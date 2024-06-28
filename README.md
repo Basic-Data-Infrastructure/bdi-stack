@@ -3,6 +3,11 @@ title: BDI Association Registry
 lang: en
 ---
 
+# In development
+
+NOTE: This repository is work in progress. This document sets out the
+goals of the projects, not the current state of affairs.
+
 # Context
 
 The BDI is a framework for data sharing between federated
@@ -35,7 +40,13 @@ The ASR can be run as a standalone Java jar, or as a docker container
 and can be statically configured using a configuration file. The ASR
 does not provide a user interface and has no management API.
 
-# How
+# Deployment 
+
+## Standalone jar on the JVM
+
+## Docker image
+
+# Development
 
 The ASR is implemented in Clojure, using `tools.deps`.
 
