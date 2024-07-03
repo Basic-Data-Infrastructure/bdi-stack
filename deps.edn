@@ -5,8 +5,10 @@
 ;;;
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-{:deps  {org.bdinetwork/ishare-jwt {:local/root "../bdi-portal-software/ishare-jwt"}}
- :paths ["src"]
+{:deps  {org.bdinetwork/ishare-jwt     {:local/root "../bdi-portal-software/ishare-jwt"}
+         nl.jomco/openapi-v3-validator {:mvn/version "0.2.1"}
+         clj-commons/clj-yaml          {:mvn/version "1.0.27"}}
+ :paths ["src" "resources"]
 
  :aliases
  {:test     {:extra-deps {lambdaisland/kaocha {:mvn/version "RELEASE"}}
