@@ -4,4 +4,4 @@
 
 (deftest smoke-test
   (get-in sut/ishare-spec-data ["components" "schemas" "Party"])
-  (is (seq (sut/validate {} "Party"))))
+  (is (seq (sut/validate {} ["components" "schemas" "Party"]))))

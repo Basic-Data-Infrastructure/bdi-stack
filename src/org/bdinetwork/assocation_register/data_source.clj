@@ -19,6 +19,9 @@
              (string/ends-with? v end))))
     #(= val (get % prop))))
 
+;; If we decide to indefinitely not implement particular params
+;; we should return a particular error status in the HTTP API
+;; (maybe 501 Not Implemented)
 (defn not-implemented
   [param & _]
   (throw (ex-info "Parameter not implemented" {:param param})))
@@ -30,8 +33,35 @@
   ;; https://framework.ishare.eu/main-aspects-of-the-ishare-trust-framework/framework-and-roles
   #{"IdentityProvider" "IdentityBroker" "AuthorisationRegistry"})
 
+(defn select-role
+  [{:strs [roles] :as _party} role]
+  (first (filter #(= role (get % "role")) roles)))
+
+
+;; This is a pretty ugly interface:
+;;
+;;   - parameters are inconsistent in camelCase and snake_case
+;;
+;;   - returned attribute names are inconsistent with parameter names
+;;
+;;   - some of the queries are unnessary (active_only vs
+;;     adherenceStatus)
+;;
+;;   - the collection queries may have unexpected results (loA,
+;;     certifiedOnly)
+;;
+;; Right now we track the OpenAPI schema closely in these interfaces,
+;; both for return shapes and parameters. Should we keep this up, or
+;; implement internal interfaces and data model differently?
+;;
+;; If we want to use a different model, is there an existing information
+;; model we could use? Preferably with a standardized translation?
+;;
+;; Related: use keywords instead of strings in internal representation?
+;; namespaced keys? Use time objects instead of strings?
+
 (defn parties
-  [{:keys [parties] :as _source} {:keys [active_only
+  [{:strs [parties] :as _source} {:strs [active_only
                                          adherenceEnddate
                                          adherenceStartdate
                                          adherenceStatus
@@ -61,7 +91,7 @@
                                          webSiteUrl]}]
   (cond->> parties
     (some? active_only)
-    (filter #(= "Active" (get-in % ["adherance" "status"])))
+    (filter #((if active_only = not=) "Active" (get-in % ["adherence" "status"])))
 
     (some? adherenceEnddate)
     (filter #(= adherenceEnddate (get-in % ["adherence" "end_date"])))
@@ -85,8 +115,24 @@
     (not-implemented "certificate_subject_name")
 
     (some? certified_only)
-    (filter (fn [{:strs [roles]}]
-              (some certified-roles roles)))
+    (filter #(some certified-roles (get % "roles")))
+
+    (some? role)
+    (filter #(select-role % role))
+
+    ;; Begin Role-specific selectors: the following only work when
+    ;; `role` is specified
+
+    (some? legalAdherence)
+    (filter #(= legalAdherence (get (select-role % role) "legal_adherence")))
+
+    (some? loA)
+    (filter #(= loA (get (select-role % role) "loa")))
+
+    (some? compliancyVerified) ;; note spelling error in iSHARE spec
+    (filter #(= compliancyVerified (get (select-role % role) "complaiancy_verified")))
+
+    ;; End Role-specific selectors
 
     (some? companyEmail)
     (filter #(= companyEmail (get-in % ["additional_info" "company_email"])))
@@ -94,10 +140,6 @@
     (some? companyPhone)
     (filter #(= companyPhone (get-in % ["additional_info" "company_phone"])))
 
-    (some? compliancyVerified)
-    (filter (fn [{:strs [roles]}]
-              (some #(= compliancyVerified (get % "compliancy_verified"))
-                    roles)))
 
     (some? countriesOfOperation) ;; This is only a single country name!
     (filter (fn [{{:strs [countries_operation]} "additional_info"}]
@@ -121,14 +163,6 @@
     (filter (fn [{:strs [agreements]}]
               (some #(= framework (get % "framework")) agreements)))
 
-    (some? legalAdherence)
-    (not-implemented "legalAdherence")
-
-    (some? loA)
-    (filter (fn [{:strs [roles]}]
-              (some #(= loA (get % "loa"))
-                    roles)))
-
     (some? name)
     (filter (wildcard-pred "name" name))
 
@@ -138,12 +172,7 @@
     (filter #(= publiclyPublishable (get-in % ["additional_info" "publicly_publishable"])))
 
     (some? registarSatelliteID)
-    (not-implemented "registrarSatelliteID")
-
-    (some? role)
-    (filter (fn [{:strs [roles]}]
-              (some #(= role (get % "role"))
-                    roles)))
+    (filter #(= registarSatelliteID (get % "registrar_id")))
 
     (some? sectorIndustry)
     (filter (fn [{{:strs [sector_industry]} "additional_info"}]
