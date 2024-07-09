@@ -43,6 +43,20 @@
   [ts]
   (Instant/parse ts))
 
+;; fixed size in iSHARE spec
+(def page-size 10)
+
+;; Page 1 is the first page
+(defn paginate
+  [page coll]
+  {:pre [(<= 1 page)]}
+  (let [c (count coll)]
+    {"data" (->> coll
+                 (drop (* page-size (dec page)))
+                 (take page-size))
+     "total_count" c
+     "page_count" (inc (int (/ (dec c) page-size)))}))
+
 ;; This is a pretty ugly interface:
 ;;
 ;;   - parameters are inconsistent in camelCase and snake_case
@@ -64,8 +78,6 @@
 ;;
 ;; Related: use keywords instead of strings in internal representation?
 ;; namespaced keys? Use time objects instead of strings?
-
-
 
 (defn parties
   [{:strs [parties] :as _source} {:strs [active_only
@@ -193,8 +205,6 @@
     (some? name)
     (filter (wildcard-pred "party_name" name))
 
-    ;; TODO: page here?
-
     (some? publiclyPublishable)
     (filter #(= publiclyPublishable (get-in % ["additional_info" "publicly_publishable"])))
 
@@ -216,4 +226,7 @@
     (filter #(string/includes? (get-in % ["additional_info" "tags"]) tags))
 
     (some? webSiteUrl)
-    (filter #(= webSiteUrl (get-in % ["additional_info" "website"])))))
+    (filter #(= webSiteUrl (get-in % ["additional_info" "website"])))
+
+    :always
+    (paginate (or page 1))))
