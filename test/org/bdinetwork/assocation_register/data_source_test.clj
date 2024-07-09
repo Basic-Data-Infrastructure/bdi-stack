@@ -22,7 +22,9 @@
    0 {"authorizationRegistryID" "EU.EORI.NL000000005"}
    1 {"authorizationRegistryName" "iSHARE Test Authorization Registry"}
    0 {"authorizationRegistryName" "Some Authorization Registry"}
-   ;; TODO: certificate_subject_name
+
+   1 {"certificate_subject_name" "CN=ABC Trucking,SERIALNUMBER=EU.EORI.NL000000001,OU=Test,O=iSHARETest,C=NL"}
+   0 {"certificate_subject_name" "CN=ABC Trucking,SERIALNUMBER=EU.EORI.NL000000001,OU=Test,O=iSHARETest,C=BE"}
    1 {"certified_only" false}
    0 {"certified_only" true}
    1 {"companyEmail" "test@example.com"}
@@ -63,6 +65,12 @@
    1 {"countriesOfOperation" "Netherlands, Kingdom of the"}
    0 {"countriesOfOperation" "Belgium"}
 
+   0 {"date_time" "2024-01-14T00:00:00.000Z"}
+   1 {"date_time" "2024-02-12T00:00:00.000Z"}
+   1 {"date_time" "2024-12-12T00:00:00.000Z"}
+   1 {"date_time" "2025-02-13T00:00:00.000Z"}
+   0 {"date_time" "2025-03-14T00:00:00.000Z"}
+
    1 {"publiclyPublishable" false}
    0 {"publiclyPublishable" true}
 
@@ -72,7 +80,8 @@
    1 {"sectorIndustry" "Metals & Mining"}
    0 {"sectorIndustry" "Paper & Forest Products"}
 
-   ;; TODO subjectName
+   1 {"subjectName" "CN=ABC Trucking,SERIALNUMBER=EU.EORI.NL000000001,OU=Test,O=iSHARETest,C=NL"}
+   0 {"subjectName" "CN=ABC Trucking,SERIALNUMBER=EU.EORI.NL000000001,OU=Test,O=iSHARETest,C=BE"}
 
    1 {"tags" "some"}
    0 {"tags" "none"}

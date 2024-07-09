@@ -1,6 +1,8 @@
 (ns org.bdinetwork.assocation-register.data-source
   (:require [org.bdinetwork.assocation-register.ishare-validator :refer [parse-yaml validate]]
-            [clojure.string :as string]))
+            [org.bdinetwork.ishare.jwt :as ishare.jwt]
+            [clojure.string :as string])
+  (:import java.time.Instant))
 
 (defn read-data-source
   [in]
@@ -37,6 +39,10 @@
   [{:strs [roles] :as _party} role]
   (first (filter #(= role (get % "role")) roles)))
 
+(defn parse-time-stamp
+  [ts]
+  (Instant/parse ts))
+
 ;; This is a pretty ugly interface:
 ;;
 ;;   - parameters are inconsistent in camelCase and snake_case
@@ -58,6 +64,8 @@
 ;;
 ;; Related: use keywords instead of strings in internal representation?
 ;; namespaced keys? Use time objects instead of strings?
+
+
 
 (defn parties
   [{:strs [parties] :as _source} {:strs [active_only
@@ -113,7 +121,9 @@
                     auth_registries)))
 
     (some? certificate_subject_name)
-    (not-implemented "certificate_subject_name")
+    (filter (fn [{:strs [certificates]}]
+              (some #(= certificate_subject_name (get % "subject_name"))
+                    certificates)))
 
     ;; certified_only = false does not filter
     (true? certified_only)
@@ -163,7 +173,15 @@
                     agreements)))
 
     (some? date_time)
-    (not-implemented "date_time")
+    (filter (fn [{{:strs [start_date end_date]} "adherence"}]
+              (when (and start_date end_date)
+                (let [i (parse-time-stamp date_time)
+                      s (parse-time-stamp start_date)
+                      e (parse-time-stamp end_date)]
+                  (and (or (.equals s i)
+                           (.isBefore s i))
+                       (or (.equals e i)
+                           (.isAfter e i)))))))
 
     (some? eori)
     (filter (wildcard-pred "party_id" eori))
@@ -189,7 +207,9 @@
                     sector_industry)))
 
     (some? subjectName)
-    (not-implemented "subjectName")
+    (filter (fn [{:strs [certificates]}]
+              (some #(= subjectName (get % "subject_name"))
+                    certificates)))
 
     (some? tags)
     ;; TODO: apparently, tags is a whitespace separated string
