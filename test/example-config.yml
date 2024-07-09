@@ -20,10 +20,11 @@ parties:
     registrar_id: EU.EORI.NL000000000
     additional_info:
       publicly_publishable: false
-      sectorIndustry: []
+      sector_industry:
+        - Metals & Mining
       company_phone: '+311234567890'
-      tags: ''
-      website: ''
+      tags: 'some space separated tags'
+      website: 'https://example.com/'
       countries_operation:
         - "Netherlands, Kingdom of the"
       logo: ''
@@ -35,12 +36,12 @@ parties:
       framework: iSHARE
       complaiancy_verified: 'No'
       status: Accepted
-      dataspace_title: ''
+      dataspace_title: 'Some Dataspace'
       title: tu
       hash_file: ae1d7d30f5db9497f21a7984a8a6f359S
       type: TermsOfUse
       sign_date: '2024-02-12T00:00:00.000Z'
-      dataspace_id: ''
+      dataspace_id: 'SOME-DATASPACE'
     - expiry_date: '2025-02-13T00:00:00.000Z'
       framework: iSHARE
       complaiancy_verified: 'No'

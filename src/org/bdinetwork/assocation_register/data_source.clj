@@ -153,14 +153,14 @@
                     countries_operation)))
 
     (some? dataSpaceID)
-    (filter (fn [{:strs [auth_registries]}]
+    (filter (fn [{:strs [agreements]}]
               (some #(= dataSpaceID (get % "dataspace_id"))
-                    auth_registries)))
+                    agreements)))
 
     (some? dataSpaceTitle)
-    (filter (fn [{:strs [auth_registries]}]
-              (some #(= dataSpaceID (get % "dataspace_name"))
-                    auth_registries)))
+    (filter (fn [{:strs [agreements]}]
+              (some #(= dataSpaceTitle (get % "dataspace_title"))
+                    agreements)))
 
     (some? date_time)
     (not-implemented "date_time")

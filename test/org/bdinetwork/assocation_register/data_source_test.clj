@@ -22,8 +22,13 @@
    0 {"authorizationRegistryID" "EU.EORI.NL000000005"}
    1 {"authorizationRegistryName" "iSHARE Test Authorization Registry"}
    0 {"authorizationRegistryName" "Some Authorization Registry"}
+   ;; TODO: certificate_subject_name
    1 {"certified_only" false}
    0 {"certified_only" true}
+   1 {"companyEmail" "test@example.com"}
+   0 {"companyEmail" "foo@example.com"}
+   1 {"companyPhone" "+311234567890"}
+   0 {"companyPhone" "+312345678901"}
    1 {"role" "ServiceConsumer"}
    0 {"role" "IdentityBroker"}
    1 {"compliancyVerified" false
@@ -38,6 +43,18 @@
       "role"           "ServiceConsumer"}
    0 {"loA" "High"
       "role"           "ServiceConsumer"}
+   1 {"dataSpaceID" "SOME-DATASPACE"}
+   0 {"dataSpaceID" "OTHER-DATASPACE"}
+   1 {"dataSpaceTitle" "Some Dataspace"}
+   0 {"dataSpaceTitle" "Other Dataspace"}
+   ;; TODO: date_time
+
+   1 {"eori" "EU.EORI.NL000000001"}
+   0 {"eori" "EU.EORI.NL000000002"}
+
+   1 {"framework" "iSHARE"}
+   0 {"framework" "BDI"}
+
    1 {"name" "*"}
    0 {"name" "Foo*"}
    1 {"name" "AB*Trucking"}
@@ -45,7 +62,23 @@
    0 {"name" "XYZ Trucking"}
    1 {"countriesOfOperation" "Netherlands, Kingdom of the"}
    0 {"countriesOfOperation" "Belgium"}
-   ])
+
+   1 {"publiclyPublishable" false}
+   0 {"publiclyPublishable" true}
+
+   1 {"registarSatelliteID" "EU.EORI.NL000000000"}
+   0 {"registarSatelliteID" "EU.EORI.NL000000001"}
+
+   1 {"sectorIndustry" "Metals & Mining"}
+   0 {"sectorIndustry" "Paper & Forest Products"}
+
+   ;; TODO subjectName
+
+   1 {"tags" "some"}
+   0 {"tags" "none"}
+
+   1 {"webSiteUrl" "https://example.com/"}
+   0 {"webSiteUrl" "https://sub.example.com/"}])
 
 (deftest parties-test
   (testing "Smoke tests"
