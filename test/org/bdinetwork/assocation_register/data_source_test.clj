@@ -95,10 +95,10 @@
         "Data Source is not empty")
     (is (seq parties)
         "Data Source contains parties")
-    (is (= (count parties) (count (get (ds/parties ds {}) "data")))
+    (is (= (count parties) (count (get-in (ds/parties ds {}) ["parties_info" "data"])))
         "No params returns all parties"))
 
   (doseq [[c params] (partition 2 query-examples)]
     (testing (str "Parameters " params)
-      (is (= c (get (ds/parties ds params) "total_count"))
+      (is (= c (get-in (ds/parties ds params) ["parties_info" "total_count"]))
           (str  c " result for " params)))))

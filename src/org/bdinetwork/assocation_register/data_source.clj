@@ -48,14 +48,14 @@
 
 ;; Page 1 is the first page
 (defn paginate
-  [page coll]
+  [page k coll]
   {:pre [(<= 1 page)]}
   (let [c (count coll)]
-    {"data" (->> coll
-                 (drop (* page-size (dec page)))
-                 (take page-size))
-     "total_count" c
-     "page_count" (inc (int (/ (dec c) page-size)))}))
+    {k {"data"        (->> coll
+                           (drop (* page-size (dec page)))
+                           (take page-size))
+        "total_count" c
+        "page_count"  (inc (int (/ (dec c) page-size)))}}))
 
 ;; This is a pretty ugly interface:
 ;;
@@ -229,4 +229,4 @@
     (filter #(= webSiteUrl (get-in % ["additional_info" "website"])))
 
     :always
-    (paginate (or page 1))))
+    (paginate (or page 1) "parties_info")))
