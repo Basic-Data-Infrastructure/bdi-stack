@@ -7,7 +7,11 @@
 
 {:deps  {org.bdinetwork/ishare-jwt     {:local/root "../bdi-portal-software/ishare-jwt"}
          nl.jomco/openapi-v3-validator {:mvn/version "0.2.1"}
-         clj-commons/clj-yaml          {:mvn/version "1.0.27"}}
+         clj-commons/clj-yaml          {:mvn/version "1.0.27"}
+         ring/ring-core                {:mvn/version "1.12.2"}
+         ring/ring-json                {:mvn/version "0.5.1"}
+         ring/ring-jetty-adapter       {:mvn/version "1.12.2"}
+         compojure/compojure           {:mvn/version "1.7.1"}}
  :paths ["src" "resources"]
 
  :aliases

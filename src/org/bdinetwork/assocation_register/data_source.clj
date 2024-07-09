@@ -37,7 +37,6 @@
   [{:strs [roles] :as _party} role]
   (first (filter #(= role (get % "role")) roles)))
 
-
 ;; This is a pretty ugly interface:
 ;;
 ;;   - parameters are inconsistent in camelCase and snake_case
@@ -97,25 +96,30 @@
     (filter #(= adherenceEnddate (get-in % ["adherence" "end_date"])))
 
     (some? adherenceStartdate)
-    (filter #(= adherenceEnddate (get-in % ["adherence" "start_date"])))
+    (filter #(= adherenceStartdate (get-in % ["adherence" "start_date"])))
 
-    ;; FIXME: take start and end date into account
+    ;; FIXME: take start and end date into account?
     (some? adherenceStatus)
     (filter #(= adherenceStatus (get-in % ["adherence" "status"])))
 
     (some? authorizationRegistryID)
     (filter (fn [{:strs [auth_registries]}]
-              (some #(= authorizationRegistryID (get % "id")))))
+              (some #(= authorizationRegistryID (get % "id"))
+                    auth_registries)))
 
     (some? authorizationRegistryName)
     (filter (fn [{:strs [auth_registries]}]
-              (some #(= authorizationRegistryName (get % "name")))))
+              (some #(= authorizationRegistryName (get % "name"))
+                    auth_registries)))
 
     (some? certificate_subject_name)
     (not-implemented "certificate_subject_name")
 
-    (some? certified_only)
-    (filter #(some certified-roles (get % "roles")))
+    ;; certified_only = false does not filter
+    (true? certified_only)
+    (filter (fn [{:strs [roles]}]
+              (some #(certified-roles (get % "role"))
+                    roles)))
 
     (some? role)
     (filter #(select-role % role))
@@ -124,13 +128,15 @@
     ;; `role` is specified
 
     (some? legalAdherence)
-    (filter #(= legalAdherence (get (select-role % role) "legal_adherence")))
+    (filter #(= legalAdherence
+                (get (select-role % role) "legal_adherence")))
 
     (some? loA)
     (filter #(= loA (get (select-role % role) "loa")))
 
     (some? compliancyVerified) ;; note spelling error in iSHARE spec
-    (filter #(= compliancyVerified (get (select-role % role) "complaiancy_verified")))
+    (filter #((if compliancyVerified = not=) "yes"
+              (get (select-role % role) "complaiancy_verified")))
 
     ;; End Role-specific selectors
 
@@ -143,28 +149,31 @@
 
     (some? countriesOfOperation) ;; This is only a single country name!
     (filter (fn [{{:strs [countries_operation]} "additional_info"}]
-              (some #(= countriesOfOperation %) countries_operation)))
+              (some #(= countriesOfOperation %)
+                    countries_operation)))
 
     (some? dataSpaceID)
     (filter (fn [{:strs [auth_registries]}]
-              (some #(= dataSpaceID (get % "dataspace_id")))))
+              (some #(= dataSpaceID (get % "dataspace_id"))
+                    auth_registries)))
 
     (some? dataSpaceTitle)
     (filter (fn [{:strs [auth_registries]}]
-              (some #(= dataSpaceID (get % "dataspace_name")))))
+              (some #(= dataSpaceID (get % "dataspace_name"))
+                    auth_registries)))
 
     (some? date_time)
     (not-implemented "date_time")
 
     (some? eori)
-    (filter (wildcard-pred "eori" eori))
+    (filter (wildcard-pred "party_id" eori))
 
     (some? framework)
     (filter (fn [{:strs [agreements]}]
               (some #(= framework (get % "framework")) agreements)))
 
     (some? name)
-    (filter (wildcard-pred "name" name))
+    (filter (wildcard-pred "party_name" name))
 
     ;; TODO: page here?
 
@@ -176,7 +185,8 @@
 
     (some? sectorIndustry)
     (filter (fn [{{:strs [sector_industry]} "additional_info"}]
-              (some #(= sectorIndustry %) sector_industry)))
+              (some #(= sectorIndustry %)
+                    sector_industry)))
 
     (some? subjectName)
     (not-implemented "subjectName")

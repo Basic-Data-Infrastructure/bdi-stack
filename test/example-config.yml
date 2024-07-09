@@ -1,6 +1,11 @@
 parties:
   - capability_url: ''
-    authregistery: []
+    auth_registries:
+    - name: iSHARE Test Authorization Registry
+      id: EU.EORI.NL000000004
+      url: http://ar.isharetest.net/
+      dataspace_id: ContaktDS1
+      dataspace_name: ContaktDS1
     party_id: EU.EORI.NL000000001
     certificates:
     - subject_name: CN=ABC Trucking,SERIALNUMBER=EU.EORI.NL000000001,OU=Test,O=iSHARETest,C=NL
@@ -16,28 +21,29 @@ parties:
     additional_info:
       publicly_publishable: false
       sectorIndustry: []
-      company_phone: ''
+      company_phone: '+311234567890'
       tags: ''
       website: ''
-      countriesOfOperation: []
+      countries_operation:
+        - "Netherlands, Kingdom of the"
       logo: ''
-      company_email: ''
+      company_email: 'test@example.com'
       description: ''
     party_name: ABC Trucking
     agreements:
     - expiry_date: '2025-02-13T00:00:00.000Z'
       framework: iSHARE
-      complaiancy_verified: 'no'
+      complaiancy_verified: 'No'
       status: Accepted
       dataspace_title: ''
       title: tu
-      hash_file: ae1d7d30f5db9497f21a7984a8a6f359
+      hash_file: ae1d7d30f5db9497f21a7984a8a6f359S
       type: TermsOfUse
       sign_date: '2024-02-12T00:00:00.000Z'
       dataspace_id: ''
     - expiry_date: '2025-02-13T00:00:00.000Z'
       framework: iSHARE
-      complaiancy_verified: 'no'
+      complaiancy_verified: 'No'
       status: Accepted
       dataspace_title: ''
       title: aa
@@ -49,7 +55,7 @@ parties:
     - role: ServiceConsumer
       start_date: '2024-02-12T00:00:00.000Z'
       end_date: '2025-02-12T00:00:00.000Z'
-      loa: ''
-      complaiancy_verified: 'no'
+      loa: 'Low'
+      complaiancy_verified: false
       legal_adherence: false
  
