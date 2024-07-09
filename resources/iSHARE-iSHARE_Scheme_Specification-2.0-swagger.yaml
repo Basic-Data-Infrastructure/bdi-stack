@@ -308,6 +308,11 @@ paths:
           schema:
             type: string
             example: Substantial
+            # @joost: restricted to possible values
+            enum:
+              - Low
+              - Substantial
+              - High
           in: query
         - style: form
           explode: true
@@ -1074,7 +1079,7 @@ components:
               start_date: '2023-01-31T00:00:00.000Z'
               end_date: '2024-01-31T00:00:00.000Z'
               loa: High
-              compliancy_verified: true
+              complaiancy_verified: true
               legal_adherence: true
         auth_registries:
           description: >-
@@ -1567,13 +1572,19 @@ components:
           description: The name of the selected dataspace
           type: string
           example: Dutch Test Dataspace
-        compliancy_verified:
+        # @joost: renamed to actual, misspelled property
+        complaiancy_verified:
           description: >-
             Legal compliance to this agreement has been verified in accordance
             with the process set in trust framework as we as data space
             governance. Possible values are Yes, No, Not Applicable
           type: string
           example: 'Yes'
+          # @joost: restriced to possible values
+          enum:
+            - 'Yes'
+            - 'No'
+            - 'Not Applicable'
     Role_definition:
       title: Role_definition
       description: >-
@@ -1616,8 +1627,13 @@ components:
             Party's level of assurance. Available values are low, substantial
             and high.
           type: string
+          # @joost: added enum. check that Capitalized-only is correct
+          enum:
+            - "Low"
+            - "Substantial"
+            - "High"
           example: High
-        compliancy_verified:
+        complaiancy_verified:
           description: Compliance requirements of this role has been met by party
           type: boolean
           example: true
