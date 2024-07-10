@@ -83,8 +83,9 @@
    1 {"subjectName" "CN=ABC Trucking,SERIALNUMBER=EU.EORI.NL000000001,OU=Test,O=iSHARETest,C=NL"}
    0 {"subjectName" "CN=ABC Trucking,SERIALNUMBER=EU.EORI.NL000000001,OU=Test,O=iSHARETest,C=BE"}
 
-   1 {"tags" "some"}
+   1 {"tags" "some tags space separated"}
    0 {"tags" "none"}
+   1 {"tags" "some"}
 
    1 {"webSiteUrl" "https://example.com/"}
    0 {"webSiteUrl" "https://sub.example.com/"}])

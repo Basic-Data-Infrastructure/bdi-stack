@@ -12,7 +12,7 @@
       (throw (ex-info "Invalid party in data source" {:issues issues})))
     source))
 
-(defn wildcard-pred
+(defn- wildcard-pred
   [prop val]
   (if-let [[_ start end] (re-find #"(.*)\*(.*)" val)]
     (fn [party]
@@ -21,13 +21,6 @@
              (string/ends-with? v end))))
     #(= val (get % prop))))
 
-;; If we decide to indefinitely not implement particular params
-;; we should return a particular error status in the HTTP API
-;; (maybe 501 Not Implemented)
-(defn not-implemented
-  [param & _]
-  (throw (ex-info "Parameter not implemented" {:param param})))
-
 (def certified-roles
   ;; According to the iShare specs, iShareSatellite is NOT a certified
   ;; role.
@@ -35,11 +28,11 @@
   ;; https://framework.ishare.eu/main-aspects-of-the-ishare-trust-framework/framework-and-roles
   #{"IdentityProvider" "IdentityBroker" "AuthorisationRegistry"})
 
-(defn select-role
+(defn- select-role
   [{:strs [roles] :as _party} role]
   (first (filter #(= role (get % "role")) roles)))
 
-(defn parse-time-stamp
+(defn- parse-time-stamp
   [ts]
   (Instant/parse ts))
 
@@ -56,6 +49,22 @@
                            (take page-size))
         "total_count" c
         "page_count"  (inc (int (/ (dec c) page-size)))}}))
+
+(defn- split-tags
+  [s]
+  (if (or (nil? s)
+          (string/blank? s))
+    #{}
+    (into #{} (-> s
+                  (string/trim)
+                  (string/split #"\s+")))))
+
+(defn- has-tags?
+  [party tags]
+  (let [party-tags (-> party
+                       (get-in ["additional_info" "tags"])
+                       (split-tags))]
+    (every? #(contains? party-tags %) (split-tags tags))))
 
 ;; This is a pretty ugly interface:
 ;;
@@ -222,8 +231,7 @@
                     certificates)))
 
     (some? tags)
-    ;; TODO: apparently, tags is a whitespace separated string
-    (filter #(string/includes? (get-in % ["additional_info" "tags"]) tags))
+    (filter #(has-tags? % tags))
 
     (some? webSiteUrl)
     (filter #(= webSiteUrl (get-in % ["additional_info" "website"])))
