@@ -5,6 +5,12 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+trusted_list:
+  - subject: CN=TEST iSHARE Foundation eIDAS
+    certificate_fingerprint: 8C39DD06E35DE8467004A542D0CA4B8FDC7D6F8F713F40A35BD9E65938A191CF
+    validity: Valid
+    status: Granted
+
 parties:
   - capability_url: ''
     auth_registries:

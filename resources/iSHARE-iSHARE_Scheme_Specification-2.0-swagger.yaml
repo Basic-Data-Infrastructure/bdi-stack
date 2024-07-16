@@ -1583,7 +1583,7 @@ components:
             governance. Possible values are Yes, No, Not Applicable
           type: string
           example: 'Yes'
-          # @joost: restriced to possible values
+          # @joost: restricted to possible values
           enum:
             - 'Yes'
             - 'No'

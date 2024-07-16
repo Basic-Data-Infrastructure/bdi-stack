@@ -7,7 +7,6 @@
 
 (ns org.bdinetwork.assocation-register.data-source
   (:require [org.bdinetwork.assocation-register.ishare-validator :refer [parse-yaml validate]]
-            [org.bdinetwork.ishare.jwt :as ishare.jwt]
             [clojure.string :as string])
   (:import java.time.Instant))
 
@@ -94,6 +93,10 @@
 ;;
 ;; Related: use keywords instead of strings in internal representation?
 ;; namespaced keys? Use time objects instead of strings?
+
+
+;; TODO: define Protocol for these
+;; TODO: Remove parties call
 
 (defn parties
   [{:strs [parties] :as _source} {:strs [active_only
@@ -245,3 +248,9 @@
 
     :always
     (paginate (or page 1) "parties_info")))
+
+(defn party
+  [{:strs [parties] :as _source} party-id]
+  (some #(when (= party-id (get % "party_id"))
+           %)
+        parties))

@@ -6,11 +6,12 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.assocation-register.web
-  (:require [compojure.core :refer [GET POST defroutes]]
+  (:require [compojure.core :refer [GET defroutes]]
             [ring.middleware.json :refer [wrap-json-response]]
             [ring.middleware.params :refer [wrap-params]]
             [ring.util.response :refer [not-found]]
             [org.bdinetwork.assocation-register.data-source :as ds]
+            [org.bdinetwork.assocation-register.authentication :as authentication]
             [org.bdinetwork.ishare.jwt :as ishare.jwt]))
 
 (defroutes routes
@@ -28,8 +29,7 @@
 (defn wrap-token-response
   [handler {:keys [private-key x5c server-id]}]
   (fn [{:keys [client-id] :as request}]
-    (let [client-id "EU.EORI.CLIENT"
-          {:keys [body token-key] :as response} (handler request)]
+    (let [{:keys [body token-key] :as response} (handler request)]
       (if (and client-id token-key)
         (assoc response :body {token-key (ishare.jwt/make-jwt (assoc body
                                                                      :iss server-id
@@ -42,6 +42,7 @@
 (defn make-handler
   [data-source config]
   (-> routes
+      (authentication/wrap-authentication config)
       (wrap-token-response config)
       (wrap-datasource data-source)
       (wrap-params)
