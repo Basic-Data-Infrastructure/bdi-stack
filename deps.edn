@@ -5,7 +5,9 @@
 ;;;
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-{:deps  {org.bdinetwork/ishare-jwt     {:local/root "../bdi-portal-software/ishare-jwt"}
+{:deps  {org.bdinetwork/ishare-jwt     {:git/url   "git@github.com:Basic-Data-Infrastructure/developer-tools.git"
+                                        :git/sha   "859ced5674816af46d26bb6e480f3eb5f84a3ccb"
+                                        :deps/root "ishare-jwt"}
          nl.jomco/openapi-v3-validator {:mvn/version "0.2.1"}
          clj-commons/clj-yaml          {:mvn/version "1.0.27"}
          ring/ring-core                {:mvn/version "1.12.2"}
