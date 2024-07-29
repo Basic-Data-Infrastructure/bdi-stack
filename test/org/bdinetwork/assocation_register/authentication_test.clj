@@ -1,12 +1,11 @@
 (ns org.bdinetwork.assocation-register.authentication-test
-  (:require [org.bdinetwork.assocation-register.authentication :as auth]
-            [org.bdinetwork.assocation-register.data-source :as data-source]
-            [org.bdinetwork.assocation-register.authentication.x5c :as x5c]
-            [nl.jomco.http-status-codes :as status]
-            [org.bdinetwork.ishare.jwt :as jwt]
-            [buddy.core.keys :as keys]
+  (:require [buddy.core.keys :as keys]
+            [clojure.string :as string]
             [clojure.test :refer [deftest is]]
-            [clojure.string :as string]))
+            [nl.jomco.http-status-codes :as status]
+            [org.bdinetwork.assocation-register.authentication :as auth]
+            [org.bdinetwork.assocation-register.data-source :as data-source]
+            [org.bdinetwork.ishare.jwt :as jwt]))
 
 (deftest jti
   (let [c (auth/mk-jti-cache-atom)]
@@ -19,7 +18,7 @@
 (def server-id "EU.EORI.SERVER")
 
 (def data-source
-  (data-source/read-data-source "test/test-config.yml"))
+  (data-source/yaml-in-memory-data-source-factory "test/test-config.yml"))
 
 (def server-private-key
   (keys/private-key "test/pem/server.key.pem"))

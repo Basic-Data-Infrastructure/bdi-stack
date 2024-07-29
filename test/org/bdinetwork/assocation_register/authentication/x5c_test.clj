@@ -1,8 +1,8 @@
 (ns org.bdinetwork.assocation-register.authentication.x5c-test
-  (:require [org.bdinetwork.assocation-register.authentication.x5c :as x5c]
-            [org.bdinetwork.assocation-register.data-source :as data-source]
-            [clojure.string :as string]
-            [clojure.test :refer [deftest is testing]]))
+  (:require [clojure.string :as string]
+            [clojure.test :refer [deftest is]]
+            [org.bdinetwork.assocation-register.authentication.x5c :as x5c]
+            [org.bdinetwork.assocation-register.data-source :as data-source]))
 
 (defn pem->x5c
   "Read chain file into vector of certificates."
@@ -22,7 +22,7 @@
         (str "fingerprint from openssl matches for " party))))
 
 (def data-source
-  (data-source/read-data-source "test/test-config.yml"))
+  (data-source/yaml-in-memory-data-source-factory "test/test-config.yml"))
 
 (def client-x5c (pem->x5c "test/pem/client.x5c.pem"))
 

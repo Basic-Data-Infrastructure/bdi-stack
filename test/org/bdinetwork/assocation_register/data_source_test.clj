@@ -6,14 +6,11 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.assocation-register.data-source-test
-  (:require [org.bdinetwork.assocation-register.data-source :as ds]
-            [clojure.test :refer [deftest is are testing]]))
+  (:require [clojure.test :refer [deftest is testing]]
+            [org.bdinetwork.assocation-register.data-source :as ds]))
 
 (def ds
-  (ds/read-data-source "test/example-config.yml"))
-
-;; peek inside
-(def parties (ds "parties"))
+  (ds/yaml-in-memory-data-source-factory "test/example-config.yml"))
 
 (def query-examples
   ;; count results, params pairs
@@ -99,11 +96,10 @@
 
 (deftest parties-test
   (testing "Smoke tests"
-    (is (seq ds)
-        "Data Source is not empty")
-    (is (seq parties)
+    (is (seq (ds/parties ds {}))
         "Data Source contains parties")
-    (is (= (count parties) (count (get-in (ds/parties ds {}) ["parties_info" "data"])))
+    (is (= 1
+           (count (get-in (ds/parties ds {}) ["parties_info" "data"])))
         "No params returns all parties"))
 
   (doseq [[c params] (partition 2 query-examples)]
