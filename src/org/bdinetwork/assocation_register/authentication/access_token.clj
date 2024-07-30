@@ -1,5 +1,6 @@
 (ns org.bdinetwork.assocation-register.authentication.access-token
-  (:require [buddy.sign.jwt :as jwt])
+  (:require [buddy.sign.jwt :as jwt]
+            [nl.jomco.http-status-codes :as status])
   (:import java.time.Instant
            java.util.UUID))
 
@@ -66,10 +67,18 @@
   Sets `:client-id` on request if a valid access token is passed. If
   no bearer token is passed, passes request as is.
 
-  If access token is invalid, raises exception."
-  [f opts]
+  If access token is invalid, return \"401 Unauthorized\" response,
+  configurable in `opts` as `invalid-token-response`."
+  [f {:keys [invalid-token-response]
+      :or   {invalid-token-response {:status status/unauthorized
+                                     :body   "Invalid access token"}}
+      :as   opts}]
   (fn access-token-wrapper [request]
     (if-let [access-token (get-bearer-token request)]
-      (f (assoc request
-                :client-id (access-token->client-id access-token opts)))
+      (try
+        (f (assoc request
+                  :client-id (access-token->client-id access-token opts)))
+        (catch Exception _
+          ;; TODO log exception for debugging
+          invalid-token-response))
       (f request))))
