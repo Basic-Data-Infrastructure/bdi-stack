@@ -5,9 +5,10 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-/test/test-config.yml
-/test/pem
 /.clj-kondo
 /.cpcache
 /.lsp
 /.nrepl-port
+/target/
+/test/pem
+/test/test-config.yml
