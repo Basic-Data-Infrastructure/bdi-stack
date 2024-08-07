@@ -46,10 +46,10 @@
    :body msg})
 
 (defn check-access-token-request
-  [{:keys [method]
+  [{:keys [request-method]
     {:strs [grant_type scope client_id client_assertion_type]} :params}]
   (cond
-    (not= :post method)
+    (not= :post request-method)
     {:status status/method-not-allowed}
 
     (not= "client_credentials" grant_type)

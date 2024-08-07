@@ -65,7 +65,8 @@
 
 (defn mk-auth-request
   []
-  {:method      :post
+  {:request-method :post
+
    :uri         "/connect/token"
    :params      {"client_assertion"      (mk-client-assertion)
                  "client_id"             client-id
@@ -86,7 +87,7 @@
     (is (= res (handler req)))))
 
 (deftest correct-auth
-  (let [res (handler {:method :get
+  (let [res (handler {:request-method :get
                       :uri "/service"})]
     (is (= status/forbidden (:status res))
         "Unauthenticated request"))
@@ -96,7 +97,7 @@
     (is (= status/ok (:status res)))
     (is (some? token))
 
-    (let [res (handler (-> {:method :get
+    (let [res (handler (-> {:request-method :get
                             :uri "/service"}
                            (token-request token)))]
       (is (= status/ok (:status res))
