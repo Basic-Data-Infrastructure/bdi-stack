@@ -12,7 +12,8 @@
     (is (auth/new-jti?! c "one"))
     (is (not (auth/new-jti?! c "one")))
     (is (auth/new-jti?! c "two"))
-    (is (not (auth/new-jti?! c "two")))))
+    (is (not (auth/new-jti?! c "two")))
+    (is (not (auth/new-jti?! c "one")))))
 
 (def client-id "EU.EORI.CLIENT")
 (def server-id "EU.EORI.SERVER")

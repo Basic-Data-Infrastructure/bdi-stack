@@ -1,5 +1,6 @@
 (ns org.bdinetwork.assocation-register.authentication.access-token
   (:require [buddy.sign.jwt :as jwt]
+            [clojure.tools.logging :as log]
             [nl.jomco.http-status-codes :as status])
   (:import java.time.Instant
            java.util.UUID))
@@ -78,7 +79,7 @@
       (try
         (f (assoc request
                   :client-id (access-token->client-id access-token opts)))
-        (catch Exception _
-          ;; TODO log exception for debugging
+        (catch Exception e
+          (log/error "Invalid access token" e)
           invalid-token-response))
       (f request))))

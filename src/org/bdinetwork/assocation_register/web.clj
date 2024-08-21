@@ -15,9 +15,9 @@
             [org.bdinetwork.ishare.jwt :as ishare.jwt]))
 
 (defroutes routes
-  (GET "/parties" {:keys [params data-source]}
-    {:body (ds/parties data-source params)
-     :token-key "parties_token"})
+  (GET "/parties/:id" {:keys [params data-source]}
+    {:body (ds/party data-source (:id params))
+     :token-key "party_token"})
   (constantly
    (not-found "Resource not found")))
 

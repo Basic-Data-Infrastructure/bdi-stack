@@ -5,20 +5,25 @@
 ;;;
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-{:deps  {org.bdinetwork/ishare-jwt     {:git/url   "https://github.com/Basic-Data-Infrastructure/developer-tools.git"
-                                        :git/sha   "35dafe676939bca09b70758fbd95aeeb98de387b"
-                                        :deps/root "ishare-jwt"}
-         nl.jomco/openapi-v3-validator {:mvn/version "0.2.1"}
-         clj-commons/clj-yaml          {:mvn/version "1.0.27"}
-         ring/ring-core                {:mvn/version "1.12.2"}
-         ring/ring-json                {:mvn/version "0.5.1"}
-         ring/ring-jetty-adapter       {:mvn/version "1.12.2"}
-         compojure/compojure           {:mvn/version "1.7.1"}
+{:deps  {org.bdinetwork/ishare-jwt      {:git/url "https://github.com/Basic-Data-Infrastructure/clj-ishare-jwt"
+                                         :git/sha "977bb1f393a22d964819a0caf627b3d2840de086"}
+         nl.jomco/openapi-v3-validator  {:mvn/version "0.2.1"}
+         clj-commons/clj-yaml           {:mvn/version "1.0.27"}
+         ring/ring-core                 {:mvn/version "1.12.2"}
+         ring/ring-json                 {:mvn/version "0.5.1"}
+         ring/ring-jetty-adapter        {:mvn/version "1.12.2"}
+         compojure/compojure            {:mvn/version "1.7.1"}
+         ch.qos.logback/logback-classic {:mvn/version "1.5.6"}
          nl.jomco/clj-http-status-codes {:mvn/version "0.1"}
-         org.clojure/core.cache         {:mvn/version "1.1.234"}}
- :paths ["src" "resources"]
+         org.clojure/core.cache         {:mvn/version "1.1.234"}
+         org.clojure/tools.logging      {:mvn/version "1.3.0"}}
+ :paths ["src" "resources" "dev"]
+
+
  :aliases
- {:test     {:extra-deps {lambdaisland/kaocha {:mvn/version "RELEASE"}}
+ {:test     {:extra-deps {lambdaisland/kaocha          {:mvn/version "RELEASE"}
+                          org.bdinetwork/ishare-client {:git/url "https://github.com/Basic-Data-Infrastructure/clj-ishare-client"
+                                                        :git/sha "61c434ae1b642f2128880d32a3a8fceea095f137"}}
              :main-opts  ["-m" "kaocha.runner"]}
   :lint     {:extra-deps {clj-kondo/clj-kondo {:mvn/version "RELEASE"}}
              :main-opts  ["-m" "clj-kondo.main" "--lint" "src" "test"]}
