@@ -29,7 +29,8 @@
   (:latest-new? (swap! jti-cache-atom
                        (fn [{:keys [impl] :as cache}]
                          (if (cache/has? impl jti)
-                           (assoc cache :latest-new? false)
+                           (-> cache
+                               (assoc :latest-new? false))
                            (-> cache
                                (update :impl cache/miss jti true)
                                (assoc :latest-new? true)))))))
@@ -75,8 +76,11 @@
               {:keys [x5c]}                     (ishare.jwt/decode-header client_assertion)
               client-cert                       (first x5c)]
           (cond
-            (not= client_id sub iss)
-            (bad-request "sub != client_id")
+            (not= client_id sub)
+            (bad-request "sub is not client_id")
+
+            (not= client_id iss)
+            (bad-request "iss is not client_id")
 
             (not (new-jti?! jti-cache-atom jti))
             (bad-request "Stale client_assertion")
@@ -91,7 +95,7 @@
             (bad-request "Invalid certificate chain")
 
             :else
-            (let [party (data-source/party data-source sub)]
+            (let [party (data-source/party data-source client_id)]
               (cond
                 (not party)
                 (bad-request "Invalid client")
@@ -104,7 +108,7 @@
                 (bad-request "Party not active")
 
                 :else
-                (let [token (access-token/mk-access-token {:client-id                (get party "party_id")
+                (let [token (access-token/mk-access-token {:client-id                client_id
                                                            :server-id                server-id
                                                            :access-token-ttl-seconds access-token-ttl-seconds
                                                            :private-key              private-key})]
@@ -112,8 +116,11 @@
                    :body   {:access_token token
                             :token_type   "Bearer"
                             :expires_in   access-token-ttl-seconds}})))))
-        (catch Exception e
-          (bad-request (ex-message e))))))
+        (catch clojure.lang.ExceptionInfo e
+          (let [{:keys [type] :as info} (ex-data e)]
+            (if (= type :validation) ;; validation error in JWT
+              (bad-request (ex-message e))
+              (throw e)))))))
 
 (defn wrap-client-assertion
   [f opts]
