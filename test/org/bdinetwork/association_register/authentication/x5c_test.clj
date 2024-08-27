@@ -1,8 +1,8 @@
-(ns org.bdinetwork.assocation-register.authentication.x5c-test
+(ns org.bdinetwork.association-register.authentication.x5c-test
   (:require [clojure.string :as string]
             [clojure.test :refer [deftest is]]
-            [org.bdinetwork.assocation-register.authentication.x5c :as x5c]
-            [org.bdinetwork.assocation-register.data-source :as data-source]))
+            [org.bdinetwork.association-register.authentication.x5c :as x5c]
+            [org.bdinetwork.association-register.data-source :as data-source]))
 
 (defn pem->x5c
   "Read chain file into vector of certificates."

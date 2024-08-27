@@ -5,9 +5,9 @@
 ;;;
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(ns org.bdinetwork.assocation-register.data-source
+(ns org.bdinetwork.association-register.data-source
   (:require [clojure.string :as string]
-            [org.bdinetwork.assocation-register.ishare-validator :refer [parse-yaml validate]])
+            [org.bdinetwork.association-register.ishare-validator :refer [parse-yaml validate]])
   (:import (java.time Instant)))
 
 (defprotocol DataSourceProtocol

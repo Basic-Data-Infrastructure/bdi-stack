@@ -1,10 +1,10 @@
-(ns org.bdinetwork.assocation-register.authentication-test
+(ns org.bdinetwork.association-register.authentication-test
   (:require [buddy.core.keys :as keys]
             [clojure.string :as string]
             [clojure.test :refer [deftest is]]
             [nl.jomco.http-status-codes :as status]
-            [org.bdinetwork.assocation-register.authentication :as auth]
-            [org.bdinetwork.assocation-register.data-source :as data-source]
+            [org.bdinetwork.association-register.authentication :as auth]
+            [org.bdinetwork.association-register.data-source :as data-source]
             [org.bdinetwork.ishare.jwt :as jwt]))
 
 (deftest jti

@@ -5,12 +5,12 @@
 ;;;
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(ns org.bdinetwork.assocation-register.system
+(ns org.bdinetwork.association-register.system
   (:require [buddy.core.keys :refer [private-key]]
             [clojure.string :as string]
             [nl.jomco.resources :refer [Resource]]
-            [org.bdinetwork.assocation-register.data-source :as ds]
-            [org.bdinetwork.assocation-register.web :as web]
+            [org.bdinetwork.association-register.data-source :as ds]
+            [org.bdinetwork.association-register.web :as web]
             [ring.adapter.jetty :refer [run-jetty]]))
 
 (defn x5c

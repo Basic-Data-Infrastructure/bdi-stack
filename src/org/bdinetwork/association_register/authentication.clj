@@ -1,10 +1,10 @@
-(ns org.bdinetwork.assocation-register.authentication
+(ns org.bdinetwork.association-register.authentication
   (:require [clojure.core.cache :as cache]
             [clojure.string :as string]
             [nl.jomco.http-status-codes :as status]
-            [org.bdinetwork.assocation-register.authentication.access-token :as access-token]
-            [org.bdinetwork.assocation-register.authentication.x5c :as x5c]
-            [org.bdinetwork.assocation-register.data-source :as data-source]
+            [org.bdinetwork.association-register.authentication.access-token :as access-token]
+            [org.bdinetwork.association-register.authentication.x5c :as x5c]
+            [org.bdinetwork.association-register.data-source :as data-source]
             [org.bdinetwork.ishare.jwt :as ishare.jwt]))
 
 ;; Client assertions may only be used once. We keep track of the

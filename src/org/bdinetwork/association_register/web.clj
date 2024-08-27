@@ -5,13 +5,13 @@
 ;;;
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(ns org.bdinetwork.assocation-register.web
+(ns org.bdinetwork.association-register.web
   (:require [compojure.core :refer [GET defroutes]]
             [ring.middleware.json :refer [wrap-json-response]]
             [ring.middleware.params :refer [wrap-params]]
             [ring.util.response :refer [not-found]]
-            [org.bdinetwork.assocation-register.data-source :as ds]
-            [org.bdinetwork.assocation-register.authentication :as authentication]
+            [org.bdinetwork.association-register.data-source :as ds]
+            [org.bdinetwork.association-register.authentication :as authentication]
             [org.bdinetwork.ishare.jwt :as ishare.jwt]))
 
 (defroutes routes

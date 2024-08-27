@@ -1,4 +1,4 @@
-(ns org.bdinetwork.assocation-register.authentication.access-token
+(ns org.bdinetwork.association-register.authentication.access-token
   (:require [buddy.sign.jwt :as jwt]
             [clojure.tools.logging :as log]
             [nl.jomco.http-status-codes :as status])

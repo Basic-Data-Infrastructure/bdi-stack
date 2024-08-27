@@ -1,4 +1,4 @@
-(ns org.bdinetwork.assocation-register.authentication.x5c
+(ns org.bdinetwork.association-register.authentication.x5c
   "Validate x5c chains"
   (:require [buddy.core.codecs :as codecs]
             [buddy.core.hash :as hash]

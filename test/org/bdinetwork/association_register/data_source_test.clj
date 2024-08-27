@@ -5,9 +5,9 @@
 ;;;
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(ns org.bdinetwork.assocation-register.data-source-test
+(ns org.bdinetwork.association-register.data-source-test
   (:require [clojure.test :refer [deftest is testing]]
-            [org.bdinetwork.assocation-register.data-source :as ds]))
+            [org.bdinetwork.association-register.data-source :as ds]))
 
 (def ds
   (ds/yaml-in-memory-data-source-factory "test/example-config.yml"))

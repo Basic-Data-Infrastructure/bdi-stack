@@ -1,9 +1,9 @@
-(ns org.bdinetwork.assocation-register.system-test
-  (:require [org.bdinetwork.assocation-register.system :as system]
+(ns org.bdinetwork.association-register.system-test
+  (:require [org.bdinetwork.association-register.system :as system]
             [nl.jomco.resources :refer [with-resources]]
             [org.bdinetwork.ishare.client :as client]
             [buddy.core.keys :as keys]
-            [org.bdinetwork.assocation-register.data-source :as ds]
+            [org.bdinetwork.association-register.data-source :as ds]
             [clojure.test :refer [deftest is]]))
 
 (def client-config

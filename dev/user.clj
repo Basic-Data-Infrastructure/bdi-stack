@@ -1,8 +1,8 @@
 (ns user
   (:require [nl.jomco.resources :refer [defresource close]]
-            [org.bdinetwork.assocation-register.system :as system]
+            [org.bdinetwork.association-register.system :as system]
             [org.bdinetwork.ishare.client :as client]
-            [org.bdinetwork.assocation-register.data-source :as ds]
+            [org.bdinetwork.association-register.data-source :as ds]
             [buddy.core.keys :as keys]
             [nl.jomco.resources :refer [defresource close]]))
 

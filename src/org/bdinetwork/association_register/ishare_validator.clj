@@ -5,7 +5,7 @@
 ;;;
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(ns org.bdinetwork.assocation-register.ishare-validator
+(ns org.bdinetwork.association-register.ishare-validator
   (:require [nl.jomco.openapi.v3.validator.json-schema-validator :as schema-validator]
             [clj-yaml.core :as yaml]
             [clojure.java.io :as io]
