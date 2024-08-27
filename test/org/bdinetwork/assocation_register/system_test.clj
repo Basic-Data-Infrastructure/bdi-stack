@@ -1,5 +1,6 @@
 (ns org.bdinetwork.assocation-register.system-test
   (:require [org.bdinetwork.assocation-register.system :as system]
+            [nl.jomco.resources :refer [with-resources]]
             [org.bdinetwork.ishare.client :as client]
             [buddy.core.keys :as keys]
             [org.bdinetwork.assocation-register.data-source :as ds]
@@ -23,7 +24,7 @@
    :access-token-ttl-seconds 600})
 
 (deftest test-system
-  (system/with-resources [s (system/run-system system-config)]
+  (with-resources [s (system/run-system system-config)]
     (let [{:keys [status body] :as response} (client/exec (-> client-config
                                                               (client/satellite-request)
                                                               (assoc :ishare/message-type :party

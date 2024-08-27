@@ -7,6 +7,7 @@
 
 {:deps  {org.bdinetwork/ishare-jwt      {:git/url "https://github.com/Basic-Data-Infrastructure/clj-ishare-jwt"
                                          :git/sha "977bb1f393a22d964819a0caf627b3d2840de086"}
+         nl.jomco/with-resources        {:local/root "../with-resources"}
          nl.jomco/openapi-v3-validator  {:mvn/version "0.2.1"}
          clj-commons/clj-yaml           {:mvn/version "1.0.27"}
          ring/ring-core                 {:mvn/version "1.12.2"}
