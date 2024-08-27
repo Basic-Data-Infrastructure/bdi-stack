@@ -82,8 +82,13 @@ test: test-certs test/test-config.yml test/pem/server.fingerprint
 clean:
 	rm -rf classes target test/pem
 
-jar: clean
-	clj -T:build jar
+bdi-association-register.jar: clean
+	mkdir classes
+	clj -M -e "(compile 'org.bdinetwork.association-register.main)"
+	clj -M:uberjar --target $@
+
+test-uberjar:
+	SERVER_ID=EU.EORI.SERVER PRIVATE_KEY=test/pem/server.key.pem PUBLIC_KEY=test/pem/server.cert.pem X5C=test/pem/server.x5c.pem DATA_SOURCE=test/test-config.yml java -Dlogback.configurationFile=dev/logback.xml -jar bdi-association-register.jar
 
 
 check: test lint outdated
