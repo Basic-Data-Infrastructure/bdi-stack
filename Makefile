@@ -16,6 +16,7 @@ test/pem/ca.cert.pem:
 	openssl req \
 		-x509 -newkey rsa:4096 -sha256 -days 365 -noenc \
 		-subj $(CA_SUBJECT) \
+		-addext keyUsage=keyCertSign \
 		-keyout test/pem/ca.key.pem \
 		-out test/pem/ca.cert.pem
 
@@ -23,6 +24,7 @@ test/pem/intermediate.cert.pem:
 	openssl req \
 		-x509 -newkey rsa:4096 -sha256 -days 365 -noenc \
 		-subj "/CN=INTERMEDIATE-CA" \
+		-addext keyUsage=keyCertSign \
 		-keyout test/pem/intermediate.key.pem \
 		-out test/pem/intermediate.cert.pem \
 		-CA test/pem/ca.cert.pem \
@@ -32,6 +34,7 @@ test/pem/server.cert.pem: test/pem/intermediate.cert.pem
 	openssl req \
 		-x509 -newkey rsa:4096 -sha256 -days 365 -noenc \
 		-subj $(SERVER_SUBJECT) \
+		-addext keyUsage=nonRepudiation \
 		-keyout test/pem/server.key.pem \
 		-out test/pem/server.cert.pem \
 		-CA test/pem/intermediate.cert.pem \

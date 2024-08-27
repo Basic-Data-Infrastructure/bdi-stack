@@ -89,16 +89,25 @@
           KeyUsage/fromExtensions
           (.hasUsages KeyUsage/nonRepudiation)))
 
+(defn cert-signing-certificate?
+  [cert]
+  (some-> cert
+          .getExtensions
+          KeyUsage/fromExtensions
+          (.hasUsages KeyUsage/keyCertSign)))
+
 (defn validate-chain
   ;; TODO: this is a simplistic implementation, we must support revocations
   [certs data-source]
-  (let [certs (map cert certs)]
-    (when (signing-certificate? (first certs))
-      (loop [[c1 c2 :as certs] certs]
-        (if c2
-          (or (and (certificates/valid-on-date? c1)
-                   (certificates/verify-signature c1 c2))
-              (recur (next certs)))
-          (and (certificates/valid-on-date? c1)
-               (certificates/verify-signature c1 c1)
-               (trusted-cert? c1 data-source)))))))
+  (let [certs (map cert certs)
+        ca-certs (next certs)]
+    (when (every? cert-signing-certificate? ca-certs)
+      (when (signing-certificate? (first certs))
+        (loop [[c1 c2 :as certs] certs]
+          (if c2
+            (or (and (certificates/valid-on-date? c1)
+                     (certificates/verify-signature c1 c2))
+                (recur (next certs)))
+            (and (certificates/valid-on-date? c1)
+                 (certificates/verify-signature c1 c1)
+                 (trusted-cert? c1 data-source))))))))
