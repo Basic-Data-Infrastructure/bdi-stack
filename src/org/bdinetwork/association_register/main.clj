@@ -2,12 +2,10 @@
   (:require [org.bdinetwork.association-register.system :as system]
             [org.bdinetwork.association-register.data-source :as ds]
             [buddy.core.keys :as keys]
-            [nl.jomco.resources :refer [close defresource]]
+            [nl.jomco.resources :refer [close with-resources]]
             [nl.jomco.envopts :as envopts]
             [environ.core :refer [env]])
   (:gen-class))
-
-(defresource system)
 
 (def opt-specs
   {:private-key              ["Server private key pem file" :private-key]
@@ -35,6 +33,15 @@
   [s _]
   [(ds/yaml-in-memory-data-source-factory s)])
 
+(defn wait-until-interrupted
+  []
+  (loop []
+    (when-not (try (Thread/sleep 10000)
+                   false
+                   (catch InterruptedException e
+                     true))
+      (recur))))
+
 (defn -main [& args]
   (let [[config errs] (envopts/opts env opt-specs)]
     (when errs
@@ -43,4 +50,9 @@
       (.println *err* "Available environment vars:")
       (.println *err* (envopts/specs-description opt-specs))
       (System/exit 1))
-    (defresource system (system/run-system config))))
+    (let [system (system/run-system config)]
+      (.addShutdownHook (Runtime/getRuntime)
+                        (Thread. (fn []
+                                   (close system)
+                                   (shutdown-agents))))
+      (wait-until-interrupted))))
