@@ -9,7 +9,6 @@
   (:require [buddy.core.keys :refer [private-key]]
             [clojure.string :as string]
             [nl.jomco.resources :refer [Resource]]
-            [org.bdinetwork.association-register.data-source :as ds]
             [org.bdinetwork.association-register.web :as web]
             [ring.adapter.jetty :refer [run-jetty]]))
 
@@ -29,6 +28,6 @@
     (.stop server)))
 
 (defn run-system
-  [{:keys [data-source] :as config}]
-  (let [handler (web/make-handler data-source config)]
+  [{:keys [association] :as config}]
+  (let [handler (web/make-handler association config)]
     (run-jetty handler {:join? false :port (:port config) :hostname (:hostname config)})))

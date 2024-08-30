@@ -10,21 +10,22 @@
             [ring.middleware.json :refer [wrap-json-response]]
             [ring.middleware.params :refer [wrap-params]]
             [ring.util.response :refer [not-found]]
-            [org.bdinetwork.association-register.data-source :as ds]
-            [org.bdinetwork.association-register.authentication :as authentication]
+            [org.bdinetwork.service-provider.association :as association]
+            [org.bdinetwork.service-provider.authentication :as authentication]
             [org.bdinetwork.ishare.jwt :as ishare.jwt]))
 
 (defroutes routes
-  (GET "/parties/:id" {:keys [params data-source]}
-    {:body (ds/party data-source (:id params))
+  (GET "/parties/:id" {:keys [params association]}
+    {:body (association/party association (:id params))
      :token-key "party_token"})
+  ;; TODO: trusted list
   (constantly
    (not-found "Resource not found")))
 
-(defn wrap-datasource
+(defn wrap-association
   [handler ds]
   (fn [request]
-    (handler (assoc request :data-source ds))))
+    (handler (assoc request :association ds))))
 
 (defn wrap-token-response
   [handler {:keys [private-key x5c server-id]}]
@@ -40,10 +41,10 @@
         response))))
 
 (defn make-handler
-  [data-source config]
+  [association config]
   (-> routes
       (authentication/wrap-authentication config)
       (wrap-token-response config)
-      (wrap-datasource data-source)
+      (wrap-association association)
       (wrap-params)
       (wrap-json-response)))

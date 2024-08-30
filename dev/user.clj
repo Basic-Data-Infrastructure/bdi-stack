@@ -2,7 +2,7 @@
   (:require [nl.jomco.resources :refer [defresource close]]
             [org.bdinetwork.association-register.system :as system]
             [org.bdinetwork.ishare.client :as client]
-            [org.bdinetwork.association-register.data-source :as ds]
+            [org.bdinetwork.service-provider.in-memory-association :refer [in-memory-association]]
             [buddy.core.keys :as keys]
             [nl.jomco.resources :refer [defresource close]]))
 
@@ -11,7 +11,7 @@
   {:private-key              (client/private-key "test/pem/server.key.pem")
    :public-key               (keys/public-key "test/pem/server.cert.pem")
    :x5c                      (system/x5c "test/pem/server.x5c.pem")
-   :data-source              (ds/yaml-in-memory-data-source-factory "test/test-config.yml")
+   :data-source              (in-memory-association "test/test-config.yml")
    :server-id                "EU.EORI.SERVER"
    :hostname                 "localhost"
    :port                     8080
