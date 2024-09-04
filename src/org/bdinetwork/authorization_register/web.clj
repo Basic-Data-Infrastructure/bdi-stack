@@ -5,6 +5,7 @@
             [ring.util.response :refer [not-found]]
             [nl.jomco.http-status-codes :as status]
             [org.bdinetwork.service-provider.authentication :as authentication]
+            [org.bdinetwork.authorization-register.policy :as policy]
             [org.bdinetwork.ishare.jwt :as ishare.jwt]))
 
 (defn wrap-token-response
@@ -25,14 +26,11 @@
 
 (defroutes routes
   (GET "/delegation"
-      {:keys                     [client-id]
-       {:strs delegationRequest} :body}
-      (if (not client-id)
+      {:keys                     [client-id
+                                  policy-view]
+       {:strs [delegationRequest]} :body}
+    (if (not client-id)
         {:status status/unauthorized}
-        (let [subject (get-in delegationRequest ["target" "accessSubject"])]
-
-          )
-
-        )
-      )
-  )
+        {:status status/ok
+         :body (policy/delegation-evidence policy-view delegationRequest)
+         :token-key :delegation_token})))

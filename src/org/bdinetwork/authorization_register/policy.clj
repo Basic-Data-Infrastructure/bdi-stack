@@ -17,7 +17,9 @@
    ;; policies are the root entities in the schema
    ;; the policy root has a "Permit" effect
    :policy/id                     {:db/unique :db.unique/identity}
-   :policy/issuer                  {}
+   :policy/issuer                 {}
+   :policy/max-delegation-depth   {}
+   :policy/licenses               {:db/cardinality :db.cardinality/many}
    :target/access-subject         {}
    :target/actions                {:db/cardinality :db.cardinality/many}
    ;; delegation depth
@@ -37,12 +39,14 @@
        selector))
    {}
    ;; map of selector key -> delegation mask path
-   {:policy/issuer ["policyIssuer"]
-    :target/access-subject ["target" "accessSubject"]
-    :target/actions ["policySets" 0 "policies" 0 "target" "actions"]
-    :resource/type ["policySets" 0 "policies" 0 "target" "resource" "type"]
-    :resource/identifiers ["policySets" 0 "policies" 0 "target" "resource" "identifiers"]
-    :resource/attributes ["policySets" 0 "policies" 0 "target" "resource" "attributes"]
+   {:policy/issuer                 ["policyIssuer"]
+    :policy/max-delegation-depth   ["policySets" 0 "maxDelegationDepth"]
+    :policy/licenses               ["policySets" 0  "target" "environment" "licenses"]
+    :target/access-subject         ["target" "accessSubject"]
+    :target/actions                ["policySets" 0 "policies" 0 "target" "actions"]
+    :resource/type                 ["policySets" 0 "policies" 0 "target" "resource" "type"]
+    :resource/identifiers          ["policySets" 0 "policies" 0 "target" "resource" "identifiers"]
+    :resource/attributes           ["policySets" 0 "policies" 0 "target" "resource" "attributes"]
     :environment/service-providers ["policySets" 0 "policies" 0 "target" "environment" "serviceProviders"]}))
 
 ;; TODO this should merge restrictions from mask
@@ -50,8 +54,8 @@
   [policy]
   {"policyIssuer" (:policy/issuer policy)
    "target" {"accessSubject" (:target/access-subject policy)}
-   "policySets" [{"maxDelegationDepth" "TODO"
-                  "target" {"environment" {"licenses" "TODO"}}
+   "policySets" [{"maxDelegationDepth" (:policy/max-delegation-depth policy)
+                  "target" {"environment" {"licenses" (:policy/licenses policy)}}
                   "policies" {"target" {"resource" {"type" (:resource/type policy)
                                                     "identifiers" (:resource/identifiers policy)
                                                     "attributes" (:resource/identifiers policy)}
