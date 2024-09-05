@@ -1,12 +1,12 @@
 (ns org.bdinetwork.authorization-register.web
-  (:require [compojure.core :refer [GET defroutes]]
+  (:require [compojure.core :refer [defroutes GET]]
+            [nl.jomco.http-status-codes :as status]
+            [org.bdinetwork.authorization-register.delegations :as delegations]
+            [org.bdinetwork.ishare.jwt :as ishare.jwt]
+            [org.bdinetwork.service-provider.authentication :as authentication]
             [ring.middleware.json :refer [wrap-json-response]]
             [ring.middleware.params :refer [wrap-params]]
-            [ring.util.response :refer [not-found]]
-            [nl.jomco.http-status-codes :as status]
-            [org.bdinetwork.service-provider.authentication :as authentication]
-            [org.bdinetwork.authorization-register.policy :as policy]
-            [org.bdinetwork.ishare.jwt :as ishare.jwt]))
+            [ring.util.response :refer [not-found]]))
 
 (defn wrap-token-response
   [handler {:keys [private-key x5c server-id]}]
@@ -23,14 +23,29 @@
 
 ;; https://dev.ishare.eu/reference/delegation-mask
 
+(defn wrap-policies
+  [f policy-store policy-view]
+  (fn [request]
+    (f (assoc request
+              :policy-store policy-store
+              :policy-view policy-view))))
 
 (defroutes routes
   (GET "/delegation"
       {:keys                     [client-id
                                   policy-view]
        {:strs [delegationRequest]} :body}
-    (if (not client-id)
+      (if (not client-id)
         {:status status/unauthorized}
         {:status status/ok
-         :body (policy/delegation-evidence policy-view delegationRequest)
+         :body (delegations/delegation-evidence policy-view delegationRequest)
          :token-key :delegation_token})))
+
+(defn mk-app
+  [{:keys [policy-store policy-view association]} config]
+  (-> routes
+      (wrap-policies policy-store policy-view)
+      (authentication/wrap-authentication (assoc config :association association))
+      (wrap-token-response config)
+      (wrap-json-response)
+      (wrap-params)))

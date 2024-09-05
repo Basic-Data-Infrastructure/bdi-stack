@@ -1,7 +1,8 @@
-(ns org.bdinetwork.authorization-register.in-memory-policies-test
-  (:require  [clojure.test :refer [deftest is]]
-             [org.bdinetwork.authorization-register.policy :as policy]
-             [org.bdinetwork.authorization-register.in-memory-policies :refer [in-memory-policies]]))
+(ns org.bdinetwork.authorization-register.delegations-test
+  (:require [clojure.test :refer [deftest is]]
+            [org.bdinetwork.authorization-register.delegations :as delegations]
+            [org.bdinetwork.authorization-register.in-memory-policies :refer [in-memory-policies]]
+            [org.bdinetwork.authorization-register.policies :as policies]))
 
 (def delegation-mask ;; delegationRequest
   {"policyIssuer"    "EU.EORI.PRECIOUSG"
@@ -21,7 +22,7 @@
 
 (deftest basic
   (let [p         (in-memory-policies)
-        policy-id (policy/delegate! p delegation)]
+        policy-id (delegations/delegate! p delegation)]
     (is (uuid? policy-id)
         "can insert delegation")
 
@@ -33,7 +34,7 @@
              :resource/identifiers        ["SOME.RESOURCE.ID"]
              :target/access-subject       "EU.EORI.FLEXTRANS"
              :target/actions              ["READ" "WRITE"]}]
-           (policy/get-policies p {:policy/issuer "EU.EORI.PRECIOUSG"}))
+           (policies/get-policies p {:policy/issuer "EU.EORI.PRECIOUSG"}))
         "Can fetch policies")
 
     (is (= {"policyIssuer" "EU.EORI.PRECIOUSG",
@@ -50,6 +51,4 @@
                 "actions"     ["READ" "WRITE"]
                 "environment" {"serviceProviders" nil}}
                "rules" [{"effect" "Allow"}]}}]}
-           (policy/delegation-evidence p delegation-mask)))
-    )
-  )
+           (delegations/delegation-evidence p delegation-mask)))))

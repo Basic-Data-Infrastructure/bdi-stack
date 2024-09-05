@@ -1,32 +1,5 @@
-(ns org.bdinetwork.authorization-register.policy
-  (:require [datascript.core :as ds])
-  (:import java.util.UUID))
-
-(defprotocol PolicyView
-  (get-policies [x selector]
-    "returns all policies matching selector"))
-
-(defprotocol PolicyStore
-  (add-policy! [x policy]
-    "adds a new policy. returns policy new id")
-  (delete-policy! [x id]
-    "delete policy with id"))
-
-(def schema
-  {
-   ;; policies are the root entities in the schema
-   ;; the policy root has a "Permit" effect
-   :policy/id                     {:db/unique :db.unique/identity}
-   :policy/issuer                 {}
-   :policy/max-delegation-depth   {}
-   :policy/licenses               {:db/cardinality :db.cardinality/many}
-   :target/access-subject         {}
-   :target/actions                {:db/cardinality :db.cardinality/many}
-   ;; delegation depth
-   :resource/type                 {}
-   :resource/identifiers          {:db/cardinality :db.cardinality/many}
-   :resource/attributes           {:db/cardinality :db.cardinality/many}
-   :environment/service-providers {:db/cardinality :db.cardinality/many}})
+(ns org.bdinetwork.authorization-register.delegations
+  (:require [org.bdinetwork.authorization-register.policies :as policies]))
 
 (defn delegation-mask->policy-selector
   "Convert an iSHARE delegation mask into a policy selector as defined
@@ -65,12 +38,15 @@
 
 (defn delegation-evidence
   [policy-view delegation-mask]
-  (policy->delegation-evidence (first (get-policies policy-view (delegation-mask->policy-selector delegation-mask)))))
+  (policy->delegation-evidence (first (policies/get-policies policy-view (delegation-mask->policy-selector delegation-mask)))))
 
 (defn delegate!
   [policy-store delegation]
-  (add-policy! policy-store (delegation-mask->policy-selector delegation)))
+  (policies/add-policy! policy-store (delegation-mask->policy-selector delegation)))
 
+(defn delete-delegation!
+  [policy-store id]
+  (policies/delete-policy! policy-store id))
 
 ;; https://dev.ishare.eu/reference/delegation-mask
 ;; 3https://dev.ishare.eu/reference/delegation-mask/policy-sets

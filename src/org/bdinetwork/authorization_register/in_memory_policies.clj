@@ -1,13 +1,15 @@
 (ns org.bdinetwork.authorization-register.in-memory-policies
-  (:require
-   [datascript.core :as ds]
-   [org.bdinetwork.authorization-register.policy
-    :refer
-    [PolicyStore PolicyView schema]])
-  (:import
-   (java.util UUID)))
+  "This implements a PolicyView and PolicyStore using a DataScript
+  database.
 
-(defn selector->where
+  The datascript connection can be extended to write to disk or some
+  other storage backend.
+  See https://github.com/tonsky/datascript/blob/master/docs/storage.md"
+  (:require [datascript.core :as ds]
+            [org.bdinetwork.authorization-register.policies :refer [PolicyStore PolicyView schema]])
+  (:import java.util.UUID))
+
+(defn- selector->where
   "Convert entity selector into eql where clauses.
 
   Entity selector is an key -> value map that may contain any key
@@ -32,14 +34,14 @@
    []
    (select-keys selector (keys schema))))
 
-(defn selector->query
+(defn- selector->query
   [selector]
   (into '[:find (pull ?e [:*])
           :in $
           :where]
         (selector->where selector)))
 
-(defrecord InMemoryPolicies [conn]
+(defrecord DataScriptPolicies [conn]
   PolicyView
   (get-policies [_ selector]
     (first (ds/q (selector->query selector)
@@ -54,8 +56,9 @@
     (ds/transact! conn [[:db/retractEntity [:policy/id id]]])))
 
 (defn in-memory-policies
+  "Create an in-memory policy store."
   []
-  (->InMemoryPolicies (ds/create-conn schema)))
+  (->DataScriptPolicies (ds/create-conn schema)))
 
 
 
