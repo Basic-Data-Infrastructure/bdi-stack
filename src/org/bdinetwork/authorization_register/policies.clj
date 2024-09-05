@@ -1,4 +1,8 @@
-(ns org.bdinetwork.authorization-register.policies)
+(ns org.bdinetwork.authorization-register.policies
+  "Defines the protocol for storing and retrieving policies.
+
+  The `org.bdinetwork.authorization-register.delegations` uses this
+  protocol to provide delegation evidence.")
 
 (defprotocol PolicyView
   (get-policies [x selector]
