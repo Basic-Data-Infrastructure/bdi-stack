@@ -6,7 +6,7 @@
                                                          :git/sha "977bb1f393a22d964819a0caf627b3d2840de086"}
          org.bdinetwork/service-provider-authentication {:git/url "https://github.com/Basic-Data-Infrastructure/service-provider-authentication"
                                                          :git/sha "68226fdb363c9998de5c3661cae27c25293f4e5c"}
-         nl.jomco/with-resources                        {:git/sha "d1ca02cf1b8ca57a7e48af7896877b2eadc96dc5"
+         nl.jomco/with-resources                        {:git/sha "82ec9aa9baf21465423c0f5d73a0d792162efd8b"
                                                          :git/url "https://git.sr.ht/~jomco/with-resources"}
          nl.jomco/openapi-v3-validator                  {:mvn/version "0.2.1"}
          clj-commons/clj-yaml                           {:mvn/version "1.0.27"}

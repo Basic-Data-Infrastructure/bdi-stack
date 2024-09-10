@@ -1,8 +1,14 @@
+;;; SPDX-FileCopyrightText: 2024 Jomco B.V.
+;;; SPDX-FileCopyrightText: 2024 Topsector Logistiek
+;;; SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
+;;; SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
+;;;
+;;; SPDX-License-Identifier: AGPL-3.0-or-later
+
 (ns org.bdinetwork.authorization-register.main
   (:require [org.bdinetwork.authorization-register.system :as system]
-            [org.bdinetwork.service-provider.remote-association :refer [remote-association]]
             [buddy.core.keys :as keys]
-            [nl.jomco.resources :refer [close with-resources]]
+            [nl.jomco.resources :refer [close]]
             [nl.jomco.envopts :as envopts]
             [environ.core :refer [env]])
   (:gen-class))
@@ -35,7 +41,7 @@
   (loop []
     (when-not (try (Thread/sleep 10000)
                    false
-                   (catch InterruptedException e
+                   (catch InterruptedException _
                      true))
       (recur))))
 
@@ -51,7 +57,7 @@
       (do (prn (keys config))
           config))))
 
-(defn -main [& args]
+(defn -main [& _]
   (if-let [c (config)]
     (let [system (system/run-system c)]
       (.addShutdownHook (Runtime/getRuntime)

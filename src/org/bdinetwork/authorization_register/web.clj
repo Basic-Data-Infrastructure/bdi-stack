@@ -1,3 +1,10 @@
+;;; SPDX-FileCopyrightText: 2024 Jomco B.V.
+;;; SPDX-FileCopyrightText: 2024 Topsector Logistiek
+;;; SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
+;;; SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
+;;;
+;;; SPDX-License-Identifier: AGPL-3.0-or-later
+
 (ns org.bdinetwork.authorization-register.web
   (:require [compojure.core :refer [defroutes GET]]
             [nl.jomco.http-status-codes :as status]
@@ -5,8 +12,7 @@
             [org.bdinetwork.ishare.jwt :as ishare.jwt]
             [org.bdinetwork.service-provider.authentication :as authentication]
             [ring.middleware.json :refer [wrap-json-response]]
-            [ring.middleware.params :refer [wrap-params]]
-            [ring.util.response :refer [not-found]]))
+            [ring.middleware.params :refer [wrap-params]]))
 
 (defn wrap-token-response
   [handler {:keys [private-key x5c server-id]}]
