@@ -88,7 +88,7 @@ bdi-authorization-register.jar: clean
 	clj -M:uberjar --target $@
 
 test-uberjar:
-	SERVER_ID=EU.EORI.SERVER PRIVATE_KEY=test/pem/server.key.pem PUBLIC_KEY=test/pem/server.cert.pem X5C=test/pem/server.x5c.pem DATA_SOURCE=test/test-config.yml java -Dlogback.configurationFile=dev/logback.xml -jar bdi-authorization-register.jar
+	ASSOCIATION_SERVER_ID=EU.EORI.ASSOCIATON ASSOCIATION_SERVER_URL=http://localhost:3000 SERVER_ID=EU.EORI.SERVER PRIVATE_KEY=test/pem/server.key.pem PUBLIC_KEY=test/pem/server.cert.pem X5C=test/pem/server.x5c.pem DATA_SOURCE=test/test-config.yml java -Dlogback.configurationFile=dev/logback.xml -jar bdi-authorization-register.jar
 
 
 check: test lint outdated

@@ -39,17 +39,24 @@
                      true))
       (recur))))
 
-(defn -main [& args]
+(defn config
+  []
   (let [[config errs] (envopts/opts env opt-specs)]
-    (when errs
-      (.println *err* "Error in environment configuration")
-      (.println *err* (envopts/errs-description errs))
-      (.println *err* "Available environment vars:")
-      (.println *err* (envopts/specs-description opt-specs))
-      (System/exit 1))
-    (let [system (system/run-system config)]
+    (if errs
+      (do (.println *err* "Error in environment configuration")
+          (.println *err* (envopts/errs-description errs))
+          (.println *err* "Available environment vars:")
+          (.println *err* (envopts/specs-description opt-specs))
+          nil)
+      (do (prn (keys config))
+          config))))
+
+(defn -main [& args]
+  (if-let [c (config)]
+    (let [system (system/run-system c)]
       (.addShutdownHook (Runtime/getRuntime)
                         (Thread. (fn []
                                    (close system)
                                    (shutdown-agents))))
-      (wait-until-interrupted))))
+      (wait-until-interrupted))
+    (System/exit 1)))

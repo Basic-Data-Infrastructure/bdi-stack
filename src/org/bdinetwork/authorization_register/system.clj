@@ -22,9 +22,10 @@
     (.stop jetty)))
 
 (defn run-system
-  [{:keys [client-id x5c private-key association-server-id association-server-url] :as config}]
+  [{:keys [server-id x5c private-key association-server-id association-server-url] :as config}]
+  {:pre [server-id x5c private-key association-server-id association-server-url]}
   (mk-system [policies    (in-memory-policies)
-              association (remote-association #:ishare {:client-id          client-id
+              association (remote-association #:ishare {:client-id          server-id
                                                         :x5c                x5c
                                                         :private-key        private-key
                                                         :satellite-id       association-server-id
@@ -33,7 +34,7 @@
                                        :policy-view  policies
                                        :association  association}
                                       config)
-              jetty       (run-jetty app config)]
+              jetty       (run-jetty app (assoc config :join? false))]
     {:policies    policies
      :app         app
      :association association

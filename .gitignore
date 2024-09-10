@@ -1,0 +1,7 @@
+/.clj-kondo/
+/.cpcache/
+/.envrc
+/.lsp/
+/.nrepl-port
+/bdi-authorization-register.jar
+/classes/

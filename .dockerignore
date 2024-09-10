@@ -1,0 +1,5 @@
+/classes
+/target
+/*.jar
+/.*
+/test/pem/*
