@@ -20,13 +20,15 @@
          org.clojure/tools.logging                      {:mvn/version "1.3.0"}
          nl.jomco/envopts                               {:mvn/version "0.0.4"}
          datascript/datascript                          {:mvn/version "1.7.3"}}
- :paths ["src" "classes"]
+ :paths ["src" "classes" "resources"]
 
  :aliases
  {:dev      {:extra-paths ["test" "dev"]}
-  :test     {:extra-deps {lambdaisland/kaocha          {:mvn/version "RELEASE"}
-                          org.bdinetwork/ishare-client {:git/url "https://github.com/Basic-Data-Infrastructure/clj-ishare-client"
-                                                        :git/sha "61c434ae1b642f2128880d32a3a8fceea095f137"}}
+  :test     {:extra-deps {lambdaisland/kaocha                 {:mvn/version "RELEASE"}
+                          org.bdinetwork/ishare-client        {:git/url "https://github.com/Basic-Data-Infrastructure/clj-ishare-client"
+                                                               :git/sha "7a9247f7fb6c607ae912bf2fb9dbe2dc0afcdd59"}
+                          org.bdinetwork/association-register {:git/sha "d091e4bc5a9cd3f79011165e379858eda62852fd"
+                                                               :git/url "https://github.com/Basic-Data-Infrastructure/association-registry"}}
              :main-opts  ["-m" "kaocha.runner"]}
   :lint     {:extra-deps {clj-kondo/clj-kondo {:mvn/version "RELEASE"}}
              :main-opts  ["-m" "clj-kondo.main" "--lint" "src" "test"]}
