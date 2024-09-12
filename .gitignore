@@ -12,3 +12,4 @@
 /target/
 /test/pem
 /test/test-config.yml
+/bdi-association-register.jar
