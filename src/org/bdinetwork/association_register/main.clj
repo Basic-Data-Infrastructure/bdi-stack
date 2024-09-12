@@ -1,6 +1,6 @@
 (ns org.bdinetwork.association-register.main
   (:require [org.bdinetwork.association-register.system :as system]
-            [org.bdinetwork.service-provider.in-memory-association :refer [in-memory-association]]
+            [org.bdinetwork.service-provider.in-memory-association :refer [in-memory-association read-source]]
             [buddy.core.keys :as keys]
             [nl.jomco.resources :refer [close with-resources]]
             [nl.jomco.envopts :as envopts]
@@ -31,7 +31,7 @@
 
 (defmethod envopts/parse :data-source
   [s _]
-  [(in-memory-association s)])
+  [(in-memory-association (read-source s))])
 
 (defn wait-until-interrupted
   []

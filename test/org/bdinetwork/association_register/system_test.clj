@@ -3,7 +3,7 @@
             [nl.jomco.resources :refer [with-resources]]
             [org.bdinetwork.ishare.client :as client]
             [buddy.core.keys :as keys]
-            [org.bdinetwork.service-provider.in-memory-association :refer [in-memory-association]]
+            [org.bdinetwork.service-provider.in-memory-association :refer [in-memory-association read-source]]
             [clojure.test :refer [deftest is]]))
 
 (def client-config
@@ -17,7 +17,7 @@
   {:private-key              (client/private-key "test/pem/server.key.pem")
    :public-key               (keys/public-key "test/pem/server.cert.pem")
    :x5c                      (system/x5c "test/pem/server.x5c.pem")
-   :association              (in-memory-association "test/test-config.yml")
+   :association              (in-memory-association (read-source "test/test-config.yml"))
    :server-id                "EU.EORI.SERVER"
    :hostname                 "localhost"
    :port                     8080
