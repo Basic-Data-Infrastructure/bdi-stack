@@ -45,4 +45,6 @@
     {:policies    policies
      :app         app
      :association association
-     :jetty       jetty}))
+     :jetty       jetty})
+
+  )

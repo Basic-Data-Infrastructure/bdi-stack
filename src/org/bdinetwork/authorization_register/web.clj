@@ -6,7 +6,7 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.authorization-register.web
-  (:require [compojure.core :refer [defroutes GET]]
+  (:require [compojure.core :refer [defroutes GET POST]]
             [nl.jomco.http-status-codes :as status]
             [org.bdinetwork.authorization-register.delegations :as delegations]
             [org.bdinetwork.ishare.jwt :as ishare.jwt]
@@ -38,20 +38,36 @@
 
 (defroutes routes
   (GET "/delegation"
-      {:keys                     [client-id
-                                  policy-view]
+      {:keys                       [client-id
+                                    policy-view]
        {:strs [delegationRequest]} :body}
       (if (not client-id)
         {:status status/unauthorized}
-        {:status status/ok
-         :body (delegations/delegation-evidence policy-view delegationRequest)
-         :token-key :delegation_token})))
+        {:status    status/ok
+         :body      (delegations/delegation-evidence policy-view delegationRequest)
+         :token-key :delegation_token}))
+  (POST "/policy"
+      {:keys                        [client-id
+              policy-store]
+       {:strs [delegationEvidence]} :body}
+        (if (not client-id)
+          {:status status/unauthorized}
+          {:status    status/ok
+           :body      (delegations/delegate! policy-store delegationEvidence)
+           :token-key :delegation_token})))
+
+(defn wrap-association
+  [f association]
+  (fn [r]
+    (f (assoc r :association association))))
 
 (defn mk-app
   [{:keys [policy-store policy-view association]} config]
+  {:pre [association policy-store policy-view]}
   (-> routes
       (wrap-policies policy-store policy-view)
-      (authentication/wrap-authentication (assoc config :association association))
+      (authentication/wrap-authentication config)
+      (wrap-association association)
       (wrap-token-response config)
       (wrap-json-response)
       (wrap-params)))

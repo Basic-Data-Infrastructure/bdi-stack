@@ -1,0 +1,90 @@
+trusted_list:
+  - test-config/ca.cert.pem
+
+parties:
+  - party_id: EU.EORI.CLIENT
+    party_name: Some Client
+    capability_url: ''
+    auth_registries:
+    - name: BDI Authorization Register
+      id: EU.EORI.AUTHORIZATION-REGISTER
+      url: http://bdi-authorization-register
+      dataspace_id: ORG.BDI.VGU-DEMO
+      dataspace_name: BDI VGU DataSpace
+
+    certificates:
+    - test-config/client.cert.pem
+    adherence:
+      status: Active
+      start_date: '2024-02-12T00:00:00.000Z'
+      end_date: '2025-02-13T00:00:00.000Z'
+    registrar_id: EU.EORI.ASSOCIATION-REGISTER
+    roles:
+    - role: ServiceConsumer
+      start_date: '2024-02-12T00:00:00.000Z'
+      end_date: '2025-02-12T00:00:00.000Z'
+      loa: 'Low'
+      complaiancy_verified: false
+      legal_adherence: false
+    agreements: []
+  - party_id: EU.EORI.ASSOCIATION-REGISTER
+    party_name: BDI Association Register
+    capability_url: ''
+    certificates:
+    - test-config/association_register.cert.pem  
+    adherence:
+      status: Active
+      start_date: '2024-02-12T00:00:00.000Z'
+      end_date: '2025-02-13T00:00:00.000Z'
+    registrar_id: EU.EORI.ASSOCIATION-REGISTER
+    roles:
+    - role: iShareSatellite
+      start_date: '2024-02-12T00:00:00.000Z'
+      end_date: '2025-02-12T00:00:00.000Z'
+      loa: 'Low'
+      complaiancy_verified: false
+      legal_adherence: false 
+    agreements: []
+  - party_id: EU.EORI.AUTHORIZATION-REGISTER
+    party_name: BDI Authorization Register
+    capability_url: ''
+    certificates:
+    - test-config/authorization_register.cert.pem
+    adherence:
+      status: Active
+      start_date: '2024-02-12T00:00:00.000Z'
+      end_date: '2025-02-13T00:00:00.000Z'
+    registrar_id: EU.EORI.ASSOCIATION-REGISTER
+    roles:
+    - role: iShareSatellite
+      start_date: '2024-02-12T00:00:00.000Z'
+      end_date: '2025-02-12T00:00:00.000Z'
+      loa: 'Low'
+      complaiancy_verified: false
+      legal_adherence: false 
+    agreements: []
+  - party_id: EU.EORI.NLSMARTPHON
+    party_name: Some Client
+    capability_url: ''
+    auth_registries:
+    - name: BDI Authorization Register
+      id: EU.EORI.AUTHORIZATION-REGISTER
+      url: http://bdi-authorization-register
+      dataspace_id: ORG.BDI.VGU-DEMO
+      dataspace_name: BDI VGU DataSpace
+
+    certificates:
+    - test-config/nlsmartphon.cert.pem
+    adherence:
+      status: Active
+      start_date: '2024-02-12T00:00:00.000Z'
+      end_date: '2025-02-13T00:00:00.000Z'
+    registrar_id: EU.EORI.ASSOCIATION-REGISTER
+    roles:
+    - role: ServiceConsumer
+      start_date: '2024-02-12T00:00:00.000Z'
+      end_date: '2025-02-12T00:00:00.000Z'
+      loa: 'Low'
+      complaiancy_verified: false
+      legal_adherence: false
+    agreements: []
