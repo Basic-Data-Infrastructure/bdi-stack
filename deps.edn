@@ -5,7 +5,7 @@
 {:deps  {org.bdinetwork/ishare-jwt                      {:git/url "https://github.com/Basic-Data-Infrastructure/clj-ishare-jwt"
                                                          :git/sha "977bb1f393a22d964819a0caf627b3d2840de086"}
          org.bdinetwork/service-provider-authentication {:git/url "https://github.com/Basic-Data-Infrastructure/service-provider-authentication"
-                                                         :git/sha "895a5de1f6d0da9a7e1c8af94affc4871ed67baf"}
+                                                         :git/sha "cec62e790d0cff8e2cc1f90f7d6fb0f0f54c25c5"}
          nl.jomco/with-resources                        {:git/sha "82ec9aa9baf21465423c0f5d73a0d792162efd8b"
                                                          :git/url "https://git.sr.ht/~jomco/with-resources"}
          nl.jomco/openapi-v3-validator                  {:mvn/version "0.2.1"}
@@ -27,7 +27,7 @@
   :test     {:extra-deps {lambdaisland/kaocha                 {:mvn/version "RELEASE"}
                           org.bdinetwork/ishare-client        {:git/url "https://github.com/Basic-Data-Infrastructure/clj-ishare-client"
                                                                :git/sha "13e8bd84d7e9d93d7461ad38977936461dd4acc0"}
-                          org.bdinetwork/association-register {:git/sha "8d64ce7f3781da6ea0101d356d741d3e22b80fde"
+                          org.bdinetwork/association-register {:git/sha "fed242faafc9cda12aee702dd5fe378c8a60ec56"
                                                                :git/url "https://github.com/Basic-Data-Infrastructure/association-registry"}}
              :main-opts  ["-m" "kaocha.runner"]}
   :lint     {:extra-deps {clj-kondo/clj-kondo {:mvn/version "RELEASE"}}
