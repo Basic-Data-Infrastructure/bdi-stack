@@ -25,17 +25,17 @@
 
 (deftest test-system
   (with-resources [s (system/run-system system-config)]
-    (let [{:keys [status body] :as response} (client/exec (-> client-config
-                                                              (client/satellite-request)
-                                                              (assoc :ishare/message-type :party
-                                                                     :ishare/party-id "EU.EORI.CLIENT")))]
+    (let [{:keys [status] :as response} (client/exec (-> client-config
+                                                         (client/satellite-request)
+                                                         (assoc :ishare/message-type :party
+                                                                :ishare/party-id "EU.EORI.CLIENT")))]
       (is (= 200 status))
-      (is (= (get body "party_id") "EU.EORI.CLIENT")))
+      (is (= (get-in response [:ishare/result :party_id]) "EU.EORI.CLIENT")))
 
-    (let [{:keys [status body] :as response} (client/exec (-> client-config
-                                                              (client/satellite-request)
-                                                              (assoc :ishare/message-type :party
-                                                                     :ishare/party-id "EU.EORI.NONE")))]
+    (let [{:keys [status] :as response} (client/exec (-> client-config
+                                                         (client/satellite-request)
+                                                         (assoc :ishare/message-type :party
+                                                                :ishare/party-id "EU.EORI.NONE")))]
       (is (= 200 status))
-      ;; what should be the format whe no party exists?
-      (is (nil? (get body "party_id"))))))
+      ;; what should be the format when no party exists?
+      (is (nil? (get-in response [:ishare/result :party_id]))))))

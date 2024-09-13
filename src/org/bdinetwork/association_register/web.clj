@@ -10,17 +10,22 @@
             [ring.middleware.json :refer [wrap-json-response]]
             [ring.middleware.params :refer [wrap-params]]
             [ring.util.response :refer [not-found]]
+            [nl.jomco.http-status-codes :as status]
             [org.bdinetwork.service-provider.association :as association]
             [org.bdinetwork.service-provider.authentication :as authentication]
             [org.bdinetwork.ishare.jwt :as ishare.jwt]))
 
 (defroutes routes
-  (GET "/parties/:id" {:keys [params association]}
-    {:body (association/party association (:id params))
-     :token-key "party_token"})
-  (GET "/trusted_list" {:keys [association]}
-    {:body (association/trusted-list association)
-     :token-key "trusted_list_token"})
+  (GET "/parties/:id" {:keys [params association client-id]}
+    (if client-id
+      {:body (association/party association (:id params))
+       :token-key "party_token"}
+      {:status status/unauthorized}))
+  (GET "/trusted_list" {:keys [association client-id]}
+    (if client-id
+      {:body (association/trusted-list association)
+       :token-key "trusted_list_token"}
+      {:status status/unauthorized}))
   (constantly
    (not-found "Resource not found")))
 
@@ -45,8 +50,8 @@
 (defn make-handler
   [association config]
   (-> routes
-      (authentication/wrap-authentication config)
       (wrap-token-response config)
+      (authentication/wrap-authentication config)
       (wrap-association association)
       (wrap-params)
       (wrap-json-response)))
