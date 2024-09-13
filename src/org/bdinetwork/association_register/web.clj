@@ -23,7 +23,7 @@
       {:status status/unauthorized}))
   (GET "/trusted_list" {:keys [association client-id]}
     (if client-id
-      {:body (association/trusted-list association)
+      {:body {"trusted_list" (association/trusted-list association)}
        :token-key "trusted_list_token"}
       {:status status/unauthorized}))
   (constantly
