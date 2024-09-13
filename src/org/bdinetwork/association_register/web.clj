@@ -18,7 +18,9 @@
   (GET "/parties/:id" {:keys [params association]}
     {:body (association/party association (:id params))
      :token-key "party_token"})
-  ;; TODO: trusted list
+  (GET "/trusted_list" {:keys [association]}
+    {:body (association/trusted-list association)
+     :token-key "trusted_list_token"})
   (constantly
    (not-found "Resource not found")))
 
