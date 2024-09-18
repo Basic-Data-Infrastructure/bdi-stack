@@ -7,17 +7,20 @@ SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
 SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
----
-title: BDI Association Registry
-lang: en
----
+# BDI Association Registry
 
-# In development
+## ⚠ DISCLAIMER ⚠
+
+**The software is for demo purposes only!**  It has not been audited
+for security flaws and is not suitable as a starting point to develop
+software.  Use at your own risk.
+
+## In development
 
 NOTE: This repository is work in progress. This document sets out the
 goals of the projects, not the current state of affairs.
 
-# Context
+## Context
 
 The BDI is a framework for data sharing between federated
 organisations. When developing BDI-compatible components, they are
@@ -35,7 +38,7 @@ All BDI components depend, directly or indirectly, on an Association
 Register, that provides information about registered parties, their
 roles and their credentials (certificates holding public keys).
 
-# What (scope)
+## What (scope)
 
 This project, the BDI Assocation Register (ASR), implements the
 complete public Assocation Register API and can be run locally on a
@@ -49,17 +52,17 @@ The ASR can be run as a standalone Java jar, or as a docker container
 and can be statically configured using a configuration file. The ASR
 does not provide a user interface and has no management API.
 
-# Deployment 
+## Deployment
 
-## Standalone jar on the JVM
+### Standalone jar on the JVM
 
-## Docker image
+### Docker image
 
-# Development
+## Development
 
 The ASR is implemented in Clojure, using `tools.deps`.
 
-# Configuration
+## Configuration
 
 The ASR is configured using a single YAML file. Party certificates
 must be provided as X509 pem files containing the full certificate
