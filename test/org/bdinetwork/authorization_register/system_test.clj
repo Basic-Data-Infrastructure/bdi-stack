@@ -35,16 +35,26 @@
    :ishare/satellite-url (str "http://localhost:" (:port association-config))})
 
 (def delegation-mask
-  {:delegationRequest
-   {:policyIssuer (:ishare/client-id client-config)
-    :target       {:accessSubject "EU.EORI.NLPRECIOUSG"}
-    :policySets   [{:policies [{:rules  [{:effect "Permit"}]
-                                :target {:resource    {:type        "klantordernummer"
-                                                       :identifiers ["112233"]
-                                                       :attributes  ["*"]}
-                                         :actions     ["BDI.PICKUP"]
-                                         :environment {:licenses ["0001"]
-                                                       :serviceProviders []}}}]}]}})
+  {"policyIssuer" (:ishare/client-id client-config)
+   "target"       {"accessSubject" "EU.EORI.NLPRECIOUSG"}
+   "policySets"   [{"policies" [{"rules"  [{"effect" "Permit"}]
+                                 "target" {"resource"    {"type"        "klantordernummer"
+                                                          "identifiers" ["112233"]
+                                                          "attributes"  ["*"]}
+                                           "actions"     ["BDI.PICKUP"]
+                                           "environment" {"licenses"         ["0001"]
+                                                          "serviceProviders" []}}}]}]})
+
+(def delegation-evidence
+  {"policyIssuer" (:ishare/client-id client-config)
+   "target"       {"accessSubject" "EU.EORI.NLPRECIOUSG"}
+   "policySets"   [{"policies" [{"rules"  [{"effect" "Permit"}]
+                                 "target" {"resource"    {"type"        "klantordernummer"
+                                                          "identifiers" ["112233"]
+                                                          "attributes"  ["*"]}
+                                           "actions"     ["BDI.PICKUP"]
+                                           "environment" {"licenses"         ["0001"]
+                                                          "serviceProviders" []}}}]}]})
 
 (deftest system-test
   (with-resources [association-system (association/run-system association-config)
@@ -56,17 +66,38 @@
       (is (= 200 (:status resp)))
       (is (string? (get-in resp [:body "access_token"]))))
 
-    (let [resp (client/exec (assoc client-config
+    (let [resp  (client/exec (assoc client-config
                                    :ishare/endpoint "http://localhost:9992"
                                    :ishare/server-id (:server-id auth-register-config)
-                                   :ishare/message-type :access-token))]
+                                   :ishare/message-type :access-token))
+          token (get-in resp [:body "access_token"])]
       (is (= 200 (:status resp)))
-      (is (string? (get-in resp [:body "access_token"]))))
+      (is (string? token))
+      (let [resp (client/exec (assoc client-config
+                                     :ishare/bearer-token token
+                                     :ishare/endpoint "http://localhost:9992"
+                                     :ishare/server-id (:server-id auth-register-config)
+                                     :ishare/message-type :delegation
+                                     :ishare/params {"delegationRequest" delegation-mask}))]
+        (is (= 200 (:status resp)))
+        (is (= "Deny" (get-in resp [:body "policySets" 0 "policies" 0 "rules" 0 "effect"]))
+            "Deny when no matching policy found"))
 
+      (let [resp (client/exec (assoc client-config
+                                     :ishare/bearer-token token
+                                     :ishare/endpoint "http://localhost:9992"
+                                     :ishare/server-id (:server-id auth-register-config)
+                                     :ishare/message-type :ishare/policy
+                                     :ishare/params delegation-evidence))]
+        (is (= 200 (:status resp))
+            "Policy accepted"))
 
-    #_    (is (= {}
-           (client/exec (assoc client-config
-                               :ishare/endpoint "http://localhost:9992"
-                               :ishare/server-id (:server-id auth-register-config)
-                               :ishare/message-type :delegation
-                               :ishare/params delegation-mask))))))
+      (let [resp (client/exec (assoc client-config
+                                     :ishare/bearer-token token
+                                     :ishare/endpoint "http://localhost:9992"
+                                     :ishare/server-id (:server-id auth-register-config)
+                                     :ishare/message-type :delegation
+                                     :ishare/params {"delegationRequest" delegation-mask}))]
+        (is (= 200 (:status resp)))
+        (is (= "Permit" (get-in resp [:body "policySets" 0 "policies" 0 "rules" 0 "effect"]))
+            "Permit when matching policy found")))))

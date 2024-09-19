@@ -15,21 +15,45 @@
   {"policyIssuer"    "EU.EORI.PRECIOUSG"
    "target"          {"accessSubject" "EU.EORI.FLEXTRANS"}
    "policySets"      [{"policies" [{"target" {"resource" {"identifiers" ["SOME.RESOURCE.ID"]}
-                                              "actions"  ["READ" "WRITE"]}}]}]
+                                              "actions"  ["WRITE"]}}]}]
    "delegation_path" ["..."]
    "previous_steps"  ["..."]})
 
-(def delegation
-  {"policyIssuer"    "EU.EORI.PRECIOUSG"
-   "target"          {"accessSubject" "EU.EORI.FLEXTRANS"}
-   "policySets"      [{"maxDelegationDepth" 4
-                       "target" {"environment" {"licenses" "AGPL"}}
-                       "policies" [{"target" {"resource" {"identifiers" ["SOME.RESOURCE.ID"]}
-                                              "actions"  ["READ" "WRITE"]}}]}]})
+(def delegation-evidence
+  {"policyIssuer" "EU.EORI.PRECIOUSG"
+   "target"       {"accessSubject" "EU.EORI.FLEXTRANS"}
+   "policySets"   [{"maxDelegationDepth" 4
+                    "target"             {"environment" {"licenses" ["AGPL"]}}
+                    "policies"           [{"target" {"resource" {"identifiers" ["SOME.RESOURCE.ID"]}
+                                                     "actions"  ["READ" "WRITE"]}
+                                           "rules"  [{"effect" "Permit"}]}]}]
+   })
+
+(deftest mappoing
+  (is (= {:policy/issuer         "EU.EORI.PRECIOUSG"
+          :resource/identifiers  ["SOME.RESOURCE.ID"]
+          :target/access-subject "EU.EORI.FLEXTRANS"
+          :target/actions        ["READ"]}
+         (delegations/delegation-mask->policy-selector
+          {"policyIssuer"    "EU.EORI.PRECIOUSG"
+           "target"          {"accessSubject" "EU.EORI.FLEXTRANS"}
+           "policySets"      [{"policies" [{"target" {"resource" {"identifiers" ["SOME.RESOURCE.ID"]}
+                                                      "actions"  ["READ"]}}]}]
+           "delegation_path" ["..."]
+           "previous_steps"  ["..."]})))
+
+  (is (= {:policy/issuer               "EU.EORI.PRECIOUSG"
+          :resource/identifiers        ["SOME.RESOURCE.ID"]
+          :target/access-subject       "EU.EORI.FLEXTRANS"
+          :policy/licenses             ["AGPL"]
+          :policy/max-delegation-depth 4
+          :target/actions              ["READ" "WRITE"]}
+         (delegations/delegation-evidence->policy
+          delegation-evidence))))
 
 (deftest basic
   (let [p         (in-memory-policies)
-        policy-id (delegations/delegate! p delegation)]
+        policy-id (delegations/delegate! p delegation-evidence)]
     (is (uuid? policy-id)
         "can insert delegation")
 
@@ -41,7 +65,10 @@
              :resource/identifiers        ["SOME.RESOURCE.ID"]
              :target/access-subject       "EU.EORI.FLEXTRANS"
              :target/actions              ["READ" "WRITE"]}]
-           (policies/get-policies p {:policy/issuer "EU.EORI.PRECIOUSG"}))
+           (policies/get-policies p {:policy/issuer         "EU.EORI.PRECIOUSG"
+                                     :resource/identifiers  ["SOME.RESOURCE.ID"]
+                                     :target/access-subject "EU.EORI.FLEXTRANS"
+                                     :target/actions        ["READ"]}))
         "Can fetch policies")
 
     (is (= {"policyIssuer" "EU.EORI.PRECIOUSG",
@@ -50,12 +77,9 @@
             [{"maxDelegationDepth" 4
               "target"             {"environment" {"licenses" ["AGPL"]}}
               "policies"
-              {"target"
-               {"resource"
-                {"type"        nil,
-                 "identifiers" ["SOME.RESOURCE.ID"]
-                 "attributes"  ["SOME.RESOURCE.ID"]}
-                "actions"     ["READ" "WRITE"]
-                "environment" {"serviceProviders" nil}}
-               "rules" [{"effect" "Allow"}]}}]}
+              [{"target"
+                {"resource"
+                 {"identifiers" ["SOME.RESOURCE.ID"]}
+                 "actions" ["WRITE"]}
+                "rules" [{"effect" "Permit"}]}]}]}
            (delegations/delegation-evidence p delegation-mask)))))

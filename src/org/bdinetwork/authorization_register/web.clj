@@ -11,7 +11,8 @@
             [org.bdinetwork.authorization-register.delegations :as delegations]
             [org.bdinetwork.ishare.jwt :as ishare.jwt]
             [org.bdinetwork.service-provider.authentication :as authentication]
-            [ring.middleware.json :refer [wrap-json-response]]
+            [ring.middleware.json :refer [wrap-json-response wrap-json-params]]
+            [ring.util.response :refer [not-found]]
             [ring.middleware.params :refer [wrap-params]]))
 
 (defn wrap-token-response
@@ -37,24 +38,25 @@
               :policy-view policy-view))))
 
 (defroutes routes
-  (GET "/delegation"
+  (POST "/delegation"
       {:keys                       [client-id
                                     policy-view]
-       {:strs [delegationRequest]} :body}
-      (if (not client-id)
-        {:status status/unauthorized}
-        {:status    status/ok
-         :body      (delegations/delegation-evidence policy-view delegationRequest)
-         :token-key :delegation_token}))
+       {:strs [delegationRequest]} :params}
+    (if (not client-id)
+      {:status status/unauthorized}
+      {:status    status/ok
+       :body      (delegations/delegation-evidence policy-view delegationRequest)
+       :token-key :delegation_token}))
   (POST "/policy"
       {:keys                        [client-id
-              policy-store]
-       {:strs [delegationEvidence]} :body}
+                                     policy-store
+                                     params]}
         (if (not client-id)
           {:status status/unauthorized}
           {:status    status/ok
-           :body      (delegations/delegate! policy-store delegationEvidence)
-           :token-key :delegation_token})))
+           :body      {:policyId (str (delegations/delegate! policy-store params))}
+           :token-key :delegation_token}))
+  (constantly (not-found "Resource not found.")))
 
 (defn wrap-association
   [f association]
@@ -70,4 +72,5 @@
       (wrap-association association)
       (wrap-token-response config)
       (wrap-json-response)
+      (wrap-json-params {:key-fn identity})
       (wrap-params)))

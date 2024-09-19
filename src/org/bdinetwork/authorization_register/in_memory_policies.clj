@@ -13,8 +13,35 @@
   other storage backend.
   See https://github.com/tonsky/datascript/blob/master/docs/storage.md"
   (:require [datascript.core :as ds]
-            [org.bdinetwork.authorization-register.policies :refer [PolicyStore PolicyView schema]])
+            [org.bdinetwork.authorization-register.policies :refer [PolicyStore PolicyView schema]]
+            [org.bdinetwork.authorization-register.policies :as policies])
   (:import java.util.UUID))
+
+(defn- bound-key-clause
+  "Create eql clause for key k and value v.
+
+  The matching policy ?e will either have key k with value v, or not
+  have key k present (meaning match any value)."
+  [k v]
+  (list 'or
+        ;; v is present for policy
+        (if (= (get-in schema [k :db/cardinality]) :db.cardinality/many)
+          ;; v must be a collection of values -- all values in the
+          ;; selector must be present in the entity (but the entity
+          ;; may have additional values)
+          (if (< 1 (count v))
+            ;; v has multiple values, must construct (and clauses..)
+            ;; because this will be inside (or ...) clause
+            (concat (list 'and)
+                    (map (fn [sub-v]
+                           ['?e k sub-v])
+                         v))
+            ;; v is collection with single value
+            ['?e k (first v)])
+          ;; v is a single value
+          ['?e k v])
+        ;; or k is not present; match any value
+        (list 'not ['?e k])))
 
 (defn- selector->where
   "Convert entity selector into eql where clauses.
@@ -23,23 +50,21 @@
   defined in `schema`. :db.cardinality/many keys must have a
   collection of values.
 
-  Returns a set of where clauses that match the given keys. Keys not
-  present are ignored, so the where clauses will match entities with
-  any (or no) value for those keys."
+  Returns a set of clauses that match the given keys. Keys not present
+  or nil will match elements that do not have that key (for any
+  value)."
   [selector]
-  (reduce-kv
-   (fn [where k v]
-     (if (= (get-in schema [k :db/cardinality])
-            :db.cardinality/many)
-       ;; v must be a collection of values
-       (reduce (fn [where v]
-                 (conj where ['?e k v]))
-               where
-               v)
-       ;; v is a single value
-       (conj where ['?e k v])))
-   []
-   (select-keys selector (keys schema))))
+  {:pre [(seq selector)]}
+  ;; for every attribute specified in selector
+  (let [bound-keys   (filter #(some? (get selector %)) policies/query-attributes)
+        unbound-keys (remove #(some? (get selector %)) policies/query-attributes)]
+    (-> [['?e :policy/id]] ;; ensure we match policies
+        ;; bound keys must be first
+        (into (map #(bound-key-clause % (get selector %)) bound-keys))
+        ;; (not [?e k]) removes entities with attribute k (for any
+        ;; value) from the selection above.
+        (into (map (fn [k] (list 'not ['?e k]))
+                   unbound-keys)))))
 
 (defn- selector->query
   [selector]
