@@ -3,7 +3,7 @@
             [nl.jomco.resources :refer [with-resources]]
             [org.bdinetwork.ishare.client :as client]
             [buddy.core.keys :as keys]
-            [org.bdinetwork.service-provider.in-memory-association :refer [in-memory-association read-source]]
+            [org.bdinetwork.service-provider.in-memory-association :refer [read-source]]
             [clojure.test :refer [deftest is]]))
 
 (def client-config
@@ -17,7 +17,7 @@
   {:private-key              (client/private-key "test/pem/server.key.pem")
    :public-key               (keys/public-key "test/pem/server.cert.pem")
    :x5c                      (system/x5c "test/pem/server.x5c.pem")
-   :association              (in-memory-association (read-source "test/test-config.yml"))
+   :data-source              (read-source "test/test-config.yml")
    :server-id                "EU.EORI.SERVER"
    :hostname                 "localhost"
    :port                     8080
@@ -30,7 +30,7 @@
                                                          (assoc :ishare/message-type :party
                                                                 :ishare/party-id "EU.EORI.CLIENT")))]
       (is (= 200 status))
-      (is (= (get-in response [:ishare/result :party_id]) "EU.EORI.CLIENT")))
+      (is (= (get-in response [:ishare/result :party_info :party_id]) "EU.EORI.CLIENT")))
 
     (let [{:keys [status] :as response} (client/exec (-> client-config
                                                          (client/satellite-request)
@@ -38,4 +38,4 @@
                                                                 :ishare/party-id "EU.EORI.NONE")))]
       (is (= 200 status))
       ;; what should be the format when no party exists?
-      (is (nil? (get-in response [:ishare/result :party_id]))))))
+      (is (nil? (get-in response [:ishare/result :party_info :party_id]))))))

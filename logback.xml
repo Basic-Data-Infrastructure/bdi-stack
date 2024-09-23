@@ -11,8 +11,10 @@
     </encoder>
   </appender>
 
-  <logger name="org.eclipse.jetty" level="INFO" />
-  <root level="debug">
+  <logger name="org.eclipse.jetty" level="WARN" />
+  <logger name="ch.qos.logback" level="WARN" />  
+
+  <root level="info">
     <appender-ref ref="STDOUT"/>
   </root>
 </configuration>

@@ -8,8 +8,9 @@
 (ns org.bdinetwork.association-register.system
   (:require [buddy.core.keys :refer [private-key]]
             [clojure.string :as string]
-            [nl.jomco.resources :refer [Resource]]
+            [nl.jomco.resources :refer [Resource mk-system]]
             [org.bdinetwork.association-register.web :as web]
+            [org.bdinetwork.service-provider.in-memory-association :refer [in-memory-association]]
             [ring.adapter.jetty :refer [run-jetty]]))
 
 (defn x5c
@@ -28,6 +29,10 @@
     (.stop server)))
 
 (defn run-system
-  [{:keys [association] :as config}]
-  (let [handler (web/make-handler association config)]
-    (run-jetty handler {:join? false :port (:port config) :hostname (:hostname config)})))
+  [config]
+  (mk-system [association (in-memory-association (:data-source config))
+              handler (web/make-handler association config)
+              jetty (run-jetty handler {:join? false :port (:port config) :hostname (:hostname config)})]
+    {:association association
+     :handler     handler
+     :jetty       jetty}))

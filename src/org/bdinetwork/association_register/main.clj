@@ -1,6 +1,6 @@
 (ns org.bdinetwork.association-register.main
   (:require [org.bdinetwork.association-register.system :as system]
-            [org.bdinetwork.service-provider.in-memory-association :refer [in-memory-association read-source]]
+            [org.bdinetwork.service-provider.in-memory-association :refer [read-source]]
             [buddy.core.keys :as keys]
             [nl.jomco.resources :refer [close with-resources]]
             [nl.jomco.envopts :as envopts]
@@ -31,7 +31,7 @@
 
 (defmethod envopts/parse :data-source
   [s _]
-  [(in-memory-association (read-source s))])
+  [(read-source s)])
 
 (defn wait-until-interrupted
   []
@@ -43,24 +43,25 @@
       (recur))))
 
 (defn config
-  []
+  [env]
   (let [[config errs] (envopts/opts env opt-specs)]
     (if errs
-      (do
-        (doto *err*
-          (.println "Error in environment configuration")
-          (.println (envopts/errs-description errs))
-          (.println "Available environment options:")
-          (.println (envopts/specs-description opt-specs)))
-        nil)
+      (throw (ex-info (str "Error in environment configuration\n"
+                           (envopts/errs-description errs) "\n"
+                           "Available environment options:\n"
+                           (envopts/specs-description opt-specs))
+                      {:config config
+                       :errs errs}))
       config)))
 
+(defn start
+  [env]
+  (system/run-system (config env)))
+
 (defn -main [& args]
-  (if-let [c (config)]
-    (let [system (system/run-system c)]
-      (.addShutdownHook (Runtime/getRuntime)
-                        (Thread. (fn []
-                                   (close system)
-                                   (shutdown-agents))))
-      (wait-until-interrupted))
-    (System/exit 1)))
+  (let [system (start env)]
+    (.addShutdownHook (Runtime/getRuntime)
+                      (Thread. (fn []
+                                 (close system)
+                                 (shutdown-agents))))
+    (wait-until-interrupted)))

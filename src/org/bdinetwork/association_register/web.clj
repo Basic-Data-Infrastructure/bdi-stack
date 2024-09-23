@@ -7,18 +7,19 @@
 
 (ns org.bdinetwork.association-register.web
   (:require [compojure.core :refer [GET defroutes]]
-            [ring.middleware.json :refer [wrap-json-response]]
+            [ring.middleware.json :refer [wrap-json-response wrap-json-params]]
             [ring.middleware.params :refer [wrap-params]]
             [ring.util.response :refer [not-found]]
             [nl.jomco.http-status-codes :as status]
             [org.bdinetwork.service-provider.association :as association]
             [org.bdinetwork.service-provider.authentication :as authentication]
-            [org.bdinetwork.ishare.jwt :as ishare.jwt]))
+            [org.bdinetwork.ishare.jwt :as ishare.jwt]
+            [clojure.tools.logging :as log]))
 
 (defroutes routes
   (GET "/parties/:id" {:keys [params association client-id]}
     (if client-id
-      {:body (association/party association (:id params))
+      {:body {"party_info" (association/party association (:id params))}
        :token-key "party_token"}
       {:status status/unauthorized}))
   (GET "/trusted_list" {:keys [association client-id]}
@@ -47,11 +48,25 @@
                                                               x5c)})
         response))))
 
+(defn wrap-log
+  [handler]
+  (fn [request]
+    (try (let [response (handler request)]
+           (log/info (str (:status response) " " (:request-method request) " " (:uri request)))
+           response)
+         (catch Exception e
+           (log/error e
+                      (str "Exception handling "  (:request-method request) " " (:uri request) ": " (ex-message e)))
+           (throw e)))))
+
+
 (defn make-handler
   [association config]
   (-> routes
       (wrap-token-response config)
       (authentication/wrap-authentication config)
       (wrap-association association)
+      (wrap-json-params)
       (wrap-params)
-      (wrap-json-response)))
+      (wrap-json-response)
+      (wrap-log)))
