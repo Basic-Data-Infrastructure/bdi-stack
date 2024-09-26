@@ -55,7 +55,7 @@
         (if (not client-id)
           {:status status/unauthorized}
           {:status    status/ok
-           :body      {:policyId (str (delegations/delegate! policy-store params))}
+           :body      {:policyId (str (delegations/delegate! policy-store (get params "delegationEvidence")))}
            :token-key :delegation_token}))
   (constantly (not-found "Resource not found.")))
 
