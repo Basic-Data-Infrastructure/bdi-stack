@@ -13,7 +13,8 @@
             [org.bdinetwork.service-provider.authentication :as authentication]
             [ring.middleware.json :refer [wrap-json-response wrap-json-params]]
             [ring.util.response :refer [not-found]]
-            [ring.middleware.params :refer [wrap-params]]))
+            [ring.middleware.params :refer [wrap-params]]
+            [clojure.tools.logging :as log]))
 
 (defn wrap-token-response
   [handler {:keys [private-key x5c server-id]}]
@@ -63,6 +64,17 @@
   (fn [r]
     (f (assoc r :association association))))
 
+(defn wrap-log
+  [handler]
+  (fn [request]
+    (try (let [response (handler request)]
+           (log/info (str (:status response) " " (:request-method request) " " (:uri request)))
+           response)
+         (catch Exception e
+           (log/error e
+                      (str "Exception handling "  (:request-method request) " " (:uri request) ": " (ex-message e)))
+           (throw e)))))
+
 (defn mk-app
   [{:keys [policy-store policy-view association]} config]
   {:pre [association policy-store policy-view]}
@@ -73,4 +85,5 @@
       (wrap-token-response config)
       (wrap-json-response)
       (wrap-json-params {:key-fn identity})
-      (wrap-params)))
+      (wrap-params)
+      (wrap-log)))
