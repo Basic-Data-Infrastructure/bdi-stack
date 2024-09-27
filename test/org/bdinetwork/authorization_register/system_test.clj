@@ -13,7 +13,7 @@
    :private-key              (keys/private-key "test-config/association_register.key.pem")
    :public-key               (keys/public-key "test-config/association_register.cert.pem")
    :x5c                      (system/x5c "test-config/association_register.x5c.pem")
-   :association              (in-memory-association (read-source "test-config/association-register-config.yml"))
+   :data-source              (read-source "test-config/association-register-config.yml")
    :port                     9991
    :access-token-ttl-seconds 300})
 
@@ -88,7 +88,7 @@
                                      :ishare/endpoint "http://localhost:9992"
                                      :ishare/server-id (:server-id auth-register-config)
                                      :ishare/message-type :ishare/policy
-                                     :ishare/params delegation-evidence))]
+                                     :ishare/params {"delegationEvidence" delegation-evidence}))]
         (is (= 200 (:status resp))
             "Policy accepted"))
 
