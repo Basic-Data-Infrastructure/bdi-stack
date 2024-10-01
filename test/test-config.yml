@@ -1,8 +1,5 @@
 trusted_list:
-  - subject: "{{CA_SUBJECT}}"
-    certificate_fingerprint: "{{CA_FINGERPRINT}}"
-    validity: Valid
-    status: Granted
+  - "test/pem/ca.cert.pem"
 
 parties:
   - capability_url: ''
@@ -14,11 +11,7 @@ parties:
       dataspace_name: ContaktDS1
     party_id: EU.EORI.CLIENT
     certificates:
-    - subject_name: "{{CLIENT_SUBJECT}}"
-      certificate_type: PKIo
-      enabled_from: '2024-02-12T00:00:00.000Z'
-      x5c: "{{CLIENT_CERTIFICATE}}"
-      x5t#s256: "{{CLIENT_FINGERPRINT}}"
+    - "test/pem/client.cert.pem"
     adherence:
       status: Active
       start_date: '2024-02-12T00:00:00.000Z'

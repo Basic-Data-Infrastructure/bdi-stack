@@ -55,28 +55,11 @@ test/pem/%.x5c.pem: test/pem/%.cert.pem test/pem/intermediate.cert.pem test/pem/
 
 test-certs: test/pem/ca.cert.pem test/pem/server.cert.pem test/pem/client.cert.pem test/pem/client.x5c.pem test/pem/server.x5c.pem
 
-# .fingerprint and .stripped are derived data from certs for inserting
-# into test configuration
-test/pem/%.fingerprint: test/pem/%.cert.pem
-	openssl x509 -in $< -noout -sha256 -fingerprint|sed 's/.*Fingerprint=//' |sed 's/://g' >$@
-
-test/pem/%.cert.stripped: test/pem/%.cert.pem
-	cat $< | tr -d '\n' | sed 's/-----BEGIN CERTIFICATE-----//;s/-----END CERTIFICATE-----//' >$@
-
-test/test-config.yml: test/test-config.template.yml test/pem/client.fingerprint test/pem/ca.fingerprint test/pem/client.cert.stripped
-	cat $< | \
-	  sed "s!{{CA_SUBJECT}}!$(CA_SUBJECT)!" | \
-	  sed "s!{{CLIENT_SUBJECT}}!$(CLIENT_SUBJECT)!" | \
-	  sed "s!{{SERVER_SUBJECT}}!$(SERVER_SUBJECT)!" | \
-	  sed "s!{{CA_FINGERPRINT}}!$(shell cat test/pem/ca.fingerprint)!" | \
-	  sed "s!{{CLIENT_FINGERPRINT}}!$(shell cat test/pem/client.fingerprint)!" | \
-	  sed "s!{{CLIENT_CERTIFICATE}}!$(shell cat test/pem/client.cert.stripped)!" >$@
-
 lint:
 	reuse lint
 	clojure -M:lint
 
-test: test-certs test/test-config.yml test/pem/server.fingerprint
+test: test-certs
 	clojure -M:test
 
 clean:
