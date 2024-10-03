@@ -80,7 +80,8 @@
                                      :ishare/message-type :delegation
                                      :ishare/params {"delegationRequest" delegation-mask}))]
         (is (= 200 (:status resp)))
-        (is (= "Deny" (get-in resp [:body "policySets" 0 "policies" 0 "rules" 0 "effect"]))
+        (prn resp)
+        (is (= "Deny" (get-in resp [:ishare/result :delegationEvidence :policySets 0 :policies 0 :rules 0 :effect]))
             "Deny when no matching policy found"))
 
       (let [resp (client/exec (assoc client-config
@@ -99,5 +100,5 @@
                                      :ishare/message-type :delegation
                                      :ishare/params {"delegationRequest" delegation-mask}))]
         (is (= 200 (:status resp)))
-        (is (= "Permit" (get-in resp [:body "policySets" 0 "policies" 0 "rules" 0 "effect"]))
+        (is (= "Permit" (get-in resp [:ishare/result :delegationEvidence :policySets 0 :policies 0 :rules 0 :effect]))
             "Permit when matching policy found")))))

@@ -20,13 +20,17 @@
   [handler {:keys [private-key x5c server-id]}]
   (fn [{:keys [client-id] :as request}]
     (let [{:keys [body token-key] :as response} (handler request)]
-      (if (and client-id token-key)
-        (assoc response :body {token-key (ishare.jwt/make-jwt (assoc body
-                                                                     :iss server-id
-                                                                     :sub server-id ;; TODO: check this
-                                                                     :aud client-id)
-                                                              private-key
-                                                              x5c)})
+      (if token-key
+        (do
+          (assert client-id
+                  "Can't sign response without a client id")
+          (assoc response :body
+                 {token-key (ishare.jwt/make-jwt (assoc body
+                                                        :iss server-id
+                                                        :sub server-id ;; TODO: check this
+                                                        :aud client-id)
+                                                 private-key
+                                                 x5c)}))
         response))))
 
 ;; https://dev.ishare.eu/reference/delegation-mask
@@ -43,20 +47,18 @@
       {:keys                       [client-id
                                     policy-view]
        {:strs [delegationRequest]} :params}
-    (if (not client-id)
-      {:status status/unauthorized}
-      {:status    status/ok
-       :body      (delegations/delegation-evidence policy-view delegationRequest)
-       :token-key :delegation_token}))
+    {:status    status/ok
+     :body      {"delegationEvidence"
+                 (delegations/delegation-evidence policy-view delegationRequest)}
+     :token-key :delegation_token})
   (POST "/policy"
       {:keys                        [client-id
                                      policy-store
                                      params]}
-        (if (not client-id)
-          {:status status/unauthorized}
-          {:status    status/ok
-           :body      {:policyId (str (delegations/delegate! policy-store (get params "delegationEvidence")))}
-           :token-key :delegation_token}))
+    ;; TODO: ensure client-id matches issuer in delegation evidence
+    {:status    status/ok
+     :body      {:policyId (str (delegations/delegate! policy-store (get params "delegationEvidence")))}
+     :token-key :delegation_token})
   (constantly (not-found "Resource not found.")))
 
 (defn wrap-association
@@ -75,14 +77,22 @@
                       (str "Exception handling "  (:request-method request) " " (:uri request) ": " (ex-message e)))
            (throw e)))))
 
+(defn wrap-private-api
+  [f]
+  (fn private-api-wrapper [{:keys [client-id] :as request}]
+    (if client-id
+      (f request)
+      {:status status/unauthorized})))
+
 (defn mk-app
   [{:keys [policy-store policy-view association]} config]
   {:pre [association policy-store policy-view]}
   (-> routes
       (wrap-policies policy-store policy-view)
+      (wrap-token-response config)
+      (wrap-private-api)
       (authentication/wrap-authentication config)
       (wrap-association association)
-      (wrap-token-response config)
       (wrap-json-response)
       (wrap-json-params {:key-fn identity})
       (wrap-params)
