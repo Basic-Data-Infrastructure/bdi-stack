@@ -15,7 +15,7 @@ parties:
     adherence:
       status: Active
       start_date: '2024-02-12T00:00:00.000Z'
-      end_date: '2025-02-13T00:00:00.000Z'
+      end_date: '2100-02-13T00:00:00.000Z'
     registrar_id: EU.EORI.NL000000000
     additional_info:
       publicly_publishable: false
@@ -31,7 +31,7 @@ parties:
       description: ''
     party_name: ABC Trucking
     agreements:
-    - expiry_date: '2025-02-13T00:00:00.000Z'
+    - expiry_date: '2100-02-13T00:00:00.000Z'
       framework: iSHARE
       complaiancy_verified: 'No'
       status: Accepted
@@ -41,7 +41,7 @@ parties:
       type: TermsOfUse
       sign_date: '2024-02-12T00:00:00.000Z'
       dataspace_id: 'SOME-DATASPACE'
-    - expiry_date: '2025-02-13T00:00:00.000Z'
+    - expiry_date: '2100-02-13T00:00:00.000Z'
       framework: iSHARE
       complaiancy_verified: 'No'
       status: Accepted
@@ -54,7 +54,7 @@ parties:
     roles:
     - role: ServiceConsumer
       start_date: '2024-02-12T00:00:00.000Z'
-      end_date: '2025-02-12T00:00:00.000Z'
+      end_date: '2100-02-12T00:00:00.000Z'
       loa: 'Low'
       complaiancy_verified: false
       legal_adherence: false
