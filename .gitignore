@@ -13,3 +13,5 @@
 /bdi-authorization-register.jar
 /classes/
 /config
+/target/
+/test/pem/
