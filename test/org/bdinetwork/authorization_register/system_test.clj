@@ -60,14 +60,14 @@
   (with-resources [association-system (association/run-system association-config)
                    authorization-system (system/run-system auth-register-config)]
     (let [resp (client/exec (assoc client-config
-                                   :ishare/endpoint "http://localhost:9991"
+                                   :ishare/base-url "http://localhost:9991"
                                    :ishare/server-id (:server-id association-config)
                                    :ishare/message-type :access-token))]
       (is (= 200 (:status resp)))
       (is (string? (get-in resp [:body "access_token"]))))
 
     (let [resp  (client/exec (assoc client-config
-                                   :ishare/endpoint "http://localhost:9992"
+                                   :ishare/base-url "http://localhost:9992"
                                    :ishare/server-id (:server-id auth-register-config)
                                    :ishare/message-type :access-token))
           token (get-in resp [:body "access_token"])]
@@ -75,7 +75,7 @@
       (is (string? token))
       (let [resp (client/exec (assoc client-config
                                      :ishare/bearer-token token
-                                     :ishare/endpoint "http://localhost:9992"
+                                     :ishare/base-url "http://localhost:9992"
                                      :ishare/server-id (:server-id auth-register-config)
                                      :ishare/message-type :delegation
                                      :ishare/params {"delegationRequest" delegation-mask}))]
@@ -86,7 +86,7 @@
 
       (let [resp (client/exec (assoc client-config
                                      :ishare/bearer-token token
-                                     :ishare/endpoint "http://localhost:9992"
+                                     :ishare/base-url "http://localhost:9992"
                                      :ishare/server-id (:server-id auth-register-config)
                                      :ishare/message-type :ishare/policy
                                      :ishare/params {"delegationEvidence" delegation-evidence}))]
@@ -95,7 +95,7 @@
 
       (let [resp (client/exec (assoc client-config
                                      :ishare/bearer-token token
-                                     :ishare/endpoint "http://localhost:9992"
+                                     :ishare/base-url "http://localhost:9992"
                                      :ishare/server-id (:server-id auth-register-config)
                                      :ishare/message-type :delegation
                                      :ishare/params {"delegationRequest" delegation-mask}))]

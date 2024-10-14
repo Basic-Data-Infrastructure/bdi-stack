@@ -36,7 +36,7 @@
                                                         :x5c                x5c
                                                         :private-key        private-key
                                                         :satellite-id       association-server-id
-                                                        :satellite-endpoint association-server-url})
+                                                        :satellite-base-url association-server-url})
               app         (web/mk-app {:policy-store policies
                                        :policy-view  policies
                                        :association  association}
