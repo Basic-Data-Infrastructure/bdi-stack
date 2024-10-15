@@ -5,7 +5,7 @@
 {:deps  {org.bdinetwork/ishare-jwt                      {:git/url "https://github.com/Basic-Data-Infrastructure/clj-ishare-jwt"
                                                          :git/sha "977bb1f393a22d964819a0caf627b3d2840de086"}
          org.bdinetwork/service-provider-authentication {:git/url "https://github.com/Basic-Data-Infrastructure/service-provider-authentication"
-                                                         :git/sha "4b9b954a7f8575e56dec9353ef30bfb0c8358255"}
+                                                         :git/sha "345b17e4f77b14d2ead8744a37f607eca0362d38"}
          nl.jomco/with-resources                        {:git/sha "82ec9aa9baf21465423c0f5d73a0d792162efd8b"
                                                          :git/url "https://git.sr.ht/~jomco/with-resources"}
          nl.jomco/openapi-v3-validator                  {:mvn/version "0.2.1"}
