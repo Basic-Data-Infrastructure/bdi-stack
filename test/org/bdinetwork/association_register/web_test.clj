@@ -5,7 +5,7 @@
             [org.bdinetwork.service-provider.in-memory-association :refer [in-memory-association read-source]]
             [clojure.test :refer [deftest is]]
             [clojure.string :as string]
-            [nl.jomco.http-status-codes :as status]))
+            [nl.jomco.http-status-codes :as http-status]))
 
 (def system-config
   {:private-key              (keys/private-key "test/pem/server.key.pem")
@@ -24,11 +24,11 @@
   (let [resp (handler {:client-id      "EU.EORI.CLIENT"
                        :request-method :get
                        :uri            "/parties/EU.EORI.CLIENT"})]
-    (is (= 200 (:status resp)))
+    (is (= http-status/ok (:status resp)))
 
     (is (string/starts-with? (:body resp) "{\"party_token\":\"")))
   (let [resp (handler {:request-method :get
                        :uri            "/parties/EU.EORI.CLIENT"})]
-    (is (= status/unauthorized (:status resp)))
+    (is (= http-status/unauthorized (:status resp)))
 
     (is (string/blank? (:body resp)))))

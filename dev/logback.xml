@@ -11,8 +11,8 @@
     </encoder>
   </appender>
 
-  <logger name="org.eclipse.jetty" level="INFO" />
-  <root level="debug">
+  <logger name="org.bdinetwork" level="debug" />
+  <root level="info">
     <appender-ref ref="STDOUT"/>
   </root>
 </configuration>

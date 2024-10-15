@@ -4,7 +4,8 @@
             [org.bdinetwork.ishare.client :as client]
             [buddy.core.keys :as keys]
             [org.bdinetwork.service-provider.in-memory-association :refer [read-source]]
-            [clojure.test :refer [deftest is]]))
+            [clojure.test :refer [deftest is]]
+            [nl.jomco.http-status-codes :as http-status]))
 
 (def client-config
   {:ishare/satellite-endpoint "http://localhost:8080"
@@ -29,13 +30,13 @@
                                                          (client/satellite-request)
                                                          (assoc :ishare/message-type :party
                                                                 :ishare/party-id "EU.EORI.CLIENT")))]
-      (is (= 200 status))
+      (is (= http-status/ok status))
       (is (= (get-in response [:ishare/result :party_info :party_id]) "EU.EORI.CLIENT")))
 
     (let [{:keys [status] :as response} (client/exec (-> client-config
                                                          (client/satellite-request)
                                                          (assoc :ishare/message-type :party
                                                                 :ishare/party-id "EU.EORI.NONE")))]
-      (is (= 200 status))
+      (is (= http-status/ok status))
       ;; what should be the format when no party exists?
       (is (nil? (get-in response [:ishare/result :party_info :party_id]))))))

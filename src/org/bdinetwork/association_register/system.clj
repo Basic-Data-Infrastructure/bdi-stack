@@ -32,7 +32,9 @@
   [config]
   (mk-system [association (in-memory-association (:data-source config))
               handler (web/make-handler association config)
-              jetty (run-jetty handler {:join? false :port (:port config) :hostname (:hostname config)})]
+              jetty (run-jetty handler {:join?    false
+                                        :port     (:port config)
+                                        :hostname (:hostname config)})]
     {:association association
      :handler     handler
      :jetty       jetty}))

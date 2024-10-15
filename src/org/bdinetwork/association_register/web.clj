@@ -10,7 +10,7 @@
             [ring.middleware.json :refer [wrap-json-response wrap-json-params]]
             [ring.middleware.params :refer [wrap-params]]
             [ring.util.response :refer [not-found]]
-            [nl.jomco.http-status-codes :as status]
+            [nl.jomco.http-status-codes :as http-status]
             [org.bdinetwork.service-provider.association :as association]
             [org.bdinetwork.service-provider.authentication :as authentication]
             [org.bdinetwork.ishare.jwt :as ishare.jwt]
@@ -21,12 +21,12 @@
     (if client-id
       {:body {"party_info" (association/party association (:id params))}
        :token-key "party_token"}
-      {:status status/unauthorized}))
+      {:status http-status/unauthorized}))
   (GET "/trusted_list" {:keys [association client-id]}
     (if client-id
       {:body {"trusted_list" (association/trusted-list association)}
        :token-key "trusted_list_token"}
-      {:status status/unauthorized}))
+      {:status http-status/unauthorized}))
   (constantly
    (not-found "Resource not found")))
 
@@ -42,7 +42,7 @@
       (if (and client-id token-key)
         (assoc response :body {token-key (ishare.jwt/make-jwt (assoc body
                                                                      :iss server-id
-                                                                     :sub server-id ;; TODO: check this
+                                                                     :sub server-id
                                                                      :aud client-id)
                                                               private-key
                                                               x5c)})
