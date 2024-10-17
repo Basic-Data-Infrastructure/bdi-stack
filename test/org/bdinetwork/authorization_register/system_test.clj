@@ -110,7 +110,6 @@
                                      :ishare/message-type :delegation
                                      :ishare/params {"delegationRequest" delegation-mask}))]
         (is (= http-status/ok (:status resp)))
-        (prn resp)
         (is (= "Deny" (get-in resp [:ishare/result :delegationEvidence :policySets 0 :policies 0 :rules 0 :effect]))
             "Deny when no matching policy found"))
 
