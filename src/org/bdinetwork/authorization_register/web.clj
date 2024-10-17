@@ -27,7 +27,7 @@
           (assoc response :body
                  {token-key (ishare.jwt/make-jwt (assoc body
                                                         :iss server-id
-                                                        :sub server-id ;; TODO: check this
+                                                        :sub server-id
                                                         :aud client-id)
                                                  private-key
                                                  x5c)}))
@@ -55,10 +55,12 @@
       {:keys                        [client-id
                                      policy-store
                                      params]}
-    ;; TODO: ensure client-id matches issuer in delegation evidence
-    {:status    status/ok
-     :body      {:policyId (str (delegations/delegate! policy-store (get params "delegationEvidence")))}
-     :token-key :delegation_token})
+    (if (= client-id (get-in params ["delegationEvidence" "policyIssuer"]))
+      {:status    status/ok
+       :body      {:policyId (str (delegations/delegate! policy-store (get params "delegationEvidence")))}
+       :token-key :delegation_token}
+      {:status    status/forbidden
+       :body      {:error "policyIssuer does not match client_id"}}))
   (constantly (not-found "Resource not found.")))
 
 (defn wrap-association
