@@ -10,9 +10,13 @@
 (ns user
   (:require [org.bdinetwork.authorization-register.main :as main]
             [org.bdinetwork.authorization-register.system :as system]
+            [environ.core :refer [env]]
             [nl.jomco.resources :refer [defresource close]]))
 
-(def config (main/config))
+(def config
+  (try (main/config env)
+       (catch Exception e
+         (prn e))))
 
 (defresource system)
 

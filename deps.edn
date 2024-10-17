@@ -2,12 +2,11 @@
 ;;;
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-{:deps  {org.bdinetwork/ishare-jwt                      {:git/url "https://github.com/Basic-Data-Infrastructure/clj-ishare-jwt"
-                                                         :git/sha "977bb1f393a22d964819a0caf627b3d2840de086"}
+{:deps  {org.bdinetwork/clj-ishare-jwt                  {:git/url "https://github.com/Basic-Data-Infrastructure/clj-ishare-jwt"
+                                                         :git/sha "65ed4c07333994faf98a6e6309800338c3577d4c"}
          org.bdinetwork/service-provider-authentication {:git/url "https://github.com/Basic-Data-Infrastructure/service-provider-authentication"
-                                                         :git/sha "2f78fe4b71f8ab5b3a0f765656b4723e5bc58d2d"}
-         nl.jomco/with-resources                        {:git/sha "82ec9aa9baf21465423c0f5d73a0d792162efd8b"
-                                                         :git/url "https://git.sr.ht/~jomco/with-resources"}
+                                                         :git/sha "20184f0d3a3b782ccb6bd153aa41b2f8004b32fb"}
+         nl.jomco/with-resources                        {:mvn/version "0.1.1"}
          nl.jomco/openapi-v3-validator                  {:mvn/version "0.2.1"}
          clj-commons/clj-yaml                           {:mvn/version "1.0.27"}
          ring/ring-core                                 {:mvn/version "1.12.2"}
@@ -27,7 +26,7 @@
   :test     {:extra-deps {lambdaisland/kaocha                 {:mvn/version "RELEASE"}
                           org.bdinetwork/ishare-client        {:git/url "https://github.com/Basic-Data-Infrastructure/clj-ishare-client"
                                                                :git/sha "13e8bd84d7e9d93d7461ad38977936461dd4acc0"}
-                          org.bdinetwork/association-register {:git/sha "fed242faafc9cda12aee702dd5fe378c8a60ec56"
+                          org.bdinetwork/association-register {:git/sha "0ae30b568d27d4b9d19f79e722d53bf78b2a9af0"
                                                                :git/url "https://github.com/Basic-Data-Infrastructure/association-registry"}}
              :main-opts  ["-m" "kaocha.runner"]}
   :lint     {:extra-deps {clj-kondo/clj-kondo {:mvn/version "RELEASE"}}
