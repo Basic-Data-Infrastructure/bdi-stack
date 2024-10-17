@@ -8,6 +8,33 @@
             [nl.jomco.resources :refer [with-resources]]
             [clojure.test :refer [deftest is]]))
 
+(defn own-ar-request
+  "If request has no ishare/base-url and ishare/server-id,
+  set base-url and server-id from ishare/authorization-registry-id
+  and ishare/authorization-registry-base-url"
+  [{:ishare/keys [authorization-registry-id
+                  authorization-registry-base-url
+                  base-url
+                  server-id]
+    :as          request}]
+  (if (and base-url server-id)
+    request
+    (assoc request
+           :ishare/base-url  authorization-registry-base-url
+           :ishare/server-id authorization-registry-id)))
+
+(defmethod client/ishare->http-request :ishare/policy ;; ishare AR specific
+  [{delegation-evidence :ishare/params :as request}]
+  {:pre [delegation-evidence]}
+  (-> request
+      (own-ar-request)
+      (assoc :method       :post
+             :path         "policy"
+             :as           :json
+             :json-params  delegation-evidence
+             :ishare/unsign-token "policy_token"
+             :ishare/lens         [:body "policy_token"])))
+
 (def association-config
   {:server-id                "EU.EORI.ASSOCIATION-REGISTER"
    :private-key              (keys/private-key "test-config/association_register.key.pem")
