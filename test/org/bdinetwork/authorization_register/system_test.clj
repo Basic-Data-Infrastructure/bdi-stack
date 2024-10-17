@@ -10,9 +10,9 @@
             [clojure.test :refer [deftest is testing]]))
 
 (defn own-ar-request
-  "If request has no ishare/base-url and ishare/server-id,
-  set base-url and server-id from ishare/authorization-registry-id
-  and ishare/authorization-registry-base-url"
+  "If request has no `ishare/base-url` and `ishare/server-id`,
+  set `base-url` and `server-id` from `ishare/authorization-registry-id`
+  and `ishare/authorization-registry-base-url`."
   [{:ishare/keys [authorization-registry-id
                   authorization-registry-base-url
                   base-url
@@ -24,7 +24,7 @@
            :ishare/base-url  authorization-registry-base-url
            :ishare/server-id authorization-registry-id)))
 
-(defmethod client/ishare->http-request :ishare/policy ;; ishare AR specific
+(defmethod client/ishare->http-request ::policy ;; non-standard request
   [{delegation-evidence :ishare/params :as request}]
   {:pre [delegation-evidence]}
   (-> request
@@ -118,7 +118,7 @@
                                      :ishare/bearer-token token
                                      :ishare/base-url "http://localhost:9992"
                                      :ishare/server-id (:server-id auth-register-config)
-                                     :ishare/message-type :ishare/policy
+                                     :ishare/message-type ::policy
                                      :ishare/params {"delegationEvidence" delegation-evidence}))]
         (is (= http-status/ok (:status resp))
             "Policy accepted"))
@@ -128,7 +128,7 @@
                                        :ishare/bearer-token token
                                        :ishare/base-url "http://localhost:9992"
                                        :ishare/server-id (:server-id auth-register-config)
-                                       :ishare/message-type :ishare/policy
+                                       :ishare/message-type ::policy
                                        :ishare/params {"delegationEvidence" (assoc delegation-evidence "policyIssuer" "someone-else")}))]
           (is (= http-status/forbidden (:status resp))
               "Policy rejected")))

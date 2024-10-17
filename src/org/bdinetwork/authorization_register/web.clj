@@ -57,7 +57,7 @@
                                      params]}
     (if (= client-id (get-in params ["delegationEvidence" "policyIssuer"]))
       {:status    status/ok
-       :body      {:policyId (str (delegations/delegate! policy-store (get params "delegationEvidence")))}
+       :body      {:policyId (delegations/delegate! policy-store (get params "delegationEvidence"))}
        :token-key :delegation_token}
       {:status    status/forbidden
        :body      {:error "policyIssuer does not match client_id"}}))
