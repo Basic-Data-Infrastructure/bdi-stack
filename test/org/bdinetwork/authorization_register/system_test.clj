@@ -56,24 +56,25 @@
    :access-token-ttl-seconds 300})
 
 (def client-config
-  {:ishare/client-id     "EU.EORI.CLIENT"
-   :ishare/private-key   (keys/private-key "test-config/client.key.pem")
-   :ishare/x5c           (system/x5c "test-config/client.x5c.pem")
-   :ishare/satellite-id  (:server-id association-config)
-   :ishare/satellite-url (str "http://localhost:" (:port association-config))
-   :throw                false ;; we test on status codes, so don't throw in the tests
+  {:ishare/client-id          "EU.EORI.CLIENT"
+   :ishare/private-key        (keys/private-key "test-config/client.key.pem")
+   :ishare/x5c                (system/x5c "test-config/client.x5c.pem")
+   :ishare/satellite-id       (:server-id association-config)
+   :ishare/satellite-base-url (str "http://localhost:" (:port association-config))
+   :throw                     false ;; we test on status codes, so don't throw in the tests
    })
 
 (def delegation-mask
-  {"policyIssuer" (:ishare/client-id client-config)
-   "target"       {"accessSubject" "EU.EORI.NLPRECIOUSG"}
-   "policySets"   [{"policies" [{"rules"  [{"effect" "Permit"}]
-                                 "target" {"resource"    {"type"        "klantordernummer"
-                                                          "identifiers" ["112233"]
-                                                          "attributes"  ["*"]}
-                                           "actions"     ["BDI.PICKUP"]
-                                           "environment" {"licenses"         ["0001"]
-                                                          "serviceProviders" []}}}]}]})
+  {:delegationRequest
+   {:policyIssuer (:ishare/client-id client-config)
+    :target       {:accessSubject "EU.EORI.NLPRECIOUSG"}
+    :policySets   [{:policies [{:rules  [{:effect "Permit"}]
+                                :target {:resource    {:type        "klantordernummer"
+                                                       :identifiers ["112233"]
+                                                       :attributes  ["*"]}
+                                         :actions     ["BDI.PICKUP"]
+                                         :environment {:licenses         ["0001"]
+                                                       :serviceProviders []}}}]}]}})
 
 (def delegation-evidence
   {"policyIssuer" (:ishare/client-id client-config)
@@ -89,26 +90,23 @@
 (deftest system-test
   (with-resources [association-system (association/run-system association-config)
                    authorization-system (system/run-system auth-register-config)]
-    (let [resp (client/exec (assoc client-config
-                                   :ishare/base-url "http://localhost:9991"
-                                   :ishare/server-id (:server-id association-config)
-                                   :ishare/message-type :access-token))]
+    (let [resp (client/exec (client/access-token-request (assoc client-config
+                                                                :ishare/base-url "http://localhost:9991"
+                                                                :ishare/server-id (:server-id association-config))))]
       (is (= http-status/ok (:status resp)))
       (is (string? (get-in resp [:body "access_token"]))))
 
-    (let [resp  (client/exec (assoc client-config
-                                    :ishare/base-url "http://localhost:9992"
-                                    :ishare/server-id (:server-id auth-register-config)
-                                    :ishare/message-type :access-token))
+    (let [resp  (client/exec (client/access-token-request (assoc client-config
+                                                                 :ishare/base-url "http://localhost:9992"
+                                                                 :ishare/server-id (:server-id auth-register-config))))
           token (get-in resp [:body "access_token"])]
       (is (= http-status/ok (:status resp)))
       (is (string? token))
-      (let [resp (client/exec (assoc client-config
-                                     :ishare/bearer-token token
-                                     :ishare/base-url "http://localhost:9992"
-                                     :ishare/server-id (:server-id auth-register-config)
-                                     :ishare/message-type :delegation
-                                     :ishare/params {"delegationRequest" delegation-mask}))]
+      (let [resp (client/exec (client/delegation-evidence-request (assoc client-config
+                                                                         :ishare/bearer-token token
+                                                                         :ishare/base-url "http://localhost:9992"
+                                                                         :ishare/server-id (:server-id auth-register-config))
+                                                                  delegation-mask))]
         (is (= http-status/ok (:status resp)))
         (is (= "Deny" (get-in resp [:ishare/result :delegationEvidence :policySets 0 :policies 0 :rules 0 :effect]))
             "Deny when no matching policy found"))
@@ -132,12 +130,12 @@
           (is (= http-status/forbidden (:status resp))
               "Policy rejected")))
 
-      (let [resp (client/exec (assoc client-config
-                                     :ishare/bearer-token token
-                                     :ishare/base-url "http://localhost:9992"
-                                     :ishare/server-id (:server-id auth-register-config)
-                                     :ishare/message-type :delegation
-                                     :ishare/params {"delegationRequest" delegation-mask}))]
+      (let [resp (client/exec (client/delegation-evidence-request
+                               (assoc client-config
+                                      :ishare/bearer-token token
+                                      :ishare/base-url "http://localhost:9992"
+                                      :ishare/server-id (:server-id auth-register-config))
+                               delegation-mask))]
         (is (= http-status/ok (:status resp)))
         (is (= "Permit" (get-in resp [:ishare/result :delegationEvidence :policySets 0 :policies 0 :rules 0 :effect]))
             "Permit when matching policy found")))))
