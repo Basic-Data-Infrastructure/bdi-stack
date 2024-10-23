@@ -1,0 +1,38 @@
+# SPDX-FileCopyrightText: 2024 Jomco B.V.
+# SPDX-FileCopyrightText: 2024 Topsector Logistiek
+# SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl
+# SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+name: Test
+
+on: push
+
+jobs:
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/cache@v4
+      with:
+        path: "~/.m2"
+        key: "deps-${{ hashFiles('deps.edn') }}"
+
+    - name: Install packages
+      run: |
+        sudo apt-get install -y reuse
+
+    - name: Install clj runtime
+      run: |
+        cd "$HOME"
+        curl -L -O https://github.com/clojure/brew-install/releases/latest/download/linux-install.sh
+        bash linux-install.sh -p "$HOME"
+
+    - name: Run make check
+      run: |
+        PATH="$PATH:$HOME/bin"
+        make check
