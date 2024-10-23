@@ -11,16 +11,16 @@
                                                          :git/sha "e2c1ff91408871a8ef8330cba7efba2ec9cfd3f1"}
          nl.jomco/with-resources                        {:mvn/version "0.1.2"}
          nl.jomco/openapi-v3-validator                  {:mvn/version "0.2.1"}
-         clj-commons/clj-yaml                           {:mvn/version "1.0.27"}
-         ring/ring-core                                 {:mvn/version "1.12.2"}
+         clj-commons/clj-yaml                           {:mvn/version "1.0.28"}
+         ring/ring-core                                 {:mvn/version "1.13.0"}
          ring/ring-json                                 {:mvn/version "0.5.1"}
-         ring/ring-jetty-adapter                        {:mvn/version "1.12.2"}
+         ring/ring-jetty-adapter                        {:mvn/version "1.13.0"}
          compojure/compojure                            {:mvn/version "1.7.1"}
-         ch.qos.logback/logback-classic                 {:mvn/version "1.5.6"}
+         ch.qos.logback/logback-classic                 {:mvn/version "1.5.11"}
          nl.jomco/clj-http-status-codes                 {:mvn/version "0.1"}
          org.clojure/core.cache                         {:mvn/version "1.1.234"}
          org.clojure/tools.logging                      {:mvn/version "1.3.0"}
-         nl.jomco/envopts                               {:mvn/version "0.0.4"}
+         nl.jomco/envopts                               {:mvn/version "0.0.5"}
          datascript/datascript                          {:mvn/version "1.7.3"}}
  :paths ["src" "classes" "resources"]
 
@@ -29,7 +29,7 @@
   :test     {:extra-deps {lambdaisland/kaocha                 {:mvn/version "RELEASE"}
                           org.bdinetwork/clj-ishare-client    {:git/url "https://github.com/Basic-Data-Infrastructure/clj-ishare-client"
                                                                :git/sha "3f2b6f4abf914f3302a0c114372f7b5780c44c5d"}
-                          org.bdinetwork/association-register {:git/sha "d124e80de71662fff87babae77c8a1adba7d27e8"
+                          org.bdinetwork/association-register {:git/sha "89b86943559f262b30ef911bde4030630abdcf81"
                                                                :git/url "https://github.com/Basic-Data-Infrastructure/association-registry"}}
              :main-opts  ["-m" "kaocha.runner"]}
   :lint     {:extra-deps {clj-kondo/clj-kondo {:mvn/version "RELEASE"}}
