@@ -5,7 +5,7 @@
 ;;;
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(ns org.bdinetwork.authorization-register.in-memory-policies
+(ns org.bdinetwork.authorization-register.datascript-policies
   "This implements a PolicyView and PolicyStore using a DataScript
   database.
 
@@ -13,8 +13,8 @@
   other storage backend.
   See https://github.com/tonsky/datascript/blob/master/docs/storage.md"
   (:require [datascript.core :as ds]
-            [org.bdinetwork.authorization-register.policies :refer [PolicyStore PolicyView schema]]
-            [org.bdinetwork.authorization-register.policies :as policies])
+            [org.bdinetwork.authorization-register.policies :refer [PolicyStore PolicyView schema] :as policies]
+            [clojure.java.io :as io])
   (:import java.util.UUID))
 
 (defn- bound-key-clause
@@ -87,11 +87,33 @@
   (delete-policy! [_ id]
     (ds/transact! conn [[:db/retractEntity [:policy/id id]]])))
 
+(defn non-empty-dir?
+  [dir]
+  (let [f (io/file dir)]
+    (and (.exists f)
+         (.isDirectory f)
+         (boolean (seq (.listFiles f))))))
+
+(defn file-conn
+  "Given directory, returns a connection
+
+  If the dir is not empty, restores the connection from dir.
+
+  Otherwise create a new connection, creating the dir if needed."
+  [dir]
+  (if (non-empty-dir? dir)
+    (ds/restore-conn (ds/file-storage dir))
+    (ds/create-conn schema {:storage (ds/file-storage dir)})))
+
+(defn file-backed-policies
+  "Create a policies DB that's stored on disk."
+  [f]
+  (->DataScriptPolicies (file-conn f)))
+
 (defn in-memory-policies
-  "Create an in-memory policy store."
+  "Create an empty in-memory policy store."
   []
   (->DataScriptPolicies (ds/create-conn schema)))
-
 
 
 ;; https://dev.ishare.eu/reference/delegation-mask

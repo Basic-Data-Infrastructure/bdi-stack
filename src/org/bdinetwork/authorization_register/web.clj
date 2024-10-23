@@ -6,7 +6,7 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.authorization-register.web
-  (:require [compojure.core :refer [defroutes GET POST]]
+  (:require [compojure.core :refer [defroutes POST]]
             [nl.jomco.http-status-codes :as status]
             [org.bdinetwork.authorization-register.delegations :as delegations]
             [org.bdinetwork.ishare.jwt :as ishare.jwt]
@@ -44,8 +44,7 @@
 
 (defroutes routes
   (POST "/delegation"
-      {:keys                       [client-id
-                                    policy-view]
+      {:keys                       [policy-view]
        {:strs [delegationRequest]} :params}
     {:status    status/ok
      :body      {"delegationEvidence"
