@@ -1,0 +1,19 @@
+;;; SPDX-FileCopyrightText: 2024 Jomco B.V.
+;;; SPDX-FileCopyrightText: 2024 Topsector Logistiek
+;;; SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl
+;;; SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
+;;;
+;;; SPDX-License-Identifier: AGPL-3.0-or-later
+
+{:deps  {buddy/buddy-sign {:mvn/version "3.6.1-359"}}
+ :paths ["src"]
+
+ :aliases
+ {:test     {:extra-deps {lambdaisland/kaocha {:mvn/version "RELEASE"}}
+             :main-opts  ["-m" "kaocha.runner"]}
+  :lint     {:extra-deps {clj-kondo/clj-kondo {:mvn/version "RELEASE"}}
+             :main-opts  ["-m" "clj-kondo.main" "--lint" "src" "test"]}
+  :build    {:deps       {io.github.clojure/tools.build {:mvn/version "0.10.5"}}
+             :ns-default build}
+  :outdated {:replace-deps {com.github.liquidz/antq {:mvn/version "RELEASE"}}
+             :main-opts    ["-m" "antq.core"]}}}
