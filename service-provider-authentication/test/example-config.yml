@@ -1,0 +1,68 @@
+trusted_list:
+  - subject: CN=TEST iSHARE Foundation eIDAS
+    certificate_fingerprint: 8C39DD06E35DE8467004A542D0CA4B8FDC7D6F8F713F40A35BD9E65938A191CF
+    validity: Valid
+    status: Granted
+
+parties:
+  - capability_url: ''
+    auth_registries:
+    - name: iSHARE Test Authorization Registry
+      id: EU.EORI.NL000000004
+      url: http://ar.isharetest.net/
+      dataspace_id: ContaktDS1
+      dataspace_name: ContaktDS1
+    party_id: EU.EORI.NL000000001
+    certificates:
+    - subject_name: CN=ABC Trucking,SERIALNUMBER=EU.EORI.NL000000001,OU=Test,O=iSHARETest,C=NL
+      certificate_type: PKIo
+      enabled_from: '2024-02-12T00:00:00.000Z'
+      x5c: MIID2jCCAsKgAwIBAgIINqe/ESZKbs0wDQYJKoZIhvcNAQELBQAwPDE6MDgGA1UEAwwxVEVTVCBpU0hBUkUgRVUgSXNzdWluZyBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eSBHNTAeFw0yMzAyMjQxNjUwMzVaFw0zMzAyMjExNjUwMzRaMGYxFTATBgNVBAMMDEFCQyBUcnVja2luZzEcMBoGA1UEBRMTRVUuRU9SSS5OTDAwMDAwMDAwMTENMAsGA1UECwwEVGVzdDETMBEGA1UECgwKaVNIQVJFVGVzdDELMAkGA1UEBhMCTkwwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCTvswK5QL7yCgkp9bix2l4gpFkRHP+aoeD25FsCKnXUbpHW/QAi6/dOPGh6PFXTaL4QrdcPQIcokxUcGJgWF8rSQkdFpXDaRs1bG6CVw/nSkROoonbdAMGh+UCV6wOzuxDCaUysYh0MMsXKrv4lJ0Ah1ST6oCMnoTCUOTuqLUg/V/84XdDN1KjR67png+YZwpl22/skdPO6FE6mL23aLBz/AOs5nfiMeP+FJfklxoCgDGv9hE7bRhKBCIQqgXaikwoBxZF2Fp92qe/K0c/Sx/Q3Tkcve8a6gJIAoSpiKRjSlPoYmwLN76bK43BDUiU1OtJrvMZw+rNUC1IUSexOGTLAgMBAAGjgbUwgbIwHwYDVR0jBBgwFoAUbcVlicvfkVTRazy3AqUuzYpokB0wJwYDVR0lBCAwHgYIKwYBBQUHAwIGCCsGAQUFBwMEBggrBgEFBQcDATA3BggrBgEFBQcBAwQrMCkwCAYGBACORgEBMAgGBgQAjkYBBDATBgYEAI5GAQYwCQYHBACORgEGAjAdBgNVHQ4EFgQU6h8u1iZphlReD4SxckZeN3cA4SYwDgYDVR0PAQH/BAQDAgbAMA0GCSqGSIb3DQEBCwUAA4IBAQBY+5XE8N0Im+PWctdtwr5452B92gcszx/TapVbOoW4+mGLtKqDwkh/xRJN+5wFjGVlhg2W9ROEpuUcWGlbx+48wQ3OBWGXpdVeDvKaOA9KH2wDagn/A1TIiBR7MSwnFNS6CVus/khnCaMsdYl6OYItiUP8xF6YHAmtY/iT3RAzzVL+ZrOIYB66rp20O19sERlbURiFk34eF6LA78R8FACNgEuGNrmgkh7hl7Gt5Kgsylio6Smz3m5WAeqdhkY5BVn+a6wxzO7uRtZRHjhFPI7leOKd4EcLZ7UaByaU4aCxowiM+K6e/dovPZyBvXkVPV4UJOLxPg2DJT2evbzA31Ul
+      x5t#s256: 778e88582bc15a1a11393f17db5e86898a8455e3e38762b63101f8e3b892c683
+    adherence:
+      status: Active
+      start_date: '2024-02-12T00:00:00.000Z'
+      end_date: '2025-02-13T00:00:00.000Z'
+    registrar_id: EU.EORI.NL000000000
+    additional_info:
+      publicly_publishable: false
+      sector_industry:
+        - Metals & Mining
+      company_phone: '+311234567890'
+      tags: 'some space separated tags'
+      website: 'https://example.com/'
+      countries_operation:
+        - "Netherlands, Kingdom of the"
+      logo: ''
+      company_email: 'test@example.com'
+      description: ''
+    party_name: ABC Trucking
+    agreements:
+    - expiry_date: '2025-02-13T00:00:00.000Z'
+      framework: iSHARE
+      complaiancy_verified: 'No'
+      status: Accepted
+      dataspace_title: 'Some Dataspace'
+      title: tu
+      hash_file: ae1d7d30f5db9497f21a7984a8a6f359S
+      type: TermsOfUse
+      sign_date: '2024-02-12T00:00:00.000Z'
+      dataspace_id: 'SOME-DATASPACE'
+    - expiry_date: '2025-02-13T00:00:00.000Z'
+      framework: iSHARE
+      complaiancy_verified: 'No'
+      status: Accepted
+      dataspace_title: ''
+      title: aa
+      hash_file: ae1d7d30f5db9497f21a7984a8a6f359
+      type: AccessionAgreement
+      sign_date: '2024-02-12T00:00:00.000Z'
+      dataspace_id: ''
+    roles:
+    - role: ServiceConsumer
+      start_date: '2024-02-12T00:00:00.000Z'
+      end_date: '2025-02-12T00:00:00.000Z'
+      loa: 'Low'
+      complaiancy_verified: false
+      legal_adherence: false
+ 
