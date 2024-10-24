@@ -5,12 +5,11 @@
 ;;;
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-{:deps  {org.bdinetwork/ishare-jwt                      {:git/url "https://github.com/Basic-Data-Infrastructure/clj-ishare-jwt"
-                                                         :git/sha "977bb1f393a22d964819a0caf627b3d2840de086"}
+{:deps  {org.bdinetwork/clj-ishare-jwt                  {:git/url "https://github.com/Basic-Data-Infrastructure/clj-ishare-jwt"
+                                                         :git/sha "65ed4c07333994faf98a6e6309800338c3577d4c"}
          org.bdinetwork/service-provider-authentication {:git/url "https://github.com/Basic-Data-Infrastructure/service-provider-authentication"
-                                                         :git/sha "95c32867e5bf57906fe356a069c6be52679d265e"}
-         nl.jomco/with-resources                        {:git/sha "66a864a1dfb6c105a7ecc7c92d2a9e6cf0239e6b"
-                                                         :git/url "https://git.sr.ht/~jomco/with-resources"}
+                                                         :git/sha "e2c1ff91408871a8ef8330cba7efba2ec9cfd3f1"}
+         nl.jomco/with-resources                        {:mvn/version "0.1.1"}
          nl.jomco/openapi-v3-validator                  {:mvn/version "0.2.1"}
          clj-commons/clj-yaml                           {:mvn/version "1.0.27"}
          ring/ring-core                                 {:mvn/version "1.12.2"}
@@ -27,9 +26,9 @@
 
  :aliases
  {:dev      {:extra-paths ["test" "dev"]}
-  :test     {:extra-deps {lambdaisland/kaocha          {:mvn/version "RELEASE"}
-                          org.bdinetwork/ishare-client {:git/url "https://github.com/Basic-Data-Infrastructure/clj-ishare-client"
-                                                        :git/sha "13e8bd84d7e9d93d7461ad38977936461dd4acc0"}}
+  :test     {:extra-deps {lambdaisland/kaocha              {:mvn/version "RELEASE"}
+                          org.bdinetwork/clj-ishare-client {:git/url "https://github.com/Basic-Data-Infrastructure/clj-ishare-client"
+                                                            :git/sha "3f2b6f4abf914f3302a0c114372f7b5780c44c5d"}}
              :main-opts  ["-m" "kaocha.runner"]}
   :lint     {:extra-deps {clj-kondo/clj-kondo {:mvn/version "RELEASE"}}
              :main-opts  ["-m" "clj-kondo.main" "--lint" "src" "test"]}

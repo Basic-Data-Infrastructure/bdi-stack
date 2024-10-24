@@ -8,7 +8,7 @@
 (ns org.bdinetwork.association-register.system
   (:require [buddy.core.keys :refer [private-key]]
             [clojure.string :as string]
-            [nl.jomco.resources :refer [Resource mk-system]]
+            [nl.jomco.resources :refer [Resource mk-system closeable]]
             [org.bdinetwork.association-register.web :as web]
             [org.bdinetwork.service-provider.in-memory-association :refer [in-memory-association]]
             [ring.adapter.jetty :refer [run-jetty]]))
@@ -30,8 +30,8 @@
 
 (defn run-system
   [config]
-  (mk-system [association (in-memory-association (:data-source config))
-              handler (web/make-handler association config)
+  (mk-system [association (closeable (in-memory-association (:data-source config)))
+              handler (closeable (web/make-handler association config))
               jetty (run-jetty handler {:join?    false
                                         :port     (:port config)
                                         :hostname (:hostname config)})]
