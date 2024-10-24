@@ -1,0 +1,39 @@
+;;; SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
+;;;
+;;; SPDX-License-Identifier: AGPL-3.0-or-later
+
+{:deps  {org.bdinetwork/clj-ishare-jwt                  {:git/url "https://github.com/Basic-Data-Infrastructure/clj-ishare-jwt"
+                                                         :git/sha "65ed4c07333994faf98a6e6309800338c3577d4c"}
+         org.bdinetwork/service-provider-authentication {:git/url "https://github.com/Basic-Data-Infrastructure/service-provider-authentication"
+                                                         :git/sha "b2b86c88f551a82407055b85e26aef423f3a77e3"}
+         nl.jomco/with-resources                        {:mvn/version "0.1.1"}
+         nl.jomco/openapi-v3-validator                  {:mvn/version "0.2.1"}
+         clj-commons/clj-yaml                           {:mvn/version "1.0.27"}
+         ring/ring-core                                 {:mvn/version "1.12.2"}
+         ring/ring-json                                 {:mvn/version "0.5.1"}
+         ring/ring-jetty-adapter                        {:mvn/version "1.12.2"}
+         compojure/compojure                            {:mvn/version "1.7.1"}
+         ch.qos.logback/logback-classic                 {:mvn/version "1.5.6"}
+         nl.jomco/clj-http-status-codes                 {:mvn/version "0.1"}
+         org.clojure/core.cache                         {:mvn/version "1.1.234"}
+         org.clojure/tools.logging                      {:mvn/version "1.3.0"}
+         nl.jomco/envopts                               {:mvn/version "0.0.4"}
+         datascript/datascript                          {:mvn/version "1.7.3"}}
+ :paths ["src" "classes" "resources"]
+
+ :aliases
+ {:dev      {:extra-paths ["test" "dev"]}
+  :test     {:extra-deps {lambdaisland/kaocha                 {:mvn/version "RELEASE"}
+                          org.bdinetwork/clj-ishare-client    {:git/url "https://github.com/Basic-Data-Infrastructure/clj-ishare-client"
+                                                               :git/sha "a6d4a422a8bb72ca41453c4c6f855553d4cb538e"}
+                          org.bdinetwork/association-register {:git/sha "d124e80de71662fff87babae77c8a1adba7d27e8"
+                                                               :git/url "https://github.com/Basic-Data-Infrastructure/association-registry"}}
+             :main-opts  ["-m" "kaocha.runner"]}
+  :lint     {:extra-deps {clj-kondo/clj-kondo {:mvn/version "RELEASE"}}
+             :main-opts  ["-m" "clj-kondo.main" "--lint" "src" "test"]}
+  :uberjar  {:replace-deps  {uberdeps/uberdeps {:mvn/version "RELEASE"}}
+             :replace-paths []
+             :main-opts     ["-m" "uberdeps.uberjar"
+                             "--main-class" "org.bdinetwork.authorization_register.main"]}
+  :outdated {:replace-deps {com.github.liquidz/antq {:mvn/version "RELEASE"}}
+             :main-opts    ["-m" "antq.core"]}}}
