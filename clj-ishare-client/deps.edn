@@ -1,0 +1,25 @@
+;;; SPDX-FileCopyrightText: 2024 Jomco B.V.
+;;; SPDX-FileCopyrightText: 2024 Topsector Logistiek
+;;; SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl
+;;; SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
+;;;
+;;; SPDX-License-Identifier: AGPL-3.0-or-later
+
+{:deps  {org.bdinetwork/clj-ishare-jwt {:git/url "https://github.com/Basic-Data-Infrastructure/clj-ishare-jwt.git"
+                                        :git/sha "65ed4c07333994faf98a6e6309800338c3577d4c"}
+         org.babashka/http-client      {:mvn/version "0.4.21"}
+         org.babashka/json             {:mvn/version "0.1.6"}
+         org.clojure/tools.logging     {:mvn/version "1.3.0"}
+         org.clojure/core.memoize      {:mvn/version "1.1.266"}}
+ :paths ["src" "test"]
+
+ :aliases
+ {:test     {:extra-deps {lambdaisland/kaocha    {:mvn/version "RELEASE"}
+                          org.clojure/core.async {:mvn/version "1.6.681"}}
+             :main-opts  ["-m" "kaocha.runner"]}
+  :lint     {:extra-deps {clj-kondo/clj-kondo {:mvn/version "RELEASE"}}
+             :main-opts  ["-m" "clj-kondo.main" "--lint" "src" "test"]}
+  :build    {:deps       {io.github.clojure/tools.build {:mvn/version "0.10.5"}}
+             :ns-default build}
+  :outdated {:replace-deps {com.github.liquidz/antq {:mvn/version "RELEASE"}}
+             :main-opts    ["-m" "antq.core"]}}}
