@@ -8,7 +8,7 @@
 (ns org.bdinetwork.authorization-register.delegations-test
   (:require [clojure.test :refer [deftest is]]
             [org.bdinetwork.authorization-register.delegations :as delegations]
-            [org.bdinetwork.authorization-register.in-memory-policies :refer [in-memory-policies]]
+            [org.bdinetwork.authorization-register.datascript-policies :refer [in-memory-policies]]
             [org.bdinetwork.authorization-register.policies :as policies]))
 
 (def delegation-mask ;; delegationRequest

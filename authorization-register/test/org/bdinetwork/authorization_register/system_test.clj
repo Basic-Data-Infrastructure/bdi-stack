@@ -1,13 +1,21 @@
+;;; SPDX-FileCopyrightText: 2024 Jomco B.V.
+;;; SPDX-FileCopyrightText: 2024 Topsector Logistiek
+;;; SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
+;;; SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
+;;;
+;;; SPDX-License-Identifier: AGPL-3.0-or-later
+
 (ns org.bdinetwork.authorization-register.system-test
   (:require [org.bdinetwork.authorization-register.system :as system]
             [org.bdinetwork.association-register.system :as association]
-            [org.bdinetwork.service-provider.in-memory-association :refer [in-memory-association read-source]]
-            [org.bdinetwork.authorization-register.policies :as policies]
+            [org.bdinetwork.service-provider.in-memory-association :refer [read-source]]
             [org.bdinetwork.ishare.client :as client]
             [nl.jomco.http-status-codes :as http-status]
             [buddy.core.keys :as keys]
             [nl.jomco.resources :refer [with-resources]]
-            [clojure.test :refer [deftest is testing]]))
+            [clojure.test :refer [deftest is testing]])
+  (:import java.nio.file.Files
+           java.nio.file.attribute.FileAttribute))
 
 (defn own-ar-request
   "If request has no `ishare/base-url` and `ishare/server-id`,
@@ -87,55 +95,62 @@
                                            "environment" {"licenses"         ["0001"]
                                                           "serviceProviders" []}}}]}]})
 
+(defn temp-dir
+  []
+  (str (Files/createTempDirectory "authregisterdb" (make-array FileAttribute 0))))
+
 (deftest system-test
-  (with-resources [association-system (association/run-system association-config)
-                   authorization-system (system/run-system auth-register-config)]
-    (let [resp (client/exec (client/access-token-request (assoc client-config
-                                                                :ishare/base-url "http://localhost:9991"
-                                                                :ishare/server-id (:server-id association-config))))]
-      (is (= http-status/ok (:status resp)))
-      (is (string? (get-in resp [:body "access_token"]))))
-
-    (let [resp  (client/exec (client/access-token-request (assoc client-config
-                                                                 :ishare/base-url "http://localhost:9992"
-                                                                 :ishare/server-id (:server-id auth-register-config))))
-          token (get-in resp [:body "access_token"])]
-      (is (= http-status/ok (:status resp)))
-      (is (string? token))
-      (let [resp (client/exec (client/delegation-evidence-request (assoc client-config
-                                                                         :ishare/bearer-token token
-                                                                         :ishare/base-url "http://localhost:9992"
-                                                                         :ishare/server-id (:server-id auth-register-config))
-                                                                  delegation-mask))]
+  (let [dir (temp-dir)]
+    #_{:clj-kondo/ignore [:unused-binding]}
+    (with-resources [association-system (association/run-system association-config)
+                     authorization-system (system/run-system (assoc auth-register-config
+                                                                    :policies-db dir))]
+      (let [resp (client/exec (client/access-token-request (assoc client-config
+                                                                  :ishare/base-url "http://localhost:9991"
+                                                                  :ishare/server-id (:server-id association-config))))]
         (is (= http-status/ok (:status resp)))
-        (is (= "Deny" (get-in resp [:ishare/result :delegationEvidence :policySets 0 :policies 0 :rules 0 :effect]))
-            "Deny when no matching policy found"))
+        (is (string? (get-in resp [:body "access_token"]))))
 
-      (let [resp (client/exec (assoc client-config
-                                     :ishare/bearer-token token
-                                     :ishare/base-url "http://localhost:9992"
-                                     :ishare/server-id (:server-id auth-register-config)
-                                     :ishare/message-type ::policy
-                                     :ishare/params {"delegationEvidence" delegation-evidence}))]
-        (is (= http-status/ok (:status resp))
-            "Policy accepted"))
+      (let [resp  (client/exec (client/access-token-request (assoc client-config
+                                                                   :ishare/base-url "http://localhost:9992"
+                                                                   :ishare/server-id (:server-id auth-register-config))))
+            token (get-in resp [:body "access_token"])]
+        (is (= http-status/ok (:status resp)))
+        (is (string? token))
+        (let [resp (client/exec (client/delegation-evidence-request (assoc client-config
+                                                                           :ishare/bearer-token token
+                                                                           :ishare/base-url "http://localhost:9992"
+                                                                           :ishare/server-id (:server-id auth-register-config))
+                                                                    delegation-mask))]
+          (is (= http-status/ok (:status resp)))
+          (is (= "Deny" (get-in resp [:ishare/result :delegationEvidence :policySets 0 :policies 0 :rules 0 :effect]))
+              "Deny when no matching policy found"))
 
-      (testing "attempt to insert policy for other party"
         (let [resp (client/exec (assoc client-config
                                        :ishare/bearer-token token
                                        :ishare/base-url "http://localhost:9992"
                                        :ishare/server-id (:server-id auth-register-config)
                                        :ishare/message-type ::policy
-                                       :ishare/params {"delegationEvidence" (assoc delegation-evidence "policyIssuer" "someone-else")}))]
-          (is (= http-status/forbidden (:status resp))
-              "Policy rejected")))
+                                       :ishare/params {"delegationEvidence" delegation-evidence}))]
+          (is (= http-status/ok (:status resp))
+              "Policy accepted"))
 
-      (let [resp (client/exec (client/delegation-evidence-request
-                               (assoc client-config
-                                      :ishare/bearer-token token
-                                      :ishare/base-url "http://localhost:9992"
-                                      :ishare/server-id (:server-id auth-register-config))
-                               delegation-mask))]
-        (is (= http-status/ok (:status resp)))
-        (is (= "Permit" (get-in resp [:ishare/result :delegationEvidence :policySets 0 :policies 0 :rules 0 :effect]))
-            "Permit when matching policy found")))))
+        (testing "attempt to insert policy for other party"
+          (let [resp (client/exec (assoc client-config
+                                         :ishare/bearer-token token
+                                         :ishare/base-url "http://localhost:9992"
+                                         :ishare/server-id (:server-id auth-register-config)
+                                         :ishare/message-type ::policy
+                                         :ishare/params {"delegationEvidence" (assoc delegation-evidence "policyIssuer" "someone-else")}))]
+            (is (= http-status/forbidden (:status resp))
+                "Policy rejected")))
+
+        (let [resp (client/exec (client/delegation-evidence-request
+                                 (assoc client-config
+                                        :ishare/bearer-token token
+                                        :ishare/base-url "http://localhost:9992"
+                                        :ishare/server-id (:server-id auth-register-config))
+                                 delegation-mask))]
+          (is (= http-status/ok (:status resp)))
+          (is (= "Permit" (get-in resp [:ishare/result :delegationEvidence :policySets 0 :policies 0 :rules 0 :effect]))
+              "Permit when matching policy found"))))))

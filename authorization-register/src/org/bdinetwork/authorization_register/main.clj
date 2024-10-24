@@ -22,6 +22,7 @@
    :server-id                ["Server ID (EORI)" :str]
    :hostname                 ["Server hostname" :str :default "localhost"]
    :port                     ["Server HTTP Port" :int :default 8080]
+   :policies-db              ["Directory to store policy data" :str]
    :access-token-ttl-seconds ["Access token time to live in seconds" :int :default 600]})
 
 (defmethod envopts/parse :private-key
@@ -62,7 +63,7 @@
   (system/run-system (config env)))
 
 (defn -main [& _]
-  (let [system start]
+  (let [system (start env)]
     (.addShutdownHook (Runtime/getRuntime)
                       (Thread. (fn []
                                  (close system)

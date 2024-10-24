@@ -6,8 +6,8 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.authorization-register.system
-  (:require [nl.jomco.resources :refer [mk-system Resource closeable]]
-            [org.bdinetwork.authorization-register.in-memory-policies :refer [in-memory-policies]]
+  (:require [nl.jomco.resources :refer [mk-system Resource]]
+            [org.bdinetwork.authorization-register.datascript-policies :refer [file-backed-policies]]
             [org.bdinetwork.authorization-register.web :as web]
             [org.bdinetwork.service-provider.remote-association :refer [remote-association]]
             [ring.adapter.jetty :refer [run-jetty]]
@@ -29,16 +29,20 @@
     (.stop jetty)))
 
 (defn run-system
-  [{:keys [server-id x5c private-key association-server-id association-server-url] :as config}]
-  {:pre [server-id x5c private-key association-server-id association-server-url]}
-  (mk-system [policies    (closeable (in-memory-policies))
-              association (closeable (remote-association #:ishare {:client-id          server-id
-                                                                   :x5c                x5c
-                                                                   :private-key        private-key
-                                                                   :satellite-id       association-server-id
-                                                                   :satellite-base-url association-server-url}))
-              app         (closeable (web/mk-app {:policy-store policies
-                                                  :policy-view  policies
-                                                  :association  association}
-                                                 config))
-              jetty       (run-jetty app (assoc config :join? false))]))
+  [{:keys [policies-db server-id x5c private-key association-server-id association-server-url] :as config}]
+  {:pre [policies-db server-id x5c private-key association-server-id association-server-url]}
+  (mk-system [policies    (file-backed-policies policies-db)
+              association (remote-association #:ishare {:client-id          server-id
+                                                        :x5c                x5c
+                                                        :private-key        private-key
+                                                        :satellite-id       association-server-id
+                                                        :satellite-base-url association-server-url})
+              app         (web/mk-app {:policy-store policies
+                                       :policy-view  policies
+                                       :association  association}
+                                      config)
+              jetty       (run-jetty app (assoc config :join? false))]
+    {:jetty       jetty
+     :app         app
+     :policies    policies
+     :association association}))
