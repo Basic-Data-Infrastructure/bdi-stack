@@ -1,0 +1,47 @@
+# SPDX-FileCopyrightText: 2024 Topsector Logistiek
+# SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
+# SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+name: Check dependency vulnerabilities
+
+on:
+  push:
+  schedule:
+    - cron: '0 1 * * 1,2,3,4,5' # every workday
+
+jobs:
+  "NVD-check":
+    runs-on: ubuntu-latest
+
+    steps:
+
+    # NVD data can change every day, so we use a cache key based on today's date
+    - name: Get current date
+      id: date
+      run: echo "date=$(date '+%Y-%m-%d')" >> $GITHUB_OUTPUT
+
+    - uses: actions/checkout@v4
+    - uses: actions/cache@v4
+      with:
+        path: "~/.m2"
+        key: "nvd-${{ steps.date.outputs.date }}"
+        restore-keys: "nvd-"
+
+    - name: Install clj runtime
+      run: .github/workflows/install-binaries.sh
+
+    - name: Install NVD clojure
+      run: bin/clojure -Ttools install nvd-clojure/nvd-clojure '{:mvn/version "RELEASE"}' :as nvd
+
+    - name: Check that NVD Secret is set
+      env:
+        NVD_API_TOKEN: ${{ secrets.NVD_API_TOKEN }}
+      if: ${{ env.NVD_API_TOKEN == '' }}
+      run: echo "NVD_API_TOKEN secret is empty"; exit 1
+
+    - name: Check clojure dependencies with NVD
+      env:
+        NVD_API_TOKEN: ${{ secrets.NVD_API_TOKEN }}
+      run: bin/clojure -J-Dclojure.main.report=stderr -Sdeps '{:deps {org.owasp/dependency-check-maven {:mvn/version "10.0.2"}}}' -Tnvd nvd.task/check :config-filename '".nvd-config.edn"' :classpath "\"$(bin/clojure -Spath)\""
