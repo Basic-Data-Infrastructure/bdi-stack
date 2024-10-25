@@ -494,32 +494,38 @@ When bearer token is not needed, provide a `nil` token"
   Will always assume the server with `server-id` equal to
   `satellite-id` is adherent.
 
-  Returns `request` with `:ishare/server-name` set from party info it
-  isn't already present."
+  Returns an updated `request` if the server is adherent:
+  - adds `:ishare/server-name` from party info if not already present
+  - adds `:ishare/server-adherent?` `true`"
   [{:ishare/keys [server-id satellite-id]
     :as          request}]
   {:pre [satellite-id server-id]}
   (if (= satellite-id server-id)
-    (assoc request :ishare/server-name "Association Register")
+    (assoc request
+           :ishare/server-name "Association Register"
+           :ishare/server-adherent? true)
     (if-let [{:keys [party_name] :as party-info} (fetch-party-info request server-id)]
       (if-let [{:keys [issue info]} (party-adherence-issue party-info)]
         (throw (ex-info issue info))
-        (assoc request :ishare/server-name party_name))
+        (assoc request
+               :ishare/server-name party_name
+               :ishare/server-adherent? true))
       (throw (ex-info "Party was not found" {:server-id    server-id
-                                                 :satellite-id satellite-id})))))
+                                             :satellite-id satellite-id})))))
 
 (def ishare-server-adherence-interceptor
   {:name ::ishare-server-status-interceptor
    :doc "Before accessing a server, check that it is still adherent.
 
+   If request has the `true` value for `:ishare/server-adherent?` the
+   sever is assumed to be adherent and the check is skipped.
+
    If request has the `false` value for
-   `:ishare/check-server-adherence?`, this check will be skipped."
-   :request (fn [{:ishare/keys [check-server-adherence?] :as request}]
-              (if (false? check-server-adherence?)
+   `:ishare/check-server-adherence?`, the check is skipped."
+   :request (fn [{:ishare/keys [server-adherent? check-server-adherence?] :as request}]
+              (if (or server-adherent? (false? check-server-adherence?))
                 request
-                (-> request
-                    (check-server-adherence)
-                    (assoc :ishare/check-server-adherence? false))))})
+                (check-server-adherence request)))})
 
 (defn- fetch-issuer-ar
   "If request contains `policy-issuer` and no `server-id` + `base-url`,
