@@ -19,16 +19,16 @@
 (def server-id "EU.EORI.SERVER")
 
 (def association
-  (in-memory-association (read-source "test/test-config.yml")))
+  (in-memory-association (read-source "test-config/association-register-config.yml")))
 
 (def server-private-key
-  (keys/private-key "test/pem/server.key.pem"))
+  (keys/private-key "test-config/authorization_register.key.pem"))
 
 (def server-public-key
-  (keys/public-key "test/pem/server.cert.pem"))
+  (keys/public-key "test-config/authorization_register.cert.pem"))
 
 (def client-private-key
-  (keys/private-key "test/pem/client.key.pem"))
+  (keys/private-key "test-config/client.key.pem"))
 
 (defn pem->x5c
   "Read chain file into vector of certificates."
@@ -41,7 +41,7 @@
        (mapv #(string/replace % #"\s+" ""))))
 
 (def client-x5c
-  (pem->x5c "test/pem/client.x5c.pem"))
+  (pem->x5c "test-config/client.x5c.pem"))
 
 (def handler
   (-> (fn [{:keys [client-id] :as req}]

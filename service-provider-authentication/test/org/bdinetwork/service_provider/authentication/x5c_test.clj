@@ -16,20 +16,20 @@
        (mapv #(string/replace % #"\s+" ""))))
 
 (deftest fingerprint
-  (doseq [party ["ca" "client" "server"]]
-    (is (= (-> (shell/sh "openssl" "x509" "-in" (str "test/pem/" party ".cert.pem") "-noout" "-fingerprint" "-sha256")
+  (doseq [party ["ca" "client" "association_register" "authorization_register"]]
+    (is (= (-> (shell/sh "openssl" "x509" "-in" (str "test-config/" party ".cert.pem") "-noout" "-fingerprint" "-sha256")
                :out
                (string/replace #".*Fingerprint=" "")
                (string/replace #"[:\r\n]" ""))
            (x5c/fingerprint
-            (x5c/cert (first (pem->x5c (str "test/pem/" party ".cert.pem"))))))
+            (x5c/cert (first (pem->x5c (str "test-config/" party ".cert.pem"))))))
         (str "fingerprint from openssl matches for " party))))
 
 
 (def association
-  (in-memory-association (read-source "test/test-config.yml")))
+  (in-memory-association (read-source "test-config/association-register-config.yml")))
 
-(def client-x5c (pem->x5c "test/pem/client.x5c.pem"))
+(def client-x5c (pem->x5c "test-config/association_register.x5c.pem"))
 
 (deftest validate-chain
   (is (x5c/validate-chain client-x5c association)))

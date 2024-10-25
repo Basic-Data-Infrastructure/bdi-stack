@@ -13,14 +13,14 @@
   {:ishare/satellite-base-url "http://localhost:8080"
    :ishare/satellite-id       "EU.EORI.SERVER"
    :ishare/client-id          "EU.EORI.CLIENT"
-   :ishare/private-key        (client/private-key "test/pem/client.key.pem")
-   :ishare/x5c                (system/x5c "test/pem/client.x5c.pem")})
+   :ishare/private-key        (client/private-key "test-config/client.key.pem")
+   :ishare/x5c                (system/x5c "test-config/client.x5c.pem")})
 
 (def system-config
-  {:private-key              (client/private-key "test/pem/server.key.pem")
-   :public-key               (keys/public-key "test/pem/server.cert.pem")
-   :x5c                      (system/x5c "test/pem/server.x5c.pem")
-   :data-source              (read-source "test/test-config.yml")
+  {:private-key              (client/private-key "test-config/association_register.key.pem")
+   :public-key               (keys/public-key "test-config/association_register.cert.pem")
+   :x5c                      (system/x5c "test-config/association_register.x5c.pem")
+   :data-source              (read-source "test-config/association-register-config.yml")
    :server-id                "EU.EORI.SERVER"
    :hostname                 "localhost"
    :port                     8080

@@ -8,10 +8,10 @@
             [nl.jomco.http-status-codes :as http-status]))
 
 (def system-config
-  {:private-key              (keys/private-key "test/pem/server.key.pem")
-   :public-key               (keys/public-key "test/pem/server.cert.pem")
-   :x5c                      (system/x5c "test/pem/server.x5c.pem")
-   :association              (in-memory-association (read-source "test/test-config.yml"))
+  {:private-key              (keys/private-key "test-config/association_register.key.pem")
+   :public-key               (keys/public-key "test-config/association_register.cert.pem")
+   :x5c                      (system/x5c "test-config/association_register.x5c.pem")
+   :association              (in-memory-association (read-source "test-config/association-register-config.yml"))
    :server-id                "EU.EORI.SERVER"
    :hostname                 "localhost"
    :port                     8080

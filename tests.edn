@@ -1,0 +1,11 @@
+#kaocha/v1
+{:tests [{:id         :clj-ishare-jwt
+          :test-paths ["clj-ishare-jwt/test"]}
+         {:id         :clj-ishare-client
+          :test-paths ["clj-ishare-client/test"]}
+         {:id         :authorization-register
+          :test-paths ["authorization-register/test"]}
+         {:id         :service-provider-authentication
+          :test-paths ["service-provider-authentication/test"]}
+         {:id         :association-register
+          :test-paths ["association-register/test"]}]}

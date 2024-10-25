@@ -29,5 +29,5 @@
   (is (jwt/unsign-token
        (jwt/make-client-assertion #:ishare {:client-id client-id
                                             :server-id server-id
-                                            :private-key (keys/private-key "test/pem/client.key.pem")
-                                            :x5c (x5c "test/pem/client.x5c.pem")}))))
+                                            :private-key (keys/private-key "test-config/client.key.pem")
+                                            :x5c (x5c "test-config/client.x5c.pem")}))))

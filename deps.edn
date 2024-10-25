@@ -1,0 +1,13 @@
+{:deps {org.bdinetwork/association-register   {:local/root "./association-register"}
+        org.bdinetwork/authorization-register {:local/root "./authorization-register"}}
+ :aliases
+ {:test     {:extra-deps {lambdaisland/kaocha    {:mvn/version "RELEASE"}
+                          org.clojure/core.async {:mvn/version "1.6.681"}}
+             :main-opts  ["-m" "kaocha.runner"]}
+  :lint     {:extra-deps {clj-kondo/clj-kondo {:mvn/version "RELEASE"}}
+             :main-opts  ["-m" "clj-kondo.main" "--lint" "src" "test"]}
+  :build    {:deps       {io.github.clojure/tools.build {:mvn/version "0.10.5"}}
+             :ns-default build}
+  :outdated {:replace-deps {com.github.liquidz/antq {:mvn/version "RELEASE"}}
+             :main-opts    ["-m" "antq.core"]}}
+ }
