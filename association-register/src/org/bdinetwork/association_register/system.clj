@@ -6,8 +6,7 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.association-register.system
-  (:require [buddy.core.keys :refer [private-key]]
-            [clojure.string :as string]
+  (:require [clojure.string :as string]
             [nl.jomco.resources :refer [Resource mk-system closeable]]
             [org.bdinetwork.association-register.web :as web]
             [org.bdinetwork.service-provider.in-memory-association :refer [in-memory-association]]

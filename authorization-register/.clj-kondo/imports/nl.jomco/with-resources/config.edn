@@ -1,8 +1,0 @@
-;;; SPDX-FileCopyrightText: 2024 Jomco B.V.
-;;; SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
-;;;
-;;; SPDX-License-Identifier: MIT
-
-{:lint-as {nl.jomco.resources/with-resources clojure.core/with-open
-           nl.jomco.resources/mk-system      clojure.core/let
-           nl.jomco.resources/defresource    clojure.core/def}}

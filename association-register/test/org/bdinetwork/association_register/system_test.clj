@@ -1,3 +1,10 @@
+;;; SPDX-FileCopyrightText: 2024 Jomco B.V.
+;;; SPDX-FileCopyrightText: 2024 Topsector Logistiek
+;;; SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
+;;; SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
+;;;
+;;; SPDX-License-Identifier: AGPL-3.0-or-later
+
 (ns org.bdinetwork.association-register.system-test
   (:require [org.bdinetwork.association-register.system :as system]
             [nl.jomco.resources :refer [with-resources]]
@@ -27,7 +34,7 @@
    :access-token-ttl-seconds 600})
 
 (deftest test-system
-  (with-resources [s (system/run-system system-config)]
+  (with-resources [#_:clj-kondo/ignore s (system/run-system system-config)]
     (let [{:keys [status] :as response} (client/exec (-> client-config
                                                          (client/satellite-request)
                                                          (assoc :ishare/message-type :party

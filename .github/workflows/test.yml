@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Jomco B.V.
 # SPDX-FileCopyrightText: 2024 Topsector Logistiek
 # SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl
+# SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
 # SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
@@ -21,6 +22,7 @@ jobs:
       with:
         path: "~/.m2"
         key: "deps-${{ hashFiles('deps.edn') }}"
+        restore-keys: "deps-"
 
     - name: Install packages
       run: |
@@ -29,10 +31,10 @@ jobs:
     - name: Install clj runtime
       run: |
         cd "$HOME"
-        curl -L -O https://github.com/clojure/brew-install/releases/latest/download/linux-install.sh
-        bash linux-install.sh -p "$HOME"
+        curl -L -O https://github.com/clojure/brew-install/releases/latest/download/posix-install.sh
+        chmod +x posix-install.sh
+        sudo ./posix-install.sh
 
     - name: Run make check
       run: |
-        PATH="$PATH:$HOME/bin"
         make check

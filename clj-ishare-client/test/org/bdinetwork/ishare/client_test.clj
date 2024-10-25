@@ -16,11 +16,11 @@
 
 (defn- ->x5c [v]
   (->> [v "ca"]
-       (map #(str "pem/" % ".cert.pem"))
-       (mapcat (comp client/x5c io/resource))))
+       (map #(str "test-config/" % ".cert.pem"))
+       (mapcat (comp client/x5c io/file))))
 
 (defn- ->key [v]
-  (-> (str "pem/" v ".key.pem") io/resource client/private-key))
+  (-> (str "test-config/" v ".key.pem") io/file client/private-key))
 
 (def client-eori "EU.EORI.CLIENT")
 (def client-x5c (->x5c "client"))
@@ -28,13 +28,13 @@
 
 (def satellite-eori "EU.EORI.AA")
 (def satellite-url "https://satellite.example.com")
-(def satellite-x5c (->x5c "aa"))
-(def satellite-private-key (->key "aa"))
+(def satellite-x5c (->x5c "association_register"))
+(def satellite-private-key (->key "association_register"))
 
 (def ar-eori "EU.EORI.AR")
 (def ar-url "https://ar.example.com")
-(def ar-x5c (->x5c "ar"))
-(def ar-private-key (->key "ar"))
+(def ar-x5c (->x5c "authorization_register"))
+(def ar-private-key (->key "authorization_register"))
 
 (def dataspace-id "test")
 

@@ -1,8 +1,15 @@
+;;; SPDX-FileCopyrightText: 2024 Jomco B.V.
+;;; SPDX-FileCopyrightText: 2024 Topsector Logistiek
+;;; SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
+;;; SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
+;;;
+;;; SPDX-License-Identifier: AGPL-3.0-or-later
+
 (ns org.bdinetwork.association-register.main
   (:require [org.bdinetwork.association-register.system :as system]
             [org.bdinetwork.service-provider.in-memory-association :refer [read-source]]
             [buddy.core.keys :as keys]
-            [nl.jomco.resources :refer [close with-resources wait-until-interrupted]]
+            [nl.jomco.resources :refer [with-resources wait-until-interrupted]]
             [nl.jomco.envopts :as envopts]
             [environ.core :refer [env]])
   (:gen-class))
@@ -50,7 +57,7 @@
   [env]
   (system/run-system (config env)))
 
-(defn -main [& args]
-  (with-resources [system (start env)]
+(defn -main [& _]
+  (with-resources [#_:clj-kondo/ignore system (start env)]
     (wait-until-interrupted)
     (prn "interrupted!")))

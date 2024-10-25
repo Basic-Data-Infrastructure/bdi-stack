@@ -13,9 +13,9 @@ test-config:
 prep-lint:
 	clojure -M:lint --lint $$(clojure -Spath)  --copy-configs --dependencies --skip-lint
 
-lint:
+lint: prep-lint
+	clojure -M:lint --lint */src */test
 	reuse lint
-	clojure -M:lint
 
 test: test-config
 	clojure -M:test
@@ -32,7 +32,7 @@ clean:
 check: test lint outdated
 
 outdated:
-	clojure -M:outdated
+	clojure -T:antq outdated
 
 copyright-headers:
 	reuse annotate \
@@ -41,4 +41,19 @@ copyright-headers:
 		--license="AGPL-3.0-or-later" \
 		--contributor="Joost Diepenmaat <joost@jomco.nl>" \
 		--contributor="Remco van 't Veer <remco@jomco.nl>" \
-		--fallback-dot-license --recursive .
+		--style=lisp \
+		--skip-existing \
+		./*/*.edn ./*.edn
+
+	reuse annotate \
+		--copyright="Jomco B.V."  \
+		--copyright="Topsector Logistiek" \
+		--license="AGPL-3.0-or-later" \
+		--contributor="Joost Diepenmaat <joost@jomco.nl>" \
+		--contributor="Remco van 't Veer <remco@jomco.nl>" \
+		--skip-unrecognised \
+		--skip-existing \
+		--recursive .
+
+watson:
+	clojure -M:watson scan -p deps.edn
