@@ -12,7 +12,7 @@ RUN apt-get install -y curl
 RUN mkdir /app
 WORKDIR /app
 COPY deps.edn /app/
-RUN clj -X:deps list # force download of deps so we can cache it if deps.edn hasn't changed
+RUN clojure -X:deps list # force download of deps so we can cache it if deps.edn hasn't changed
 
 COPY . /app/
 RUN make bdi-association-register.jar

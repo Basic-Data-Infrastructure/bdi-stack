@@ -21,13 +21,7 @@ test: test-config
 	clojure -M:test
 
 clean:
-	rm -rf */classes */target test-config/*pem
-
-#bdi-authorization-register.jar: clean
-#	mkdir classes
-#	clj -M -e "(compile 'org.bdinetwork.authorization-register.main)"
-#	clj -M:uberjar --target $@
-
+	rm -rf ./*/classes ./*/target test-config/*pem
 
 check: test lint outdated
 

@@ -11,7 +11,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 An implementation of a standalone Authorization Register (AR), as
 defined by the Basic Data Infrastructure Framework. This AR implements
-a the iSHARE Authorization Register API, plus an API for managing
+the iSHARE Authorization Register API, plus an API for managing
 authorization policies; delegation evidence is provided based on the
 policies present.
 
@@ -24,6 +24,8 @@ policies and a PolicyStore protocol for adding and deleting policies.
 **The software is for demo purposes only!**  It has not been audited
 for security flaws and is not suitable as a starting point to develop
 software.  Use at your own risk.
+
+## 
 
 ## Copying
 

@@ -20,16 +20,9 @@
          nl.jomco/envopts                               {:mvn/version "0.0.5"}}
  :paths ["src" "classes"]
 
-
  :aliases
- {:dev      {:extra-paths ["test" "dev"]}
-  :test     {:extra-deps {lambdaisland/kaocha              {:mvn/version "RELEASE"}}
-             :main-opts  ["-m" "kaocha.runner"]}
-  :lint     {:extra-deps {clj-kondo/clj-kondo {:mvn/version "RELEASE"}}
-             :main-opts  ["-m" "clj-kondo.main" "--lint" "src" "test"]}
+ {:dev      {:extra-paths ["dev"]}
   :uberjar  {:replace-deps  {uberdeps/uberdeps {:mvn/version "RELEASE"}}
              :replace-paths []
              :main-opts     ["-m" "uberdeps.uberjar"
-                             "--main-class" "org.bdinetwork.association_register.main"]}
-  :outdated {:replace-deps {com.github.liquidz/antq {:mvn/version "RELEASE"}}
-             :main-opts    ["-m" "antq.core"]}}}
+                             "--main-class" "org.bdinetwork.association_register.main"]}}}
