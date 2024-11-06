@@ -12,7 +12,16 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 Tools for developing clients and services in the [Basic Data
 Infrastructure](https://bdinetwork.org/) framework.
 
-The BDI Stack contains multiple components:
+The BDI Stack contains standalone services and libraries.
+
+## Services
+
+- [association-register](./association-register) - A minimal iSHARE /
+  BDI compatible Association Register
+- [authorization-register](./authorization-register) - A minimal
+  iSHARE / BDI compatible Authorization Register
+
+## Libraries
 
 - [clj-share-jwt](./clj-ishare-jwt) - A Clojure Library for creating
   and validating iSHARE compatible JWTs
@@ -20,10 +29,6 @@ The BDI Stack contains multiple components:
   accessing iSHARE compatible services
 - [service-provider-authentication](./service-provider-authentication) -
   Ring middleware for authenticating iSHARE compatible clients
-- [association-register](./association-register) - A minimal iSHARE /
-  BDI compatible Association Register
-- [authentication-register](./authentication-register) - A minimal
-  iSHARE / BDI compatible Authentication Register
 
 ## ⚠ DISCLAIMER ⚠
 
