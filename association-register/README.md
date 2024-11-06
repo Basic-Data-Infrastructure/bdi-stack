@@ -7,7 +7,7 @@ SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
 SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
-# BDI Association Registry
+# BDI Association Register
 
 ## ⚠ DISCLAIMER ⚠
 
@@ -49,10 +49,10 @@ The implemented endpoints are:
 
 - `POST /connect/token` -- Access Token
 - `GET /parties/{party_id}` -- Single party info
-- `GET /trusted_list` -- list of trusted certificate authorities.
+- `GET /trusted_list` -- Trusted certificate authorities
 
 The ASR API is described as the "iSHARE Satellite Role" at [the iSHARE
-developer documentation](https://dev.ishare.eu/common/token.html) .
+developer documentation](https://dev.ishare.eu/common/token.html).
 
 The ASR can be run as a standalone Java jar, or as a docker container
 and can be statically configured using a configuration file. The ASR

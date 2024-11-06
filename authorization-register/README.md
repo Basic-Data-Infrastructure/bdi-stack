@@ -9,16 +9,6 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 # BDI Authorization Register
 
-An implementation of a standalone Authorization Register (AR), as
-defined by the Basic Data Infrastructure Framework. This AR implements
-the iSHARE Authorization Register API, plus an API for managing
-authorization policies; delegation evidence is provided based on the
-policies present.
-
-Policies are kept in an in-memory database (durability of policies is
-work-in-progress), The AR provides a PolicyView protocol for quering
-policies and a PolicyStore protocol for adding and deleting policies.
-
 ## ⚠ DISCLAIMER ⚠
 
 **The software is for demo purposes only!**  It has not been audited
@@ -38,11 +28,29 @@ demonstrations. It can also make it difficult to create automated
 tests for edge cases (when the test case depends on very specific
 responses from services).
 
-BDI Services often rely on an Authorization Register. The BDI AR is a
-standalone service that provides delegation evidence based on policies
-inserted via its HTTP API.  The AR can be run locally on a developer's
-hardware, in a CI environment or -- after security testing -- it can be
-used as an Authorization Register for small associations.
+BDI Services often rely on an Authorization Register.
+
+## The BDI Authorization Register
+
+This project, the BDI Authorization Register, is a standalone service
+that provides delegation evidence based on policies inserted via its
+HTTP API.  The AR can be run locally on a developer's hardware, in a
+CI environment or -- after security testing -- it can be used as an
+Authorization Register for small associations.
+
+This AR implements the iSHARE Authorization Register API, plus an API
+for managing authorization policies; delegation evidence is provided
+based on the policies present.
+
+Policies are kept in an in-memory database (durability of policies is
+work-in-progress), The AR provides a PolicyView protocol for quering
+policies and a PolicyStore protocol for adding and deleting policies.
+
+The implemented endpoints are:
+
+- `POST /connect/token` -- [Access token](https://dev.ishare.eu/ishare-satellite-role/access-token-m2m)
+- `POST /delegation` -- [Delegation evidence](https://dev.ishare.eu/authorisation-registry-role/delegation-endpoint)
+- `POST /policy` -- Insert a new policy based on the given delegation evidence
 
 ## Deployment
 

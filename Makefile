@@ -55,7 +55,7 @@ watson:
 %.jar:
 	$(MAKE) -C $(dir $@) $(notdir $@)
 
-bdi-association-register-%.zip: association-register/bdi-association-register.jar association-register//README.md LICENSES
+bdi-association-register-%.zip: association-register/bdi-association-register.jar association-register/README.md LICENSES
 	rm -rf "$(basename $@)"
 	mkdir -p "$(basename $@)"
 	cp -r $^ "$(basename $@)/"
