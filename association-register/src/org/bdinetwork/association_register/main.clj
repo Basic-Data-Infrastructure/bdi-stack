@@ -48,7 +48,8 @@
       (throw (ex-info (str "Error in environment configuration\n"
                            (envopts/errs-description errs) "\n"
                            "Available environment options:\n"
-                           (envopts/specs-description opt-specs))
+                           (envopts/specs-description opt-specs)
+                           "\n")
                       {:config config
                        :errs errs}))
       config)))
@@ -59,5 +60,4 @@
 
 (defn -main [& _]
   (with-resources [#_:clj-kondo/ignore system (start env)]
-    (wait-until-interrupted)
-    (prn "interrupted!")))
+    (wait-until-interrupted)))

@@ -21,7 +21,7 @@ test: test-config
 	clojure -M:test
 
 clean:
-	rm -rf ./*/classes ./*/target test-config/*pem
+	rm -rf ./*/classes ./*/target test-config/*pem ./*/*.jar ./*.zip
 
 check: test lint outdated
 
@@ -51,3 +51,18 @@ copyright-headers:
 
 watson:
 	clojure -M:watson scan -p deps.edn
+
+%.jar:
+	$(MAKE) -C $(dir $@) $(notdir $@)
+
+bdi-association-register-%.zip: association-register/bdi-association-register.jar association-register/README.md LICENSES
+	rm -rf "$(basename $@)"
+	mkdir -p "$(basename $@)"
+	cp -r $^ "$(basename $@)/"
+	zip -r $@ "$(basename $@)"
+
+bdi-authorization-register-%.zip: authorization-register/bdi-authorization-register.jar authorization-register/README.md LICENSES
+	rm -rf "$(basename $@)"
+	mkdir -p "$(basename $@)"
+	cp -r $^ "$(basename $@)/"
+	zip -r $@ "$(basename $@)"

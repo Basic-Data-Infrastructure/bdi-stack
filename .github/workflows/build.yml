@@ -1,0 +1,72 @@
+# SPDX-FileCopyrightText: 2024 Jomco B.V.
+# SPDX-FileCopyrightText: 2024 Topsector Logistiek
+# SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
+# SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+name: Build artifacts
+on:
+  push
+
+jobs:
+  create_release:
+    if: startsWith(github.ref, 'refs/tags/v0') || startsWith(github.ref, 'refs/tags/v1')
+    runs-on: ubuntu-latest
+    permissions:
+      # needed to create releases
+      contents: write   
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: "~/.m2"
+          key: "deps-${{ hashFiles('deps.edn') }}"
+          restore_keys: "deps-"
+
+      - name: Install clj runtime
+        run: |
+          cd "$HOME"
+          curl -L -O https://github.com/clojure/brew-install/releases/latest/download/posix-install.sh
+          chmod +x posix-install.sh
+          sudo ./posix-install.sh
+
+      - name: version
+        # need some shenanigans to get simple tag name from repo/tags/tagname ref
+        run: echo "version=$(echo $GITHUB_REF | cut -d / -f 3)" >> $GITHUB_OUTPUT
+        id: version
+
+      - name: release
+        uses: actions/create-release@v1
+        id: create_release
+        with:
+          draft: false
+          prerelease: false
+          release_name: ${{ steps.version.outputs.version }}
+          tag_name: ${{ github.ref }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Build artifacs
+        run: make bdi-association-register-${{ steps.version.outputs.version }}.zip bdi-authorization-register-${{ steps.version.outputs.version }}.zip
+
+      - name: Upload association-register
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: bdi-association-register-${{ steps.version.outputs.version }}.zip
+          asset_name: bdi-association-register-${{ steps.version.outputs.version }}.zip
+          asset_content_type: application/octet-stream
+
+      - name: Upload association-register
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: bdi-authorization-register-${{ steps.version.outputs.version }}.zip
+          asset_name: bdi-authorization-register-${{ steps.version.outputs.version }}.zip
+          asset_content_type: application/octet-stream

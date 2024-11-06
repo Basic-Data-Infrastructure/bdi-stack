@@ -8,9 +8,9 @@
 .PHONY: clean
 
 clean:
-	rm -rf ./classes ./target ./bdi-association-register.jar
+	rm -rf ./classes ./target ./bdi-authorization-register.jar
 
-bdi-association-register.jar: clean
+bdi-authorization-register.jar: clean
 	mkdir classes
-	clojure -M -e "(compile 'org.bdinetwork.association-register.main)"
+	clojure -M -e "(compile 'org.bdinetwork.authorization-register.main)"
 	clojure -M:uberjar --target $@
