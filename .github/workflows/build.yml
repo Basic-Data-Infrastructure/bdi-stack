@@ -80,14 +80,14 @@ jobs:
           password: ${{ secrets.ACR_PASSWORD }}
 
       - name: Build and Push Association Register to ACR
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6.9.0
         with:
           push: true
           context: "{{defaultContext}}:association-register"
           file: "{{context}}/association-register.dockerfile"
           tags: "${{ vars.ACR_HOSTNAME }}/association-register:${{ steps.version.outputs.version }}"
       - name: Build and Push Authorization Register to ACR
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6.9.0
         with:
           push: true
           context: "{{defaultContext}}:authorization-register"
