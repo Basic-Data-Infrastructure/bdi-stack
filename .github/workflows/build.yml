@@ -70,3 +70,28 @@ jobs:
           asset_path: bdi-authorization-register-${{ steps.version.outputs.version }}.zip
           asset_name: bdi-authorization-register-${{ steps.version.outputs.version }}.zip
           asset_content_type: application/octet-stream
+
+      # publish to docker hub
+      - name: Docker Login
+        uses: azure/docker-login@v2
+        with:
+          login-server: ${{ vars.ACR_HOSTNAME }}
+          username: ${{ vars.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build and Push Association Register to ACR
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          file: "association-register.dockerfile"
+          tags: |
+            ${{ vars.ACR_HOSTNAME }}/association-register:${{ steps.version.outputs.version }}
+            ${{ vars.ACR_HOSTNAME }}/association-register:latest
+      - name: Build and Push Authorization Register to ACR
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          file: "authorization-register.dockerfile"
+          tags: |
+            ${{ vars.ACR_HOSTNAME }}/authorization-register:${{ steps.version.outputs.version }}
+            ${{ vars.ACR_HOSTNAME }}/authorization-register:latest
