@@ -84,10 +84,14 @@ jobs:
         with:
           push: true
           file: "association-register.dockerfile"
-          tags: "${{ vars.ACR_HOSTNAME }}/association-register:${{ steps.version.outputs.version }}"
+          tags: |
+            ${{ vars.ACR_HOSTNAME }}/association-register:${{ steps.version.outputs.version }}
+            ${{ vars.ACR_HOSTNAME }}/association-register:latest
       - name: Build and Push Authorization Register to ACR
         uses: docker/build-push-action@v6.9.0
         with:
           push: true
           file: "authorization-register.dockerfile"
-          tags: "${{ vars.ACR_HOSTNAME }}/authorization-register:${{ steps.version.outputs.version }}"
+          tags: |
+            ${{ vars.ACR_HOSTNAME }}/authorization-register:${{ steps.version.outputs.version }}
+            ${{ vars.ACR_HOSTNAME }}/authorization-register:latest
