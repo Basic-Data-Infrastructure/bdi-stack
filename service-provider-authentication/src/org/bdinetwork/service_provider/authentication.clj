@@ -56,7 +56,7 @@
 
 (defn check-access-token-request
   [{:keys [request-method]
-    {:strs [grant_type scope client_id client_assertion_type]} :params}]
+    {:strs [grant_type scope client_id client_assertion_type]} :form-params}]
   (cond
     (not= :post request-method)
     {:status status/method-not-allowed}
@@ -79,7 +79,7 @@
 
 (defn client-assertion-response
   [{:keys                                [association]
-    {:strs [client_id client_assertion]} :params :as request}
+    {:strs [client_id client_assertion]} :form-params :as request}
    {:keys [private-key server-id jti-cache-atom access-token-ttl-seconds]}]
 
   (or (check-access-token-request request)
@@ -153,8 +153,8 @@
   {:pre [(:access-token-ttl-seconds opts)]}
   (let [jti-cache-atom (mk-jti-cache-atom)]
     (fn client-assertion-wrapper
-      [{:keys [uri] :as request}]
-      (if (= "/connect/token" uri)
+      [{:keys [path-info uri] :as request}]
+      (if (= "/connect/token" (or path-info uri))
         (client-assertion-response request (assoc opts :jti-cache-atom jti-cache-atom))
         (f request)))))
 
