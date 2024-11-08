@@ -89,14 +89,14 @@
 
 (deftest incorrect-auth
   (doseq [[res req] [[{:status 405}
-                      {:uri "/connect/token"}]
+                      {:path-info "/connect/token"}]
                      ;; TODO add more examples here
                      ]]
     (is (= res (handler req)))))
 
 (deftest correct-auth
   (let [res (handler {:request-method :get
-                      :uri "/service"})]
+                      :path-info      "/service"})]
     (is (= status/forbidden (:status res))
         "Unauthenticated request"))
 
@@ -106,7 +106,7 @@
     (is (some? token))
 
     (let [res (handler (-> {:request-method :get
-                            :uri "/service"}
+                            :path-info      "/service"}
                            (token-request token)))]
       (is (= status/ok (:status res))
           "Authenticated request")

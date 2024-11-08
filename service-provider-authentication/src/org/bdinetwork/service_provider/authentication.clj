@@ -153,8 +153,8 @@
   {:pre [(:access-token-ttl-seconds opts)]}
   (let [jti-cache-atom (mk-jti-cache-atom)]
     (fn client-assertion-wrapper
-      [{:keys [uri] :as request}]
-      (if (= "/connect/token" uri)
+      [{:keys [path-info uri] :as request}]
+      (if (= "/connect/token" (or path-info uri))
         (client-assertion-response request (assoc opts :jti-cache-atom jti-cache-atom))
         (f request)))))
 
