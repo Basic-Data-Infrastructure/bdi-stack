@@ -60,6 +60,14 @@ does not provide a user interface and has no management API.
 
 ## Deployment
 
+### Docker image
+
+We publish docker images for every release:
+
+```sh
+docker run bdinetwork.azurecr.io/association-register
+```
+
 ### Standalone jar on the JVM
 
 You can download the latest association-register zip bundle from the
