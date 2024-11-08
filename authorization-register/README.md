@@ -54,6 +54,14 @@ The implemented endpoints are:
 
 ## Deployment
 
+### Docker image
+
+We publish docker images for every release:
+
+```sh
+docker run bdinetwork.azurecr.io/authorization-register
+```
+
 ### Standalone jar on the JVM
 
 You can download the latest authorization-register zip bundle from the
