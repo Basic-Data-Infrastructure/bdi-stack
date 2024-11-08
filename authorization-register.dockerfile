@@ -16,7 +16,6 @@ RUN make bdi-authorization-register.jar
 
 FROM gcr.io/distroless/java21-debian12
 COPY --from=builder /bdi-stack/authorization-register/bdi-authorization-register.jar /bdi-authorization-register.jar
-COPY --from=builder /bdi-stack/authorization-register/logback.xml /logback.xml
 
 WORKDIR /
 ENTRYPOINT ["java", "-jar", "bdi-authorization-register.jar"]
