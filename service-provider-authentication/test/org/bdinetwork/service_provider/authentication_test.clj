@@ -75,8 +75,8 @@
   []
   {:request-method :post
 
-   :uri         "/connect/token"
-   :params      {"client_assertion"      (mk-client-assertion)
+   :path-info   "/connect/token"
+   :form-params {"client_assertion"      (mk-client-assertion)
                  "client_id"             client-id
                  "grant_type"            "client_credentials"
                  "client_assertion_type" "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
