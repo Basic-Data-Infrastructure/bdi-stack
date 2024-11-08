@@ -76,7 +76,7 @@ jobs:
         uses: azure/docker-login@v2
         with:
           login-server: ${{ vars.ACR_HOSTNAME }}
-          username: ${{ secrets.ACR_USERNAME }}
+          username: ${{ vars.ACR_USERNAME }}
           password: ${{ secrets.ACR_PASSWORD }}
 
       - name: Build and Push Association Register to ACR
@@ -84,12 +84,12 @@ jobs:
         with:
           push: true
           context: "{{defaultContext}}:association-register"
-          file: "{{context}}/association-register.dockerfile"
+          file: "{{defaultContext}}/association-register.dockerfile"
           tags: "${{ vars.ACR_HOSTNAME }}/association-register:${{ steps.version.outputs.version }}"
       - name: Build and Push Authorization Register to ACR
         uses: docker/build-push-action@v6.9.0
         with:
           push: true
           context: "{{defaultContext}}:authorization-register"
-          file: "{{context}}/authorization-register.dockerfile"
+          file: "{{defaultContext}}/authorization-register.dockerfile"
           tags: "${{ vars.ACR_HOSTNAME }}/authorization-register:${{ steps.version.outputs.version }}"
