@@ -30,12 +30,19 @@
   [lib version]
   (b/create-basis {:project (versioned-edn lib version)}))
 
+(defn scm
+  [lib version]
+  {:tag version
+   :url "https://github.com/Basic-Data-Infrastructure/bdi-stack"
+   :dir lib})
+
 (defn jar
   [{:keys [lib version deploy?]}]
   (b/write-pom {:class-dir (class-dir lib)
                 :lib       lib
                 :version   (name version)
                 :basis     (basis lib (name version))
+                :scm       (scm (name lib) (name version))
                 :pom-data  [[:organization
                              [:name "BDI Network"]
                              [:url "https://bdinetwork.org"]]
@@ -48,10 +55,10 @@
   (b/jar {:class-dir (class-dir lib)
           :jar-file  (jar-file lib)})
   (when deploy?
-    (dd/deploy {:installer :remote
-                :pom-file       (str (class-dir lib)
-                                     "/META-INF/maven/"
-                                     (str lib)
-                                     "/pom.xml")
-                :artifact (jar-file lib)
+    (dd/deploy {:installer     :remote
+                :pom-file      (str (class-dir lib)
+                                    "/META-INF/maven/"
+                                    (str lib)
+                                    "/pom.xml")
+                :artifact      (jar-file lib)
                 :sign-release? false})))
