@@ -95,3 +95,11 @@ jobs:
           tags: |
             ${{ vars.ACR_HOSTNAME }}/authorization-register:${{ steps.version.outputs.version }}
             ${{ vars.ACR_HOSTNAME }}/authorization-register:latest
+
+
+      # publish libs to clojars
+      - name: Build and push clj-ishare-jwt to clojars
+        run: clojure -T:build jar :lib org.bdinetwork/clj-ishare-jwt :version ${{ steps.version.outputs.version}} :deploy? true
+
+      - name: Build and push clj-ishare-client to clojars
+        run: clojure -T:build jar :lib org.bdinetwork/clj-ishare-client :version ${{ steps.version.outputs.version}} :deploy? true
