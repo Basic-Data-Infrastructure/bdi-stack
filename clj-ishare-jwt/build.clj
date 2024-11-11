@@ -12,7 +12,7 @@
 (def lib 'org.bdinetwork/ishare-jwt)
 (def version (format "0.1.%s" (b/git-count-revs nil)))
 
-(def jar-file (format "target/%s-%s.jar" (name lib) version))
+(def jar-file (format "%s.jar" (name lib)))
 (def class-dir "target/classes")
 
 ;; delay to defer side effects (artifact downloads)
