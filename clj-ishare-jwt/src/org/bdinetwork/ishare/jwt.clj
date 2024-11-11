@@ -7,9 +7,9 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.ishare.jwt
-  "Create, sign and unsign iSHARE JWTs
+  "Create, sign and unsign (validate) iSHARE JWTs
 
-  See also: https://dev.ishareworks.org/reference/jwt.html"
+  See also: https://dev.ishare.eu/reference/ishare-jwt"
   (:require [buddy.sign.jwt :as jwt]
             [buddy.core.keys :as keys]
             [clojure.spec.alpha :as s])
@@ -176,20 +176,15 @@
 
 (s/def ::jti (s/and string? seq))
 
-(defn expires-in-30-seconds?
+(defn- expires-in-30-seconds?
   [{:keys [iat exp]}]
   (= 30 (- exp iat)))
 
-(defn nbf-equal-to-iat?
+(defn- nbf-equal-to-iat?
   [{:keys [nbf iat] :as payload}]
   ;; nbf is optional, only do the check if nbf is present
   (or (not (contains? payload :nbf))
       (= nbf iat)))
-
-;; TODO: This is only the case for client-assertions
-(defn iss-equal-to-sub?
-  [{:keys [iss sub]}]
-  (= iss sub))
 
 (s/def ::payload
   (s/and (s/keys :req-un [::iss ::sub ::aud ::jti ::iat ::exp]
@@ -197,7 +192,16 @@
          expires-in-30-seconds?
          nbf-equal-to-iat?))
 
+(defn- iss-equal-to-sub?
+  [{:keys [iss sub]}]
+  (= iss sub))
+
+
+(s/def ::client-assertion-payload
+  (s/and ::payload
+         iss-equal-to-sub?))
 
+
 ;; Parsing and validating iSHARE JWTs
 
 (defn- cert-reader
@@ -210,6 +214,7 @@
                       "\n-----END CERTIFICATE-----\n")))
 
 (defn decode-header
+  "Return header info from a signed JWT. Does not validate."
   [token]
   (check! ::header (jwt/decode-header token)))
 
@@ -218,16 +223,32 @@
   [x5c]
   (keys/public-key (cert-reader (first x5c))))
 
-(defn unsign-token
-  "Parse a signed token. Returns parsed data or raises exception.
-
-  Raises exception when token is not a valid iSHARE JWT for any
-  reason, including expiration."
+(defn- unsign*
   [token]
   (check! ::signed-token token)
   (let [{:keys [x5c]} (decode-header token)
         pkey          (x5c->first-public-key x5c)]
-    (check! ::payload (jwt/unsign token pkey {:alg :rs256 :leeway 5}))))
+    (jwt/unsign token pkey {:alg :rs256 :leeway 5})))
+
+(defn unsign-token
+  "Parse a signed token. Returns parsed data or raises exception.
+
+  Raises an exception when token is not a valid iSHARE JWT for any
+  reason, including expiration.
+
+  Does not check revocation status of certificates."
+  [token]
+  (check! ::payload (unsign* token)))
+
+(defn unsign-client-assertion
+  "Parse a signed client assertion. Returns parsed data or raises exception.
+
+  Raises an exception when client-assertion is not valid for any
+  reason including expiration.
+
+  Does not check revocation status of certificates."
+  [client-assertion]
+  (check! ::client-assertion-payload (unsign* client-assertion)))
 
 
 ;; Creating iSHARE JWTs
@@ -238,6 +259,20 @@
   (.getEpochSecond (Instant/now)))
 
 (defn make-jwt
+  "Generate JWT with provided `claims`, signed with `private-key`.
+
+  The JWT header is set with :alg as RS256, :typ \"JWT\" and `:x5c`
+  from `x5c` (a vector of certificate strings). The first certificate
+  in `x5c` should correspond to `private-key`.
+
+  A few claims are generated if not provided:
+
+  - `:iat` -- the current time
+  - `:exp` -- iat + 30 seconds
+  - `:jti` -- a random UUID
+  - `:nbf` -- iat
+
+  https://dev.ishare.eu/reference/ishare-jwt"
   [{:keys [iat iss sub aud]
     :or   {iat (seconds-since-unix-epoch)}
     :as   claims}
@@ -263,7 +298,9 @@
                       :typ "JWT"}}))
 
 (defn make-client-assertion
-  "Create a signed client assertion for requesting an access token."
+  "Create a signed client assertion for requesting an access token.
+
+  See https://dev.ishare.eu/reference/ishare-jwt"
   [{:ishare/keys [client-id server-id x5c private-key]}]
   {:pre [client-id server-id x5c private-key]}
   (make-jwt {:iss client-id, :sub client-id, :aud server-id} private-key x5c))
