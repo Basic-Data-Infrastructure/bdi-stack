@@ -7,7 +7,8 @@
 
 (ns build-lib
   (:require [clojure.tools.build.api :as b]
-            [deps-deploy.deps-deploy :as dd]))
+            [deps-deploy.deps-deploy :as dd]
+            [clojure.tools.deps.util.io :as io]))
 
 (defn jar-file
   [lib]
@@ -17,16 +18,24 @@
   [lib]
   (str (name lib) "/target/classes"))
 
+(defn versioned-edn
+  "Read a deps.edn file, replacing all :local/root deps with
+  a :mvn/version of `version`"
+  [lib version]
+  (-> (str (name lib) "/" "deps.edn")
+      (io/slurp-edn)
+      (update :deps update-vals #(if (:local/root %) {:mvn/version version} %))))
+
 (defn basis
-  [lib]
-  (b/create-basis {:project (str (name lib) "/" "deps.edn")}))
+  [lib version]
+  (b/create-basis {:project (versioned-edn lib version)}))
 
 (defn jar
   [{:keys [lib version deploy?]}]
   (b/write-pom {:class-dir (class-dir lib)
                 :lib       lib
                 :version   (name version)
-                :basis     (basis lib)
+                :basis     (basis lib (name version))
                 :pom-data  [[:organization
                              [:name "BDI Network"]
                              [:url "https://bdinetwork.org"]]
