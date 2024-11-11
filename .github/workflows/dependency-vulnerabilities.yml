@@ -26,11 +26,7 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/cache@v4
       with:
-        path: |
-          ./.m2
-          ./bin
-          ./lib
-          
+        path: "~/.m2"
         # store as today's cache
         key: "nvd-clojure-${{ steps.date.outputs.date }}"
         # if today's cache does not yet exist, fetch from whatever iss

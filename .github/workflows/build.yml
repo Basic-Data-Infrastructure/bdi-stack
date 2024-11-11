@@ -23,7 +23,7 @@ jobs:
         with:
           path: "~/.m2"
           key: "deps-${{ hashFiles('deps.edn') }}"
-          restore_keys: "deps-"
+          restore-keys: "deps-"
 
       - name: Install clj runtime
         run: |
