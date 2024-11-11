@@ -13,8 +13,9 @@
            :main-opts  ["-m" "kaocha.runner"]}
   :lint   {:extra-deps {clj-kondo/clj-kondo {:mvn/version "RELEASE"}}
            :main-opts  ["-m" "clj-kondo.main"]}
-  :build  {:deps       {io.github.clojure/tools.build {:mvn/version "0.10.5"}}
-           :ns-default build}
+  :build  {:deps       {io.github.clojure/tools.build {:mvn/version "0.10.5"}
+                        slipset/deps-deploy           {:mvn/version "RELEASE"}}
+           :ns-default build-lib}
   :watson {:replace-deps
            {io.github.clj-holmes/clj-watson
             {:git/tag "v6.0.0" :git/sha "cb02879"}}

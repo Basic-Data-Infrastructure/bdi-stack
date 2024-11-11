@@ -1,0 +1,17 @@
+;;; SPDX-FileCopyrightText: 2024 Jomco B.V.
+;;; SPDX-FileCopyrightText: 2024 Topsector Logistiek
+;;; SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
+;;; SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
+;;;
+;;; SPDX-License-Identifier: AGPL-3.0-or-later
+
+;; Since this git repository contains multiple Clojure libs, this file
+;; is neccessary for cljdoc.org to find the location of per-lib
+;; documentation.
+;;
+;; We only need to provide the location of the Markdown files here,
+;; since the inline documentation (from the source docstrings) is read
+;; directly from the published jars.
+
+{org.bdinetwork/clj-ishare-jwt    {:cljdoc.doc/tree [["README" {:file "clj-ishare-jwt/README.md"}]]}
+ org.bdinetwork/clj-ishare-client {:cljdoc.doc/tree [["README" {:file "clj-ishare-client/README.md"}]]}}
