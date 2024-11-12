@@ -10,7 +10,7 @@
             [nl.jomco.resources :refer [with-resources]]
             [org.bdinetwork.ishare.client :as client]
             [buddy.core.keys :as keys]
-            [org.bdinetwork.service-provider.in-memory-association :refer [read-source]]
+            [org.bdinetwork.ring.in-memory-association :refer [read-source]]
             [clojure.test :refer [deftest is]]
             [nl.jomco.http-status-codes :as http-status]))
 

@@ -27,7 +27,7 @@ The BDI Stack contains standalone services and libraries.
   and validating iSHARE compatible JWTs
 - [clj-share-client](./clj-ishare-client) - A Clojure Library for
   accessing iSHARE compatible services
-- [service-provider-authentication](./service-provider-authentication) -
+- [clj-ring-middleware](./clj-ring-middleware) -
   Ring middleware for authenticating iSHARE compatible clients
 
 ## ⚠ DISCLAIMER ⚠

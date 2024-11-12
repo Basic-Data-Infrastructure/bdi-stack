@@ -5,8 +5,8 @@
 ;;;
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(ns org.bdinetwork.service-provider.ishare-validator-test
-  (:require [org.bdinetwork.service-provider.ishare-validator :as sut]
+(ns org.bdinetwork.ring.ishare-validator-test
+  (:require [org.bdinetwork.ring.ishare-validator :as sut]
             [clojure.test :refer [deftest is]]))
 
 (deftest smoke-test

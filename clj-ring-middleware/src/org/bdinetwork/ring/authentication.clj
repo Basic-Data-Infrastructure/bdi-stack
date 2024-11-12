@@ -5,13 +5,13 @@
 ;;;
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(ns org.bdinetwork.service-provider.authentication
+(ns org.bdinetwork.ring.authentication
   (:require [clojure.core.cache :as cache]
             [clojure.string :as string]
             [nl.jomco.http-status-codes :as status]
-            [org.bdinetwork.service-provider.authentication.access-token :as access-token]
-            [org.bdinetwork.service-provider.authentication.x5c :as x5c]
-            [org.bdinetwork.service-provider.association :as association]
+            [org.bdinetwork.ring.authentication.access-token :as access-token]
+            [org.bdinetwork.ring.authentication.x5c :as x5c]
+            [org.bdinetwork.ring.association :as association]
             [org.bdinetwork.ishare.jwt :as ishare.jwt]))
 
 ;; Client assertions may only be used once. We keep track of the
@@ -163,7 +163,7 @@
   `ring.middleware.json/wrap-json-response` and
   `ring.middleware.params/wrap-params` to function and expects an
   `association` on the request which implements
-  `org.bdinetwork.service-provider.association/Association`."
+  `org.bdinetwork.ring.association/Association`."
   [f {:keys [private-key server-id] :as opts}]
   {:pre [private-key server-id]}
   (-> f

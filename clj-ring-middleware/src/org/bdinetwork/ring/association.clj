@@ -5,7 +5,7 @@
 ;;;
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(ns org.bdinetwork.service-provider.association)
+(ns org.bdinetwork.ring.association)
 
 (defprotocol Association
   "Provides info on registered parties and root CAs in an association"

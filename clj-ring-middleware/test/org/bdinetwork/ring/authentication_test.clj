@@ -5,13 +5,13 @@
 ;;;
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(ns org.bdinetwork.service-provider.authentication-test
+(ns org.bdinetwork.ring.authentication-test
   (:require [buddy.core.keys :as keys]
             [clojure.string :as string]
             [clojure.test :refer [deftest is]]
             [nl.jomco.http-status-codes :as status]
-            [org.bdinetwork.service-provider.authentication :as auth]
-            [org.bdinetwork.service-provider.in-memory-association :refer [in-memory-association read-source]]
+            [org.bdinetwork.ring.authentication :as auth]
+            [org.bdinetwork.ring.in-memory-association :refer [in-memory-association read-source]]
             [org.bdinetwork.ishare.jwt :as jwt]))
 
 (deftest jti

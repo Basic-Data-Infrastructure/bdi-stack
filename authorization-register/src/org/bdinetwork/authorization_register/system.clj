@@ -9,7 +9,7 @@
   (:require [nl.jomco.resources :refer [mk-system Resource]]
             [org.bdinetwork.authorization-register.datascript-policies :refer [file-backed-policies]]
             [org.bdinetwork.authorization-register.web :as web]
-            [org.bdinetwork.service-provider.remote-association :refer [remote-association]]
+            [org.bdinetwork.ring.remote-association :refer [remote-association]]
             [ring.adapter.jetty :refer [run-jetty]]
             [clojure.string :as string]))
 

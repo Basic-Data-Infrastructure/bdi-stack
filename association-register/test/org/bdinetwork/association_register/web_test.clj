@@ -9,7 +9,7 @@
   (:require [org.bdinetwork.association-register.web :as web]
             [org.bdinetwork.association-register.system :as system]
             [buddy.core.keys :as keys]
-            [org.bdinetwork.service-provider.in-memory-association :refer [in-memory-association read-source]]
+            [org.bdinetwork.ring.in-memory-association :refer [in-memory-association read-source]]
             [clojure.test :refer [deftest is]]
             [clojure.string :as string]
             [nl.jomco.http-status-codes :as http-status]))

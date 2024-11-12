@@ -5,12 +5,12 @@
 ;;;
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(ns org.bdinetwork.service-provider.in-memory-association
-  (:require [org.bdinetwork.service-provider.ishare-validator :refer [parse-yaml validate]]
-            [org.bdinetwork.service-provider.authentication.x5c :refer [fingerprint subject-name]]
+(ns org.bdinetwork.ring.in-memory-association
+  (:require [org.bdinetwork.ring.ishare-validator :refer [parse-yaml validate]]
+            [org.bdinetwork.ring.authentication.x5c :refer [fingerprint subject-name]]
             [buddy.core.codecs :as codecs]
             [buddy.core.certificates :as certificates]
-            [org.bdinetwork.service-provider.association :refer [Association]]))
+            [org.bdinetwork.ring.association :refer [Association]]))
 
 (defrecord InMemoryAssociation [source]
   Association
