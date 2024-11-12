@@ -109,3 +109,9 @@ jobs:
           CLOJARS_USERNAME: ${{ vars.CLOJARS_USERNAME }}
           CLOJARS_PASSWORD: ${{ secrets.CLOJARS_PASSWORD }}
         run: clojure -T:build jar :lib org.bdinetwork/clj-ishare-client :version ${{ steps.version.outputs.version}} :deploy? true
+
+      - name: Build and push clj-ring-middleware to clojars
+        env:
+          CLOJARS_USERNAME: ${{ vars.CLOJARS_USERNAME }}
+          CLOJARS_PASSWORD: ${{ secrets.CLOJARS_PASSWORD }}
+        run: clojure -T:build jar :lib org.bdinetwork/clj-ring-middleware :version ${{ steps.version.outputs.version}} :deploy? true
