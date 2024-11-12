@@ -13,5 +13,6 @@
 ;; since the inline documentation (from the source docstrings) is read
 ;; directly from the published jars.
 
-{org.bdinetwork/clj-ishare-jwt    {:cljdoc.doc/tree [["README" {:file "clj-ishare-jwt/README.md"}]]}
- org.bdinetwork/clj-ishare-client {:cljdoc.doc/tree [["README" {:file "clj-ishare-client/README.md"}]]}}
+{org.bdinetwork/clj-ishare-jwt      {:cljdoc.doc/tree [["README" {:file "clj-ishare-jwt/README.md"}]]}
+ org.bdinetwork/clj-ishare-client   {:cljdoc.doc/tree [["README" {:file "clj-ishare-client/README.md"}]]}
+ org.bdinetwork/clj-ring-middleware {:cljdoc.doc/tree [["README" {:file "clj-ring-middleware/README.md"}]]}}
