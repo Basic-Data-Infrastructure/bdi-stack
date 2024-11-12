@@ -7,7 +7,7 @@
 
 (ns org.bdinetwork.association-register.main
   (:require [org.bdinetwork.association-register.system :as system]
-            [org.bdinetwork.service-provider.in-memory-association :refer [read-source]]
+            [org.bdinetwork.ring.in-memory-association :refer [read-source]]
             [buddy.core.keys :as keys]
             [nl.jomco.resources :refer [with-resources wait-until-interrupted]]
             [nl.jomco.envopts :as envopts]

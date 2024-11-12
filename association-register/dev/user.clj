@@ -9,7 +9,7 @@
   (:require [nl.jomco.resources :refer [defresource close]]
             [org.bdinetwork.association-register.system :as system]
             [org.bdinetwork.ishare.client :as client]
-            [org.bdinetwork.service-provider.in-memory-association :refer [in-memory-association]]
+            [org.bdinetwork.ring.in-memory-association :refer [in-memory-association]]
             [buddy.core.keys :as keys]
             [nl.jomco.resources :refer [defresource close]]))
 

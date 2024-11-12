@@ -7,9 +7,9 @@ SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
 SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
-# BDI Service Provider -- Authentication
+# BDI Ring Middleware
 
-Clojure middleware for implementing the machine-to-machine
+Clojure/Ring middleware for implementing the machine-to-machine
 authentication mechanisms of a BDI service provider.
 
 Also provides an `Association` clojure protocol as the basic data

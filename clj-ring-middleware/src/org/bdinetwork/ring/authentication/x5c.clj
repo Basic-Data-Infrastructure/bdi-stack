@@ -5,7 +5,7 @@
 ;;;
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(ns org.bdinetwork.service-provider.authentication.x5c
+(ns org.bdinetwork.ring.authentication.x5c
   "Validate x5c chains"
   (:require [buddy.core.codecs :as codecs]
             [buddy.core.hash :as hash]

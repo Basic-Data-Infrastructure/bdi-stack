@@ -11,8 +11,8 @@
             [ring.middleware.params :refer [wrap-params]]
             [ring.util.response :refer [not-found]]
             [nl.jomco.http-status-codes :as http-status]
-            [org.bdinetwork.service-provider.association :as association]
-            [org.bdinetwork.service-provider.authentication :as authentication]
+            [org.bdinetwork.ring.association :as association]
+            [org.bdinetwork.ring.authentication :as authentication]
             [org.bdinetwork.ishare.jwt :as ishare.jwt]
             [clojure.tools.logging :as log]))
 

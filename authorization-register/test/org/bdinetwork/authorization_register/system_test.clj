@@ -8,7 +8,7 @@
 (ns org.bdinetwork.authorization-register.system-test
   (:require [org.bdinetwork.authorization-register.system :as system]
             [org.bdinetwork.association-register.system :as association]
-            [org.bdinetwork.service-provider.in-memory-association :refer [read-source]]
+            [org.bdinetwork.ring.in-memory-association :refer [read-source]]
             [org.bdinetwork.ishare.client :as client]
             [nl.jomco.http-status-codes :as http-status]
             [buddy.core.keys :as keys]

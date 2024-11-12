@@ -5,11 +5,11 @@
 ;;;
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(ns org.bdinetwork.service-provider.authentication.x5c-test
+(ns org.bdinetwork.ring.authentication.x5c-test
   (:require [clojure.string :as string]
             [clojure.test :refer [deftest is]]
-            [org.bdinetwork.service-provider.authentication.x5c :as x5c]
-            [org.bdinetwork.service-provider.in-memory-association :refer [in-memory-association read-source]]
+            [org.bdinetwork.ring.authentication.x5c :as x5c]
+            [org.bdinetwork.ring.in-memory-association :refer [in-memory-association read-source]]
             [clojure.java.shell :as shell]))
 
 (defn pem->x5c

@@ -10,7 +10,7 @@
             [nl.jomco.http-status-codes :as status]
             [org.bdinetwork.authorization-register.delegations :as delegations]
             [org.bdinetwork.ishare.jwt :as ishare.jwt]
-            [org.bdinetwork.service-provider.authentication :as authentication]
+            [org.bdinetwork.ring.authentication :as authentication]
             [ring.middleware.json :refer [wrap-json-response wrap-json-params]]
             [ring.util.response :refer [not-found]]
             [ring.middleware.params :refer [wrap-params]]
