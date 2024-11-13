@@ -1,0 +1,15 @@
+<!--
+SPDX-FileCopyrightText: 2024 Topsector Logistiek
+SPDX-FileCopyrightText: 2024 Jomco B.V.
+SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
+SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+  <suppress>
+    <notes>We don't use the HttpURI class or the authority segment of an URI.</notes>
+    <cve>CVE-2024-6763</cve>
+  </suppress>
+</suppressions>
