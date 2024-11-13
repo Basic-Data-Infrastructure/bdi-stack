@@ -50,7 +50,7 @@ copyright-headers:
 		--recursive .
 
 watson:
-	clojure -M:watson scan -p deps.edn
+	clojure -M:watson scan -p deps.edn -f -s
 
 %.jar:
 	$(MAKE) -C $(dir $@) $(notdir $@)
