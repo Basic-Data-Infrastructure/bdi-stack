@@ -6,15 +6,15 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.association-register.web
-  (:require [compojure.core :refer [GET defroutes]]
-            [ring.middleware.json :refer [wrap-json-response wrap-json-params]]
-            [ring.middleware.params :refer [wrap-params]]
-            [ring.util.response :refer [not-found]]
+  (:require [clojure.tools.logging :as log]
+            [compojure.core :refer [defroutes GET]]
             [nl.jomco.http-status-codes :as http-status]
+            [org.bdinetwork.ishare.jwt :as ishare.jwt]
             [org.bdinetwork.ring.association :as association]
             [org.bdinetwork.ring.authentication :as authentication]
-            [org.bdinetwork.ishare.jwt :as ishare.jwt]
-            [clojure.tools.logging :as log]))
+            [ring.middleware.json :refer [wrap-json-params wrap-json-response]]
+            [ring.middleware.params :refer [wrap-params]]
+            [ring.util.response :refer [not-found]]))
 
 (defroutes routes
   (GET "/parties/:id" {:keys [params association client-id]}

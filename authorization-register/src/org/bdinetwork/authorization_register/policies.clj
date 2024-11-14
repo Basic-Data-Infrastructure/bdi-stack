@@ -13,13 +13,13 @@
 
 (defprotocol PolicyView
   (get-policies [x selector]
-    "returns all policies matching selector"))
+    "Return all policies matching selector."))
 
 (defprotocol PolicyStore
   (add-policy! [x policy]
-    "adds a new policy. returns policy new id")
+    "Add a new policy, return policy new id.")
   (delete-policy! [x id]
-    "delete policy with id"))
+    "Delete policy with id."))
 
 (def schema
   {
@@ -38,9 +38,10 @@
    :environment/service-providers {:db/cardinality :db.cardinality/many}})
 
 (def query-attributes
-  "These attributes can be queried on using `get-policies`. If any
-  attribute is misssing in the query it must also be missing in the
-  policy.
+  "These attributes can be queried on using `get-policies`.
+
+  If any attribute is misssing in the query it must also be missing in
+  the policy.
 
   If an attribute is present in the selector, it must either be
   present in the policy with the same value(s), or the attribute must

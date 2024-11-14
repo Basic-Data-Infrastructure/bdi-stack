@@ -10,9 +10,9 @@
             [clojure.string :as string]
             [clojure.test :refer [deftest is]]
             [nl.jomco.http-status-codes :as status]
+            [org.bdinetwork.ishare.jwt :as jwt]
             [org.bdinetwork.ring.authentication :as auth]
-            [org.bdinetwork.ring.in-memory-association :refer [in-memory-association read-source]]
-            [org.bdinetwork.ishare.jwt :as jwt]))
+            [org.bdinetwork.ring.in-memory-association :refer [in-memory-association read-source]]))
 
 (deftest jti
   (let [c (auth/mk-jti-cache-atom)]

@@ -7,12 +7,12 @@
 
 (ns org.bdinetwork.ishare.client-test
   (:require [clojure.data.json :as json]
-            [clojure.string :as s]
-            [clojure.test :refer [deftest is testing are]]
             [clojure.java.io :as io]
+            [clojure.string :as s]
+            [clojure.test :refer [are deftest is testing]]
             [org.bdinetwork.ishare.client :as client]
             [org.bdinetwork.ishare.jwt :as jwt]
-            [org.bdinetwork.ishare.test-helper :refer [run-exec take-request! put-response!]]))
+            [org.bdinetwork.ishare.test-helper :refer [put-response! run-exec take-request!]]))
 
 (defn- ->x5c [v]
   (->> [v "ca"]

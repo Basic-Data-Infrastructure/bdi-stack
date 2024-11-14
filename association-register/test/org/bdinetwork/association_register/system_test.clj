@@ -6,13 +6,13 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.association-register.system-test
-  (:require [org.bdinetwork.association-register.system :as system]
-            [nl.jomco.resources :refer [with-resources]]
-            [org.bdinetwork.ishare.client :as client]
-            [buddy.core.keys :as keys]
-            [org.bdinetwork.ring.in-memory-association :refer [read-source]]
+  (:require [buddy.core.keys :as keys]
             [clojure.test :refer [deftest is]]
-            [nl.jomco.http-status-codes :as http-status]))
+            [nl.jomco.http-status-codes :as http-status]
+            [nl.jomco.resources :refer [with-resources]]
+            [org.bdinetwork.association-register.system :as system]
+            [org.bdinetwork.ishare.client :as client]
+            [org.bdinetwork.ring.in-memory-association :refer [read-source]]))
 
 ;; TODO: make port numbers configurable for tests / automatically use free port
 

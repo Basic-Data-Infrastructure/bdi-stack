@@ -6,15 +6,15 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.authorization-register.web
-  (:require [compojure.core :refer [defroutes POST]]
+  (:require [clojure.tools.logging :as log]
+            [compojure.core :refer [defroutes POST]]
             [nl.jomco.http-status-codes :as status]
             [org.bdinetwork.authorization-register.delegations :as delegations]
             [org.bdinetwork.ishare.jwt :as ishare.jwt]
             [org.bdinetwork.ring.authentication :as authentication]
-            [ring.middleware.json :refer [wrap-json-response wrap-json-params]]
-            [ring.util.response :refer [not-found]]
+            [ring.middleware.json :refer [wrap-json-params wrap-json-response]]
             [ring.middleware.params :refer [wrap-params]]
-            [clojure.tools.logging :as log]))
+            [ring.util.response :refer [not-found]]))
 
 (defn wrap-token-response
   [handler {:keys [private-key x5c server-id]}]

@@ -6,12 +6,12 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.authorization-register.main
-  (:require [org.bdinetwork.authorization-register.system :as system]
-            [buddy.core.keys :as keys]
-            [nl.jomco.resources :refer [close]]
+  (:gen-class)
+  (:require [buddy.core.keys :as keys]
+            [environ.core :refer [env]]
             [nl.jomco.envopts :as envopts]
-            [environ.core :refer [env]])
-  (:gen-class))
+            [nl.jomco.resources :refer [close]]
+            [org.bdinetwork.authorization-register.system :as system]))
 
 (def opt-specs
   {:private-key              ["Server private key pem file" :private-key]

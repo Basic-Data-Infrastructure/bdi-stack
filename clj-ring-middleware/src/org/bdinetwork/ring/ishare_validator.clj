@@ -6,10 +6,10 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.ring.ishare-validator
-  (:require [nl.jomco.openapi.v3.validator.json-schema-validator :as schema-validator]
-            [clj-yaml.core :as yaml]
+  (:require [clj-yaml.core :as yaml]
             [clojure.java.io :as io]
-            [clojure.walk :as walk]))
+            [clojure.walk :as walk]
+            [nl.jomco.openapi.v3.validator.json-schema-validator :as schema-validator]))
 
 (def ishare-openapi-spec
   (io/resource "iSHARE-iSHARE_Scheme_Specification-2.0-swagger.yaml"))

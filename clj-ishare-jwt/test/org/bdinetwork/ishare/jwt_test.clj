@@ -7,10 +7,10 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.ishare.jwt-test
-  (:require [org.bdinetwork.ishare.jwt :as jwt]
-            [buddy.core.keys :as keys]
+  (:require [buddy.core.keys :as keys]
             [clojure.string :as string]
-            [clojure.test :refer [deftest is]]))
+            [clojure.test :refer [deftest is]]
+            [org.bdinetwork.ishare.jwt :as jwt]))
 
 ;; corresponding to generated certificates and keys in test/pem
 (def client-id "EU.EORI.CLIENT")

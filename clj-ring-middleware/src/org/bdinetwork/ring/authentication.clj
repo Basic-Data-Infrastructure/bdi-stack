@@ -9,10 +9,10 @@
   (:require [clojure.core.cache :as cache]
             [clojure.string :as string]
             [nl.jomco.http-status-codes :as status]
-            [org.bdinetwork.ring.authentication.access-token :as access-token]
-            [org.bdinetwork.ring.authentication.x5c :as x5c]
+            [org.bdinetwork.ishare.jwt :as ishare.jwt]
             [org.bdinetwork.ring.association :as association]
-            [org.bdinetwork.ishare.jwt :as ishare.jwt]))
+            [org.bdinetwork.ring.authentication.access-token :as access-token]
+            [org.bdinetwork.ring.authentication.x5c :as x5c]))
 
 ;; Client assertions may only be used once. We keep track of the
 ;; client assertions seen.
@@ -26,12 +26,12 @@
 (def jti-cache-ttl-seconds 120)
 
 (defn mk-jti-cache-atom
-  "Create an empty jti cache atom"
+  "Create an empty jti cache atom."
   []
   (atom {:impl (cache/ttl-cache-factory {} {:ttl (* 1000 jti-cache-ttl-seconds)})}))
 
 (defn new-jti?!
-  "Returns `true` if jti wasn't in cache. Updates cache if jti is new"
+  "Returns `true` if jti wasn't in cache. Updates cache if jti is new."
   [jti-cache-atom jti]
   (:latest-new? (swap! jti-cache-atom
                        (fn [{:keys [impl] :as cache}]
@@ -159,8 +159,9 @@
         (f request)))))
 
 (defn wrap-authentication
-  "Middleware to add a `/connect/token` endpoint.  It requires both
-  `ring.middleware.json/wrap-json-response` and
+  "Middleware to add a `/connect/token` endpoint.
+
+   It requires both `ring.middleware.json/wrap-json-response` and
   `ring.middleware.params/wrap-params` to function and expects an
   `association` on the request which implements
   `org.bdinetwork.ring.association/Association`."

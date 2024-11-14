@@ -6,21 +6,18 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.authorization-register.system-test
-  (:require [org.bdinetwork.authorization-register.system :as system]
-            [org.bdinetwork.association-register.system :as association]
-            [org.bdinetwork.ring.in-memory-association :refer [read-source]]
-            [org.bdinetwork.ishare.client :as client]
+  (:require [buddy.core.keys :as keys]
+            [clojure.test :refer [deftest is testing]]
             [nl.jomco.http-status-codes :as http-status]
-            [buddy.core.keys :as keys]
             [nl.jomco.resources :refer [with-resources]]
-            [clojure.test :refer [deftest is testing]])
-  (:import java.nio.file.Files
-           java.nio.file.attribute.FileAttribute))
+            [org.bdinetwork.association-register.system :as association]
+            [org.bdinetwork.authorization-register.system :as system]
+            [org.bdinetwork.ishare.client :as client]
+            [org.bdinetwork.ring.in-memory-association :refer [read-source]])
+  (:import (java.nio.file Files)
+           (java.nio.file.attribute FileAttribute)))
 
-(defn own-ar-request
-  "If request has no `ishare/base-url` and `ishare/server-id`,
-  set `base-url` and `server-id` from `ishare/authorization-registry-id`
-  and `ishare/authorization-registry-base-url`."
+(defn- own-ar-request
   [{:ishare/keys [authorization-registry-id
                   authorization-registry-base-url
                   base-url

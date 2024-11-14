@@ -8,9 +8,10 @@
 (ns org.bdinetwork.ring.association)
 
 (defprotocol Association
-  "Provides info on registered parties and root CAs in an association"
+  "Provides info on registered parties and root CAs in an association."
   (party [this party-id]
-    "Return the registered party with `party-id` or nil if no such
-    party is registered.")
+    "Return the registered party with `party-id`.
+
+     Returns nil if no such party is registered.")
   (trusted-list [this]
     "Return the fingerprints of the trusted root CA certificates."))

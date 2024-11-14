@@ -6,12 +6,12 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.authorization-register.system
-  (:require [nl.jomco.resources :refer [mk-system Resource]]
+  (:require [clojure.string :as string]
+            [nl.jomco.resources :refer [mk-system Resource]]
             [org.bdinetwork.authorization-register.datascript-policies :refer [file-backed-policies]]
             [org.bdinetwork.authorization-register.web :as web]
             [org.bdinetwork.ring.remote-association :refer [remote-association]]
-            [ring.adapter.jetty :refer [run-jetty]]
-            [clojure.string :as string]))
+            [ring.adapter.jetty :refer [run-jetty]]))
 
 (defn x5c
   "Read chain file into vector of certificates."
