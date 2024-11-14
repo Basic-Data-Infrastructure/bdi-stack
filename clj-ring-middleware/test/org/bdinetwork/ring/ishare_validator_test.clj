@@ -6,8 +6,8 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.ring.ishare-validator-test
-  (:require [org.bdinetwork.ring.ishare-validator :as sut]
-            [clojure.test :refer [deftest is]]))
+  (:require [clojure.test :refer [deftest is]]
+            [org.bdinetwork.ring.ishare-validator :as sut]))
 
 (deftest smoke-test
   (is (get-in sut/ishare-spec-data ["components" "schemas" "Party"]))

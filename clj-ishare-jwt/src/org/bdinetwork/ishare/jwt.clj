@@ -7,15 +7,15 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.ishare.jwt
-  "Create, sign and unsign (validate) iSHARE JWTs
+  "Create, sign and unsign (validate) iSHARE JWTs.
 
   See also: https://dev.ishare.eu/reference/ishare-jwt"
-  (:require [buddy.sign.jwt :as jwt]
-            [buddy.core.keys :as keys]
+  (:require [buddy.core.keys :as keys]
+            [buddy.sign.jwt :as jwt]
             [clojure.spec.alpha :as s])
-  (:import java.time.Instant
-           java.util.UUID
-           java.io.StringReader))
+  (:import (java.io StringReader)
+           (java.time Instant)
+           (java.util UUID)))
 
 ;; Data specs; these are used to validate the data shape.
 ;;
@@ -67,7 +67,7 @@
 (s/def ::x5c (s/coll-of ::cert-str :kind vector? :min-count 1))
 
 (defn- no-additional-keys?
-  "True if m has no keys but the keys in `ks`"
+  "True if m has no keys but the keys in `ks`."
   [m ks]
   (and (map? m)
        (every? (set ks) (keys m))))
@@ -205,8 +205,7 @@
 ;; Parsing and validating iSHARE JWTs
 
 (defn- cert-reader
-  "Convert base64 encoded certificate string into a reader for parsing
-  as a PEM."
+  "Convert base64 encoded certificate string into a reader for parsing as a PEM."
   [cert-str]
   (check! ::cert-str cert-str)
   (StringReader. (str "-----BEGIN CERTIFICATE-----\n"

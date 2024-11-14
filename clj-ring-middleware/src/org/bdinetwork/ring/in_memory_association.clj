@@ -6,11 +6,11 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.ring.in-memory-association
-  (:require [org.bdinetwork.ring.ishare-validator :refer [parse-yaml validate]]
-            [org.bdinetwork.ring.authentication.x5c :refer [fingerprint subject-name]]
+  (:require [buddy.core.certificates :as certificates]
             [buddy.core.codecs :as codecs]
-            [buddy.core.certificates :as certificates]
-            [org.bdinetwork.ring.association :refer [Association]]))
+            [org.bdinetwork.ring.association :refer [Association]]
+            [org.bdinetwork.ring.authentication.x5c :refer [fingerprint subject-name]]
+            [org.bdinetwork.ring.ishare-validator :refer [parse-yaml validate]]))
 
 (defrecord InMemoryAssociation [source]
   Association
@@ -32,7 +32,7 @@
     (get source "trusted_list")))
 
 (defn in-memory-association
-  "Create a new in-memory Assocation from source data"
+  "Create a new in-memory Assocation from source data."
   [source]
   {:pre [(map? source)]}
   (when-let [issues (validate (get source "parties")
@@ -62,7 +62,7 @@
           #(map parse-certificate %)))
 
 (defn- parse-ca
-  "Parse CA info; reads from file is ca-info is a string"
+  "Parse CA info; reads from file is ca-info is a string."
   [ca-info]
   (if (string? ca-info)
     (let [c (certificates/certificate ca-info)]

@@ -6,13 +6,13 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.association-register.main
-  (:require [org.bdinetwork.association-register.system :as system]
-            [org.bdinetwork.ring.in-memory-association :refer [read-source]]
-            [buddy.core.keys :as keys]
-            [nl.jomco.resources :refer [with-resources wait-until-interrupted]]
+  (:gen-class)
+  (:require [buddy.core.keys :as keys]
+            [environ.core :refer [env]]
             [nl.jomco.envopts :as envopts]
-            [environ.core :refer [env]])
-  (:gen-class))
+            [nl.jomco.resources :refer [wait-until-interrupted with-resources]]
+            [org.bdinetwork.association-register.system :as system]
+            [org.bdinetwork.ring.in-memory-association :refer [read-source]]))
 
 (def opt-specs
   {:private-key              ["Server private key pem file" :private-key]

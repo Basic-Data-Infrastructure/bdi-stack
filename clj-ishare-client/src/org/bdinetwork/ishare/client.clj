@@ -10,10 +10,10 @@
             [babashka.http-client.interceptors :as interceptors]
             [babashka.json :as json]
             [buddy.core.keys :as keys]
+            [clojure.core.memoize :as memoize]
             [clojure.string :as string]
-            [org.bdinetwork.ishare.jwt :as jwt]
             [clojure.tools.logging.readable :as log]
-            [clojure.core.memoize :as memoize])
+            [org.bdinetwork.ishare.jwt :as jwt])
   (:import (java.net URI)))
 
 (defn private-key
@@ -322,7 +322,7 @@ When bearer token is not needed, provide a `nil` token"
     r))
 
 (defn redact-body
-  "Remove sensitive params from request body (for logging)"
+  "Remove sensitive params from request body (for logging)."
   [body]
   (if (string? body)
     (string/replace body #"(client_assertion=)[^&]+" "$1REDACTED")
@@ -343,7 +343,9 @@ When bearer token is not needed, provide a `nil` token"
   #{200 201 202 203 204 205 206 207 300 301 302 303 304 307})
 
 (def throw-on-exceptional-status-code
-  "Response: throw on exceptional status codes. Strips out client info and private information"
+  "Response interceptor: throw on exceptional status codes.
+
+   Strips out client info and private information"
   {:name ::throw-on-exceptional-status-code
    :response (fn throw-on-exceptional-status-code-response [resp]
                (if-let [status (:status resp)]
@@ -408,8 +410,9 @@ When bearer token is not needed, provide a `nil` token"
       (.toInstant)))
 
 (defn party-adherence-issue
-  "If party info is not currently adherent, returns an issue map
-  of :issue message and :info data."
+  "Return party adherence issue, if any.
+
+   Returns an issue map of :issue message and :info data."
   [{{:keys [status start_date end_date]} :adherence
     :keys                                [party_id] :as party-info}]
   {:pre [party-info]}
@@ -463,7 +466,7 @@ When bearer token is not needed, provide a `nil` token"
       :party_info))
 
 (defn mk-cached-fetch-party-info
-  "Create a cached version of `fetch-party-info*`"
+  "Create a cached version of `fetch-party-info*`."
   [ttl-ms]
   (memoize/ttl fetch-party-info* {} :ttl/threshold ttl-ms))
 
@@ -488,8 +491,7 @@ When bearer token is not needed, provide a `nil` token"
                        party-id))
 
 (defn- check-server-adherence
-  "Fetch party for `:ishare/server-id` and raise an exception if the
-  party is not adherent.
+  "Fetch party for `:ishare/server-id` and raise an exception if the party is not adherent.
 
   Will always assume the server with `server-id` equal to
   `satellite-id` is adherent.
@@ -528,9 +530,6 @@ When bearer token is not needed, provide a `nil` token"
                 (check-server-adherence request)))})
 
 (defn- fetch-issuer-ar
-  "If request contains `policy-issuer` and no `server-id` + `base-url`,
-  set `server-id` and `base-url` to issuer's authorization registry
-  for dataspace."
   [{:ishare/keys [policy-issuer dataspace-id server-id base-url]
     :as          request}]
   (if (or (not (and policy-issuer dataspace-id))

@@ -6,11 +6,11 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.ring.authentication.x5c-test
-  (:require [clojure.string :as string]
+  (:require [clojure.java.shell :as shell]
+            [clojure.string :as string]
             [clojure.test :refer [deftest is]]
             [org.bdinetwork.ring.authentication.x5c :as x5c]
-            [org.bdinetwork.ring.in-memory-association :refer [in-memory-association read-source]]
-            [clojure.java.shell :as shell]))
+            [org.bdinetwork.ring.in-memory-association :refer [in-memory-association read-source]]))
 
 (defn pem->x5c
   "Read chain file into vector of certificates."

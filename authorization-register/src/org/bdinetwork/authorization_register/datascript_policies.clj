@@ -6,15 +6,14 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.authorization-register.datascript-policies
-  "This implements a PolicyView and PolicyStore using a DataScript
-  database.
+  "This implements a PolicyView and PolicyStore using a DataScript database.
 
   The datascript connection can be extended to write to disk or some
   other storage backend.
   See https://github.com/tonsky/datascript/blob/master/docs/storage.md"
-  (:require [datascript.core :as ds]
-            [org.bdinetwork.authorization-register.policies :refer [PolicyStore PolicyView schema] :as policies]
-            [clojure.java.io :as io])
+  (:require [clojure.java.io :as io]
+            [datascript.core :as ds]
+            [org.bdinetwork.authorization-register.policies :refer [PolicyStore PolicyView schema] :as policies])
   (:import java.util.UUID))
 
 (defn- bound-key-clause
@@ -95,7 +94,7 @@
          (boolean (seq (.listFiles f))))))
 
 (defn file-conn
-  "Given directory, returns a connection
+  "Given directory, returns a connection.
 
   If the dir is not empty, restores the connection from dir.
 

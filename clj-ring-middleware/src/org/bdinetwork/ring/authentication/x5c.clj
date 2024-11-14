@@ -6,19 +6,18 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.ring.authentication.x5c
-  "Validate x5c chains"
-  (:require [buddy.core.codecs :as codecs]
+  "Validate x5c chains."
+  (:require [buddy.core.certificates :as certificates]
+            [buddy.core.codecs :as codecs]
             [buddy.core.hash :as hash]
-            [clojure.string :as string]
-            [buddy.core.certificates :as certificates])
-  (:import java.io.StringReader
-           org.bouncycastle.cert.X509CertificateHolder
-           org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
-           org.bouncycastle.asn1.x509.KeyUsage))
+            [clojure.string :as string])
+  (:import (java.io StringReader)
+           (org.bouncycastle.asn1.x509 KeyUsage)
+           (org.bouncycastle.cert X509CertificateHolder)
+           (org.bouncycastle.cert.jcajce JcaX509CertificateConverter)))
 
 (defn- cert-reader
-  "Convert base64 encoded certificate string into a reader for parsing
-  as a PEM."
+  "Convert base64 encoded certificate string into a reader for parsing as a PEM."
   [cert-str]
   (StringReader. (str "-----BEGIN CERTIFICATE-----\n"
                       cert-str

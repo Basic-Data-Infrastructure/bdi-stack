@@ -19,7 +19,7 @@
   (:require [org.bdinetwork.authorization-register.policies :as policies]))
 
 (defn delegation-evidence->policy
-  "Convert an iSHARE delegation-evidence into a policy"
+  "Convert an iSHARE delegation-evidence into a policy."
   [delegation-evidence]
   (assert (= "Permit" (get-in delegation-evidence ["policySets" 0 "policies" 0 "rules" 0 "effect"]))
           "Cannot convert 'Deny' effects into policies")
@@ -41,8 +41,7 @@
     :environment/service-providers ["policySets" 0 "policies" 0 "target" "environment" "serviceProviders"]}))
 
 (defn delegation-mask->policy-selector
-  "Convert an iSHARE delegation mask into a policy selector as defined
-  by the PolicyView protocol"
+  "Convert an iSHARE delegation mask into a policy selector as defined by the PolicyView protocol."
   [mask]
   (reduce-kv
    (fn [selector k path]
