@@ -9,20 +9,22 @@
   "Implement org.bdinetwork.ring.association.Assocation protocol by querying a BDI Assocation Register."
   (:require [clojure.walk :as walk]
             [org.bdinetwork.ishare.client :as client]
+            [org.bdinetwork.ishare.client.interceptors :as interceptors]
+            [org.bdinetwork.ishare.client.request :as request]
             [org.bdinetwork.ring.association :refer [Association]]))
 
 (defn ensure-ok
   [{:keys [status] :as response}]
   (when-not (= 200 status)
     (throw (ex-info (str "Unexpected status code '" status "' from association register")
-                    (update response :request client/redact-request))))
+                    (update response :request interceptors/redact-request))))
   response)
 
 (defrecord RemoteAssociation [client-data]
   Association
   (party [_ party-id]
     (-> client-data
-        (assoc :ishare/message-type :party, :ishare/party-id party-id)
+        (request/party-request party-id)
         (client/exec)
         ensure-ok
         :ishare/result
@@ -30,7 +32,7 @@
         (get "party_info")))
   (trusted-list [_]
     (-> client-data
-        (assoc :ishare/message-type :trusted-list)
+        (request/trusted-list-request)
         (client/exec)
         ensure-ok
         :ishare/result

@@ -9,8 +9,10 @@
   (:require [clojure.data.json :as json]
             [clojure.java.io :as io]
             [clojure.string :as s]
-            [clojure.test :refer [are deftest is testing]]
+            [clojure.test :refer [deftest is testing]]
             [org.bdinetwork.ishare.client :as client]
+            [org.bdinetwork.ishare.client.interceptors :as interceptors]
+            [org.bdinetwork.ishare.client.request :as request]
             [org.bdinetwork.ishare.jwt :as jwt]
             [org.bdinetwork.ishare.test-helper :refer [put-response! run-exec take-request!]]))
 
@@ -65,7 +67,7 @@
 
 (deftest parties
   (testing "expired parties token"
-    (let [[c r] (run-exec (client/parties-request client-data nil))]
+    (let [[c r] (run-exec (request/parties-request client-data nil))]
 
       (test-get-token c satellite-url "satellite-token")
 
@@ -99,7 +101,7 @@
       (is (nil? @r))))
 
   (testing "wrong certificate chain"
-    (let [[c r] (run-exec (client/parties-request client-data {"active_only" "true"}))]
+    (let [[c r] (run-exec (request/parties-request client-data {"active_only" "true"}))]
 
       (test-get-token c satellite-url "satellite-token")
 
@@ -136,7 +138,7 @@
       (is (nil? @r))))
 
   (testing "valid parties token"
-    (let [[c r] (run-exec (client/parties-request client-data {"name" "Party Name"}))]
+    (let [[c r] (run-exec (request/parties-request client-data {"name" "Party Name"}))]
 
       (test-get-token c satellite-url "satellite-token")
 
@@ -168,9 +170,9 @@
 (deftest delegation
   (testing "Delegation evidence request"
 
-    (let [[c r] (run-exec (client/delegation-evidence-request (assoc client-data
+    (let [[c r] (run-exec (request/delegation-evidence-request (assoc client-data
                                                                      ;; use fresh cached fetch-party-info-fn for repeatable tests
-                                                                     :ishare/fetch-party-info-fn (client/mk-cached-fetch-party-info 60000))
+                                                                     :ishare/fetch-party-info-fn (interceptors/mk-cached-fetch-party-info 60000))
                                                               {:delegationRequest
                                                                {:policyIssuer client-eori}}))]
       (test-get-token c satellite-url "satellite-token")
@@ -242,51 +244,3 @@
 
       (is (= "test" (-> @r :ishare/result :delegationEvidence))))))
 
-(def base-request
-  (assoc client-data
-         :ishare/base-url "https://example.com/api"
-         :ishare/server-id "EU.EORI.SERVERID"))
-
-(def delegation-request
-  {:delegationRequest {:policyIssuer client-eori}})
-
-(defn clean-request
-  [req]
-  (-> req
-      (dissoc :ishare/message-type
-              :ishare/params
-              :ishare/party-id)
-      (update :form-params dissoc "client_assertion")))
-
-(deftest deprecated-api
-  (testing "Deprecated ishare->http-request middleware still works"
-    (are [new-api old-api] (= (clean-request new-api)
-                              (clean-request old-api))
-
-      (client/access-token-request base-request)
-      (client/ishare->http-request (assoc base-request
-                                          :ishare/message-type :access-token))
-
-      (client/parties-request base-request {"name" "foo"})
-      (client/ishare->http-request (assoc base-request
-                                          :ishare/message-type :parties
-                                          :ishare/params {"name" "foo"}))
-
-      (client/party-request base-request "foo")
-      (client/ishare->http-request (assoc base-request
-                                          :ishare/message-type :party
-                                          :ishare/party-id "foo"))
-
-      (client/trusted-list-request base-request)
-      (client/ishare->http-request (assoc base-request
-                                          :ishare/message-type :trusted-list))
-
-      (client/capabilities-request base-request)
-      (client/ishare->http-request (assoc base-request
-                                          :ishare/message-type :capabilities))
-
-      (client/delegation-evidence-request base-request delegation-request)
-      (client/ishare->http-request (assoc base-request
-                                          :ishare/message-type :delegation
-                                          :ishare/policy-issuer client-eori
-                                          :ishare/params delegation-request)))))

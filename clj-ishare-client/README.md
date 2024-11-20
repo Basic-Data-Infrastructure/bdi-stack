@@ -9,6 +9,15 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 # Clojure iSHARE client
 
+A Clojure HTTP Client for accessing iSHARE services. Includes generic
+authentication & access token processing, party adherence checks
+including checking adherence of contacted services and authorization
+requests (requesting *Delegation Evidence*).
+
+## Coordinates
+
+[![Clojars Project](https://img.shields.io/clojars/v/org.bdinetwork/clj-ishare-jwt.svg)](https://clojars.org/org.bdinetwork/clj-ishare-jwt)
+
 ## ⚠ DISCLAIMER ⚠
 
 **The software is for demo purposes only!**  It has not been audited
