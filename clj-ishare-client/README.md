@@ -16,7 +16,7 @@ requests (requesting *Delegation Evidence*).
 
 ## Coordinates
 
-[![Clojars Project](https://img.shields.io/clojars/v/org.bdinetwork/clj-ishare-jwt.svg)](https://clojars.org/org.bdinetwork/clj-ishare-jwt)
+[![Clojars Project](https://img.shields.io/clojars/v/org.bdinetwork/clj-ishare-client.svg)](https://clojars.org/org.bdinetwork/clj-ishare-client)
 
 ## ⚠ DISCLAIMER ⚠
 
