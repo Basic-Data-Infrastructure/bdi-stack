@@ -21,6 +21,10 @@ This is a work in progress and might be split up at a later date. The
 immediate goal for this project is to provide a shared basis for
 implementing an Assocation Register and an Authorization Register.
 
+## Coordinates
+
+[![Clojars Project](https://img.shields.io/clojars/v/org.bdinetwork/clj-ring-middleware.svg)](https://clojars.org/org.bdinetwork/clj-ring-middleware)
+
 ## ⚠ DISCLAIMER ⚠
 
 **The software is for demo purposes only!**  It has not been audited

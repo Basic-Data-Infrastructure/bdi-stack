@@ -12,6 +12,7 @@
             [nl.jomco.resources :refer [with-resources]]
             [org.bdinetwork.association-register.system :as system]
             [org.bdinetwork.ishare.client :as client]
+            [org.bdinetwork.ishare.client.request :as request]
             [org.bdinetwork.ring.in-memory-association :refer [read-source]]))
 
 ;; TODO: make port numbers configurable for tests / automatically use free port
@@ -36,16 +37,12 @@
 (deftest test-system
   (with-resources [#_:clj-kondo/ignore s (system/run-system system-config)]
     (let [{:keys [status] :as response} (client/exec (-> client-config
-                                                         (client/satellite-request)
-                                                         (assoc :ishare/message-type :party
-                                                                :ishare/party-id "EU.EORI.CLIENT")))]
+                                                         (request/party-request "EU.EORI.CLIENT")))]
       (is (= http-status/ok status))
       (is (= (get-in response [:ishare/result :party_info :party_id]) "EU.EORI.CLIENT")))
 
     (let [{:keys [status] :as response} (client/exec (-> client-config
-                                                         (client/satellite-request)
-                                                         (assoc :ishare/message-type :party
-                                                                :ishare/party-id "EU.EORI.NONE")))]
+                                                         (request/party-request "EU.EORI.NONE")))]
       (is (= http-status/ok status))
       ;; what should be the format when no party exists?
       (is (nil? (get-in response [:ishare/result :party_info :party_id]))))))
