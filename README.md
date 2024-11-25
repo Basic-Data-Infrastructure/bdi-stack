@@ -36,6 +36,15 @@ The BDI Stack contains standalone services and libraries.
 not been audited for security flaws and may not be suitable as a
 starting point for production quality software.  Use at your own risk.
 
+## Running services in docker
+
+We publish services as docker images.
+
+The VGU Demo repository contains a [docker
+example](https://github.com/Basic-Data-Infrastructure/demo-vertrouwde-goederenafgifte/tree/master/docker-example)
+that demonstrates running an application with the Authorization
+Register and Association Register using docker-compose.
+
 ## Developing
 
 ### Development tooling

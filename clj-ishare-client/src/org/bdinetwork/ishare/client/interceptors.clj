@@ -20,6 +20,9 @@
             [org.bdinetwork.ishare.jwt :as jwt])
   (:import (java.net URI)))
 
+;; TODO: Token cache
+;; TODO: party cache configuration via data instead of function
+
 ;; Interceptors
 
 (def unsign-token-interceptor
