@@ -8,7 +8,8 @@
 (ns org.bdinetwork.ring.authentication.access-token
   (:require [buddy.sign.jwt :as jwt]
             [clojure.tools.logging :as log]
-            [nl.jomco.http-status-codes :as status])
+            [nl.jomco.http-status-codes :as status]
+            [org.bdinetwork.ring.diagnostic-context :refer [with-context]])
   (:import java.time.Instant
            java.util.UUID))
 
@@ -111,6 +112,7 @@
                               (catch Exception e
                                 (log/error "Invalid access token" e)
                                 nil))]
-        (f (assoc request :client-id client-id))
+        (with-context [:client-id client-id]
+          (f (assoc request :client-id client-id)))
         invalid-token-response)
       (f request))))

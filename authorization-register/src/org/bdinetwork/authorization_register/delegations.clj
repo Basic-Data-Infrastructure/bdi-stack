@@ -32,6 +32,8 @@
    ;; map of selector key -> delegation mask path
    {:policy/issuer                 ["policyIssuer"]
     :policy/max-delegation-depth   ["policySets" 0 "maxDelegationDepth"]
+    :policy/not-before             ["notBefore"]
+    :policy/not-on-or-after        ["notOnOrAfter"]
     :target/access-subject         ["target" "accessSubject"]
     :policy/licenses               ["policySets" 0 "target" "environment" "licenses"]
     :target/actions                ["policySets" 0 "policies" 0 "target" "actions"]
@@ -66,38 +68,45 @@
    permit?]
   {"policyIssuer" (:policy/issuer policy)
    "target"       {"accessSubject" (:target/access-subject policy)}
-   "policySets"   [{"maxDelegationDepth" (:policy/max-delegation-depth policy)
-                    "target"             {"environment" {"licenses" (:policy/licenses policy)}}
-                    "policies"           [{"target" (cond-> {"resource" (cond-> {}
-                                                                          (some? type)
-                                                                          (assoc "type" type)
-                                                                          (some? identifiers)
-                                                                          (assoc "identifiers" identifiers)
-                                                                          (some? attributes)
-                                                                          (assoc "attributes" attributes))}
-                                                      (seq actions)
-                                                      (assoc "actions" actions)
-                                                      (seq service-providers)
-                                                      (assoc-in ["environment" "serviceProviders"] service-providers))
-                                           "rules"  [{"effect" (if permit? "Permit" "Deny")}]}]}]})
+   "notBefore"    (:policy/not-before policy)
+   "notOnOrAfter" (:policy/not-on-or-after policy)
+   "policySets"   [(cond-> {"target"   {"environment" {"licenses" (:policy/licenses policy)}}
+                            "policies" [{"target" (cond-> {"resource" (cond-> {}
+                                                                        (some? type)
+                                                                        (assoc "type" type)
+
+                                                                        (some? identifiers)
+                                                                        (assoc "identifiers" identifiers)
+
+                                                                        (some? attributes)
+                                                                        (assoc "attributes" attributes))}
+                                                    (seq actions)
+                                                    (assoc "actions" actions)
+
+                                                    (seq service-providers)
+                                                    (assoc-in ["environment" "serviceProviders"] service-providers))
+                                         "rules"  [{"effect" (if permit? "Permit" "Deny")}]}]}
+                     (:policy/max-delegation-depth policy)
+                     (assoc "maxDelegationDepth" (:policy/max-delegation-depth policy)))]})
 
 (defn delegation-evidence
   [policy-view delegation-mask]
   {:pre [delegation-mask]}
   (let [selector (delegation-mask->policy-selector delegation-mask)
         policy (first (policies/get-policies policy-view selector))]
-    (-> policy
-        ;; Merge the selector into the policy since the returned
-        ;; delegation evidence should be restricted by the selector. For
-        ;; example: if the delegation mask requests authorization for a
-        ;; particular resource id, but the backing policy grants
-        ;; authorization for all resource of some type, we want the
-        ;; resulting delegation evidence to be restricted to the requested
-        ;; resource.
-        (merge selector)
-        ;; if no policy is found, the delegation evidence must be
-        ;; negative (have a "Deny" effect).
-        (policy->delegation-evidence (some? policy)))))
+    (when policy
+      (-> policy
+          ;; Merge the selector into the policy since the returned
+          ;; delegation evidence should be restricted by the selector. For
+          ;; example: if the delegation mask requests authorization for a
+          ;; particular resource id, but the backing policy grants
+          ;; authorization for all resource of some type, we want the
+          ;; resulting delegation evidence to be restricted to the requested
+          ;; resource.
+          (merge selector)
+          ;; if no policy is found, the delegation evidence must be
+          ;; negative (have a "Deny" effect).
+          (policy->delegation-evidence (some? policy))))))
 
 (defn delegate!
   [policy-store delegation]

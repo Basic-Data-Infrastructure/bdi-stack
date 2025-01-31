@@ -11,6 +11,7 @@
             [nl.jomco.http-status-codes :as status]
             [org.bdinetwork.ishare.jwt :as ishare.jwt]
             [org.bdinetwork.ring.association :as association]
+            [clojure.tools.logging :as log]
             [org.bdinetwork.ring.authentication.access-token :as access-token]
             [org.bdinetwork.ring.authentication.x5c :as x5c]))
 
@@ -81,7 +82,7 @@
   [{:keys                                [association]
     {:strs [client_id client_assertion]} :form-params :as request}
    {:keys [private-key server-id jti-cache-atom access-token-ttl-seconds]}]
-
+  (log/debug "Client assertion: " client_assertion)
   (or (check-access-token-request request)
       (try
         (let [{:keys [iat exp jti sub aud iss]} (ishare.jwt/unsign-token client_assertion)
@@ -113,8 +114,11 @@
                           :exp  exp
                           :diff (- exp iat)})
 
+            (<= (count x5c) 1)
+            (bad-request "Incomplete certificate chain, x5c must provide full path from client certificate until trusted root" {:x5c x5c})
+
             (not (x5c/validate-chain x5c (association/trusted-list association)))
-            (bad-request "Invalid certificate chain" nil)
+            (bad-request "Invalid certificate chain." {:x5c x5c})
 
             :else
             (let [party (association/party association client_id)]

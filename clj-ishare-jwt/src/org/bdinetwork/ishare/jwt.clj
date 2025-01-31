@@ -59,7 +59,7 @@
 ;;   NOT contain other header parameters."
 
 (s/def ::typ #{"JWT"})
-(s/def ::alg #{:rs256})
+(s/def ::alg #{:rs256 :rs512}) ;; we'll also allow RS512 since it is used in practice
 (s/def ::base64-str
   (s/and string?
          #(re-matches #"[A-Za-z0-9\+/=]+" %)))
@@ -225,9 +225,11 @@
 (defn- unsign*
   [token]
   (check! ::signed-token token)
-  (let [{:keys [x5c]} (decode-header token)
+  (let [{:keys [x5c alg]} (decode-header token)
         pkey          (x5c->first-public-key x5c)]
-    (jwt/unsign token pkey {:alg :rs256 :leeway 5})))
+    (when-not (#{:rs512 :rs256} alg)
+      (throw (ex-info "Invalid JWT alg" {:alg alg})))
+    (jwt/unsign token pkey {:alg alg :leeway 5})))
 
 (defn unsign-token
   "Parse a signed token. Returns parsed data or raises exception.

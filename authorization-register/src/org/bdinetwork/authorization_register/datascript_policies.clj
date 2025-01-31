@@ -13,6 +13,7 @@
   See https://github.com/tonsky/datascript/blob/master/docs/storage.md"
   (:require [clojure.java.io :as io]
             [datascript.core :as ds]
+            [clojure.tools.logging :as log]
             [org.bdinetwork.authorization-register.policies :refer [PolicyStore PolicyView schema] :as policies])
   (:import java.util.UUID))
 
@@ -81,9 +82,11 @@
   PolicyStore
   (add-policy! [_ policy]
     (let [id (UUID/randomUUID)]
+      (log/debug "Adding policy " id policy)
       (ds/transact! conn [(assoc (select-keys policy (keys schema)) :policy/id id)])
       id))
   (delete-policy! [_ id]
+    (log/debug "Deleting policy" id)
     (ds/transact! conn [[:db/retractEntity [:policy/id id]]])))
 
 (defn non-empty-dir?

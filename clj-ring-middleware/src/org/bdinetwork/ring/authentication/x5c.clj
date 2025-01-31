@@ -84,9 +84,11 @@
       (when (signing-certificate? (first certs))
         (loop [[c1 c2 :as certs] certs]
           (if c2
-            (or (and (certificates/valid-on-date? c1)
-                     (certificates/verify-signature c1 c2))
-                (recur (next certs)))
+            ;; c2 is an intermediate or root cert. c1 should be signed
+            ;; by c2
             (and (certificates/valid-on-date? c1)
-                 (certificates/verify-signature c1 c1)
+                 (certificates/verify-signature c1 c2)
+                 (recur (next certs)))
+            ;; c1 is a trusted root certificate
+            (and (certificates/valid-on-date? c1)
                  (trusted-cert? c1 trusted-list))))))))
