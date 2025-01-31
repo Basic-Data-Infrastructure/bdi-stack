@@ -10,6 +10,7 @@
             [clojure.string :as string]
             [clojure.test :refer [deftest is]]
             [org.bdinetwork.ring.authentication.x5c :as x5c]
+            [org.bdinetwork.ring.association :as association]
             [org.bdinetwork.ring.in-memory-association :refer [in-memory-association read-source]]))
 
 (defn pem->x5c
@@ -33,10 +34,10 @@
         (str "fingerprint from openssl matches for " party))))
 
 
-(def association
-  (in-memory-association (read-source "test-config/association-register-config.yml")))
-
 (def client-x5c (pem->x5c "test-config/association_register.x5c.pem"))
+(def trusted-list (association/trusted-list (in-memory-association (read-source "test-config/association-register-config.yml"))))
 
 (deftest validate-chain
-  (is (x5c/validate-chain client-x5c association)))
+  (is (x5c/validate-chain client-x5c trusted-list)
+      "Full chain including trusted CA")
+)

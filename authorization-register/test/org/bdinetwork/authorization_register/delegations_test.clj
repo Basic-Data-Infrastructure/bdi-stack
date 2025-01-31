@@ -21,6 +21,8 @@
 
 (def delegation-evidence
   {"policyIssuer" "EU.EORI.PRECIOUSG"
+   "notBefore"    1
+   "notOnOrAfter" 2
    "target"       {"accessSubject" "EU.EORI.FLEXTRANS"}
    "policySets"   [{"maxDelegationDepth" 4
                     "target"             {"environment" {"licenses" ["AGPL"]}}
@@ -43,6 +45,8 @@
            "previous_steps"  ["..."]})))
 
   (is (= {:policy/issuer               "EU.EORI.PRECIOUSG"
+          :policy/not-before           1
+          :policy/not-on-or-after      2
           :resource/identifiers        ["SOME.RESOURCE.ID"]
           :target/access-subject       "EU.EORI.FLEXTRANS"
           :policy/licenses             ["AGPL"]
@@ -62,6 +66,8 @@
              :policy/issuer               "EU.EORI.PRECIOUSG"
              :policy/max-delegation-depth 4
              :policy/licenses             ["AGPL"]
+             :policy/not-before           1
+             :policy/not-on-or-after      2
              :resource/identifiers        ["SOME.RESOURCE.ID"]
              :target/access-subject       "EU.EORI.FLEXTRANS"
              :target/actions              ["READ" "WRITE"]}]
@@ -73,6 +79,8 @@
 
     (is (= {"policyIssuer" "EU.EORI.PRECIOUSG",
             "target"       {"accessSubject" "EU.EORI.FLEXTRANS"}
+            "notBefore"    1
+            "notOnOrAfter" 2
             "policySets"
             [{"maxDelegationDepth" 4
               "target"             {"environment" {"licenses" ["AGPL"]}}

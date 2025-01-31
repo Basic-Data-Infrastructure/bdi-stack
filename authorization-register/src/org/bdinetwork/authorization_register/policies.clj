@@ -27,6 +27,8 @@
    ;; the policy root has a "Permit" effect
    :policy/id                     {:db/unique :db.unique/identity}
    :policy/issuer                 {}
+   :policy/not-before             {}
+   :policy/not-on-or-after        {}
    :policy/max-delegation-depth   {}
    :policy/licenses               {:db/cardinality :db.cardinality/many}
    :target/access-subject         {}

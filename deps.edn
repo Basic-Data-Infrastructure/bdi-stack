@@ -6,7 +6,8 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 {:deps {org.bdinetwork/association-register   {:local/root "./association-register"}
-        org.bdinetwork/authorization-register {:local/root "./authorization-register"}}
+        org.bdinetwork/authorization-register {:local/root "./authorization-register"}
+        org.bdinetwork/clj-ring-middleware    {:local/root "./clj-ring-middleware"}}
  :aliases
  {:test   {:extra-deps {lambdaisland/kaocha    {:mvn/version "RELEASE"}
                         org.clojure/core.async {:mvn/version "1.6.681"}}

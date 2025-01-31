@@ -8,4 +8,5 @@
   :single-key-in {:level :warning}
   :docstring-no-summary {:level :warning}
   :used-underscored-binding {:level :warning}
-  :refer-all {:exclude [clojure.test]}}}
+  :refer-all {:exclude [clojure.test]}
+  :condition-always-true {:level :warning}}}

@@ -136,8 +136,8 @@ When bearer token is not needed, provide a `nil` token"
 (def logging-interceptor
   {:name     ::logging
    :response (fn logging-response [{:keys [request] :as response}]
-               (log/debug {:request  (select-keys request [:method :uri])
-                           :response (select-keys response [:status])})
+               (log/debug {:request  (select-keys request [:method :uri :ishare/client-id])
+                           :response (select-keys response [:status :ishare/result])})
                response)})
 
 
