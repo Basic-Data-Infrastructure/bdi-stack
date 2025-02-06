@@ -61,6 +61,12 @@ bdi-association-register-%.zip: association-register/bdi-association-register.ja
 	cp -r $^ "$(basename $@)/"
 	zip -r $@ "$(basename $@)"
 
+bdi-authentication-service-%.zip: authentication-service/bdi-authentication-service.jar authentication-service/README.md LICENSES
+	rm -rf "$(basename $@)"
+	mkdir -p "$(basename $@)"
+	cp -r $^ "$(basename $@)/"
+	zip -r $@ "$(basename $@)"
+
 bdi-authorization-register-%.zip: authorization-register/bdi-authorization-register.jar authorization-register/README.md LICENSES
 	rm -rf "$(basename $@)"
 	mkdir -p "$(basename $@)"

@@ -6,13 +6,12 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.association-register.web
-  (:require [clojure.tools.logging :as log]
-            [compojure.core :refer [defroutes GET]]
-            [clojure.string :as string]
+  (:require [compojure.core :refer [defroutes GET]]
             [nl.jomco.http-status-codes :as http-status]
             [org.bdinetwork.ishare.jwt :as ishare.jwt]
-            [org.bdinetwork.ring.association :as association]
+            [org.bdinetwork.ring.association :as association :refer [wrap-association]]
             [org.bdinetwork.ring.authentication :as authentication]
+            [org.bdinetwork.ring.logging :refer [wrap-logging wrap-server-error]]
             [ring.middleware.json :refer [wrap-json-params wrap-json-response]]
             [ring.middleware.params :refer [wrap-params]]
             [ring.util.response :refer [not-found]]))
@@ -26,7 +25,7 @@
   ;; For backwards compatibility, also implement /parties endpoint
   ;; with params, but only for queries that provide an EORI -- meaning
   ;; it's only possible to fetch info for a single party.
-  (GET "/parties"  {:keys          [association client-id]
+  (GET "/parties"  {:keys                                   [association client-id]
                     {:strs [eori]} :query-params}
     (if client-id
       (if eori
@@ -46,11 +45,6 @@
   (constantly
    (not-found "Resource not found")))
 
-(defn wrap-association
-  [handler ds]
-  (fn [request]
-    (handler (assoc request :association ds))))
-
 (defn wrap-token-response
   [handler {:keys [private-key x5c server-id]}]
   (fn [{:keys [client-id] :as request}]
@@ -64,37 +58,14 @@
                                                               x5c)})
         response))))
 
-(defn error-message-from-response
-  [{:keys [status body]}]
-  (if (<= 400 status)
-    (or (:message body)
-        (let [msg (string/replace (str body) #"\s+" " ")]
-          (if (<= 300 (count msg))
-            (subs msg 0 300)
-            msg)))))
-
-(defn wrap-log
-  [handler]
-  (fn [request]
-    (try (let [{:keys [status body] :as response} (handler request)]
-           (if (<= 500 status)
-             (log/error (str (:status response) " " (:request-method request) " " (:uri request)))
-             (log/info (str (:status response) " " (:request-method request) " " (:uri request))))
-           (when-let [msg (error-message-from-response response)]
-             (log/error msg))
-           response)
-         (catch Exception e
-           (log/error e
-                      (str "Exception handling "  (:request-method request) " " (:uri request) ": " (ex-message e)))
-           (throw e)))))
-
 (defn make-handler
   [association config]
   (-> routes
       (wrap-token-response config)
       (authentication/wrap-authentication config)
       (wrap-association association)
+      (wrap-server-error)
       (wrap-json-params)
       (wrap-params)
       (wrap-json-response)
-      (wrap-log)))
+      (wrap-logging)))

@@ -8,7 +8,7 @@
 
 # these parties are defined in the association; we need to generate
 # keys and certificates for thme.
-PARTIES=authorization_register association_register client nlsmartphon
+PARTIES=authorization_register association_register authentication_service client nlsmartphon
 
 %.cert.pem %.key.pem : intermediate.cert.pem  intermediate.key.pem
 	openssl req \

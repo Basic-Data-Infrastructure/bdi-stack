@@ -2,7 +2,7 @@
 ;;; SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
 ;;; SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
 ;;;
-;;; SPDX-License-Identifier: MIT
+;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.ring.diagnostic-context
   (:import

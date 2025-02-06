@@ -15,5 +15,7 @@
           :test-paths ["clj-ring-middleware/test"]}
          {:id         :authorization-register
           :test-paths ["authorization-register/test"]}
+         {:id         :authentication-service
+          :test-paths ["authentication-service/test"]}
          {:id         :association-register
           :test-paths ["association-register/test"]}]}

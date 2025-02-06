@@ -7,7 +7,9 @@
 
 {:deps {org.bdinetwork/association-register   {:local/root "./association-register"}
         org.bdinetwork/authorization-register {:local/root "./authorization-register"}
+        org.bdinetwork/authentication-service {:local/root "./authentication-service"}
         org.bdinetwork/clj-ring-middleware    {:local/root "./clj-ring-middleware"}}
+ :paths ["resources"]
  :aliases
  {:test   {:extra-deps {lambdaisland/kaocha    {:mvn/version "RELEASE"}
                         org.clojure/core.async {:mvn/version "1.6.681"}}
