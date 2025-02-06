@@ -12,8 +12,8 @@
   other storage backend.
   See https://github.com/tonsky/datascript/blob/master/docs/storage.md"
   (:require [clojure.java.io :as io]
-            [datascript.core :as ds]
             [clojure.tools.logging :as log]
+            [datascript.core :as ds]
             [org.bdinetwork.authorization-register.policies :refer [PolicyStore PolicyView schema] :as policies])
   (:import java.util.UUID))
 

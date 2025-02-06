@@ -15,3 +15,8 @@
      Returns nil if no such party is registered.")
   (trusted-list [this]
     "Return the fingerprints of the trusted root CA certificates."))
+
+(defn wrap-association
+  [f association]
+  (fn association-wrapper [r]
+    (f (assoc r :association association))))

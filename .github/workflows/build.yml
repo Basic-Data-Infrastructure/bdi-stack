@@ -87,6 +87,7 @@ jobs:
           tags: |
             ${{ vars.ACR_HOSTNAME }}/association-register:${{ steps.version.outputs.version }}
             ${{ vars.ACR_HOSTNAME }}/association-register:latest
+            
       - name: Build and Push Authorization Register to ACR
         uses: docker/build-push-action@v6.9.0
         with:
@@ -96,6 +97,14 @@ jobs:
             ${{ vars.ACR_HOSTNAME }}/authorization-register:${{ steps.version.outputs.version }}
             ${{ vars.ACR_HOSTNAME }}/authorization-register:latest
 
+      - name: Build and Push Authentication Service to ACR
+        uses: docker/build-push-action@v6.13.0
+        with:
+          push: true
+          file: "authentication-service.dockerfile"
+          tags: |
+            ${{ vars.ACR_HOSTNAME }}/authentication-service:${{ steps.version.outputs.version }}
+            ${{ vars.ACR_HOSTNAME }}/authentication-service:latest            
 
       # publish libs to clojars
       - name: Build and push clj-ishare-jwt to clojars

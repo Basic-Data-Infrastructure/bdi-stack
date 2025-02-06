@@ -9,8 +9,8 @@
   (:require [clojure.java.shell :as shell]
             [clojure.string :as string]
             [clojure.test :refer [deftest is]]
-            [org.bdinetwork.ring.authentication.x5c :as x5c]
             [org.bdinetwork.ring.association :as association]
+            [org.bdinetwork.ring.authentication.x5c :as x5c]
             [org.bdinetwork.ring.in-memory-association :refer [in-memory-association read-source]]))
 
 (defn pem->x5c
@@ -39,5 +39,4 @@
 
 (deftest validate-chain
   (is (x5c/validate-chain client-x5c trusted-list)
-      "Full chain including trusted CA")
-)
+      "Full chain including trusted CA"))

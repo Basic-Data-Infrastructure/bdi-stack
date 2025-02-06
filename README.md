@@ -16,10 +16,13 @@ The BDI Stack contains standalone services and libraries.
 
 ## Services
 
-- [association-register](./association-register) - A minimal iSHARE /
-  BDI compatible Association Register
-- [authorization-register](./authorization-register) - A minimal
-  iSHARE / BDI compatible Authorization Register
+- [authentication-service](./authentication-service) - A standalone
+  iSHARE / BDI compatible authentication service providing trusted
+  access tokens.
+- [association-register](./association-register) - An iSHARE / BDI
+  compatible Association Register
+- [authorization-register](./authorization-register) - An iSHARE / BDI
+  compatible Authorization Register
 
 ## Libraries
 

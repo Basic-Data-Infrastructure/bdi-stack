@@ -8,10 +8,10 @@
 (ns org.bdinetwork.ring.authentication
   (:require [clojure.core.cache :as cache]
             [clojure.string :as string]
+            [clojure.tools.logging :as log]
             [nl.jomco.http-status-codes :as status]
             [org.bdinetwork.ishare.jwt :as ishare.jwt]
             [org.bdinetwork.ring.association :as association]
-            [clojure.tools.logging :as log]
             [org.bdinetwork.ring.authentication.access-token :as access-token]
             [org.bdinetwork.ring.authentication.x5c :as x5c]))
 

@@ -34,6 +34,24 @@ parties:
       complaiancy_verified: false
       legal_adherence: false
     agreements: []
+  - party_id: EU.EORI.AUTHENTICATION-SERVICE
+    party_name: Generic Authentication Service
+    capability_url: ''
+    certificates:
+    - test-config/authentication_service.cert.pem
+    adherence:
+      status: Active
+      start_date: '2024-02-12T00:00:00.000Z'
+      end_date: '2025-02-13T00:00:00.000Z'
+    registrar_id: EU.EORI.ASSOCIATION-REGISTER
+    roles:
+    - role: ServiceProvider
+      start_date: '2024-02-12T00:00:00.000Z'
+      end_date: '2025-02-12T00:00:00.000Z'
+      loa: 'Low'
+      complaiancy_verified: false
+      legal_adherence: false
+    agreements: []
   - party_id: EU.EORI.ASSOCIATION-REGISTER
     party_name: BDI Association Register
     capability_url: ''
