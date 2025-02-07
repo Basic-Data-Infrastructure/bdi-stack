@@ -7,7 +7,7 @@
 
 {:deps  {org.bdinetwork/clj-ishare-client {:local/root "../clj-ishare-client"}
          org.bdinetwork/clj-ishare-jwt    {:local/root "../clj-ishare-jwt"}
-         nl.jomco/openapi-v3-validator    {:mvn/version "0.2.5"}
+         nl.jomco/openapi-v3-validator    {:mvn/version "0.2.6"}
          nl.jomco/clj-http-status-codes   {:mvn/version "0.1"}
          clj-commons/clj-yaml             {:mvn/version "1.0.29"}
          org.clojure/core.cache           {:mvn/version "1.1.234"}
