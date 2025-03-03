@@ -24,12 +24,12 @@ parties:
     adherence:
       status: Active
       start_date: '2024-02-12T00:00:00.000Z'
-      end_date: '2025-02-13T00:00:00.000Z'
+      end_date: '2100-02-13T00:00:00.000Z'
     registrar_id: EU.EORI.ASSOCIATION-REGISTER
     roles:
     - role: ServiceConsumer
       start_date: '2024-02-12T00:00:00.000Z'
-      end_date: '2025-02-12T00:00:00.000Z'
+      end_date: '2100-02-12T00:00:00.000Z'
       loa: 'Low'
       complaiancy_verified: false
       legal_adherence: false
@@ -42,12 +42,12 @@ parties:
     adherence:
       status: Active
       start_date: '2024-02-12T00:00:00.000Z'
-      end_date: '2025-02-13T00:00:00.000Z'
+      end_date: '2100-02-13T00:00:00.000Z'
     registrar_id: EU.EORI.ASSOCIATION-REGISTER
     roles:
     - role: ServiceProvider
       start_date: '2024-02-12T00:00:00.000Z'
-      end_date: '2025-02-12T00:00:00.000Z'
+      end_date: '2100-02-12T00:00:00.000Z'
       loa: 'Low'
       complaiancy_verified: false
       legal_adherence: false
@@ -60,12 +60,12 @@ parties:
     adherence:
       status: Active
       start_date: '2024-02-12T00:00:00.000Z'
-      end_date: '2025-02-13T00:00:00.000Z'
+      end_date: '2100-02-13T00:00:00.000Z'
     registrar_id: EU.EORI.ASSOCIATION-REGISTER
     roles:
     - role: iShareSatellite
       start_date: '2024-02-12T00:00:00.000Z'
-      end_date: '2025-02-12T00:00:00.000Z'
+      end_date: '2100-02-12T00:00:00.000Z'
       loa: 'Low'
       complaiancy_verified: false
       legal_adherence: false 
@@ -78,12 +78,12 @@ parties:
     adherence:
       status: Active
       start_date: '2024-02-12T00:00:00.000Z'
-      end_date: '2025-02-13T00:00:00.000Z'
+      end_date: '2100-02-13T00:00:00.000Z'
     registrar_id: EU.EORI.ASSOCIATION-REGISTER
     roles:
     - role: iShareSatellite
       start_date: '2024-02-12T00:00:00.000Z'
-      end_date: '2025-02-12T00:00:00.000Z'
+      end_date: '2100-02-12T00:00:00.000Z'
       loa: 'Low'
       complaiancy_verified: false
       legal_adherence: false 
@@ -103,12 +103,12 @@ parties:
     adherence:
       status: Active
       start_date: '2024-02-12T00:00:00.000Z'
-      end_date: '2025-02-13T00:00:00.000Z'
+      end_date: '2100-02-13T00:00:00.000Z'
     registrar_id: EU.EORI.ASSOCIATION-REGISTER
     roles:
     - role: ServiceConsumer
       start_date: '2024-02-12T00:00:00.000Z'
-      end_date: '2025-02-12T00:00:00.000Z'
+      end_date: '2100-02-12T00:00:00.000Z'
       loa: 'Low'
       complaiancy_verified: false
       legal_adherence: false
