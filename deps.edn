@@ -18,7 +18,7 @@
   :lint   {:extra-deps {clj-kondo/clj-kondo {:mvn/version "RELEASE"}}
            :main-opts  ["-m" "clj-kondo.main"]}
 
-  :build  {:deps       {io.github.clojure/tools.build {:mvn/version "0.10.7"}
+  :build  {:deps       {io.github.clojure/tools.build {:mvn/version "0.10.8"}
                         slipset/deps-deploy           {:mvn/version "RELEASE"}}
            :ns-default build-lib}
 
