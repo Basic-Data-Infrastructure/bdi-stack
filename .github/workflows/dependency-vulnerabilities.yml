@@ -14,7 +14,7 @@ on:
 
 jobs:
   "NVD-check":
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
 
@@ -33,6 +33,11 @@ jobs:
         # the most recent cache for nvd-clojure
         # and update that
         restore-keys: "nvd-clojure-"
+
+    - uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '21'
 
     - name: Install clj runtime
       run: |
