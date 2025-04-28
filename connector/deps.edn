@@ -1,0 +1,13 @@
+;;; SPDX-FileCopyrightText: 2025 Jomco B.V.
+;;; SPDX-FileCopyrightText: 2025 Topsector Logistiek
+;;; SPDX-License-Identifier: AGPL-3.0-or-later
+{
+ :deps  {aleph/aleph                    {:mvn/version "0.8.3"}
+         nl.jomco/clj-http-status-codes {:mvn/version "0.1"}}
+ :paths ["src"]
+
+ :aliases
+ {:test {:extra-deps  {lambdaisland/kaocha {:mvn/version "RELEASE"}
+                       ring/ring           {:mvn/version "RELEASE"}}
+         :extra-paths ["test"]}
+  :run  {:main-opts ["-m" "org.bdinetwork.connector.reverse-proxy"]}}}

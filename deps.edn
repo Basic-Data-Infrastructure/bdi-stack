@@ -8,11 +8,17 @@
 {:deps {org.bdinetwork/association-register   {:local/root "./association-register"}
         org.bdinetwork/authorization-register {:local/root "./authorization-register"}
         org.bdinetwork/authentication-service {:local/root "./authentication-service"}
-        org.bdinetwork/clj-ring-middleware    {:local/root "./clj-ring-middleware"}}
+        org.bdinetwork/clj-ring-middleware    {:local/root "./clj-ring-middleware"}
+        org.bdinetwork/connector              {:local/root "./connector"}}
  :paths ["resources"]
  :aliases
- {:test   {:extra-deps {lambdaisland/kaocha    {:mvn/version "RELEASE"}
-                        org.clojure/core.async {:mvn/version "1.8.741"}}
+ {:test   {:extra-deps {lambdaisland/kaocha {:mvn/version "RELEASE"}
+
+                        ;; clj-ishare-client tests
+                        org.clojure/core.async {:mvn/version "1.8.741"}
+
+                        ;; connector tests
+                        ring/ring {:mvn/version "1.14.1"}}
            :main-opts  ["-m" "kaocha.runner"]}
 
   :lint   {:extra-deps {clj-kondo/clj-kondo {:mvn/version "RELEASE"}}
