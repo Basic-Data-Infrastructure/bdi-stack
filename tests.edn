@@ -17,4 +17,6 @@
          {:id         :authentication-service
           :test-paths ["authentication-service/test"]}
          {:id         :association-register
-          :test-paths ["association-register/test"]}]}
+          :test-paths ["association-register/test"]}
+         {:id         :connector
+          :test-paths ["connector/test"]}]}
