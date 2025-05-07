@@ -12,7 +12,7 @@
  :paths ["resources"]
  :aliases
  {:test   {:extra-deps {lambdaisland/kaocha    {:mvn/version "RELEASE"}
-                        org.clojure/core.async {:mvn/version "1.7.701"}}
+                        org.clojure/core.async {:mvn/version "1.8.741"}}
            :main-opts  ["-m" "kaocha.runner"]}
 
   :lint   {:extra-deps {clj-kondo/clj-kondo {:mvn/version "RELEASE"}}
