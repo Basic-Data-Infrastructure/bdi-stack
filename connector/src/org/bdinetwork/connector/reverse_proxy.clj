@@ -4,6 +4,7 @@
 
 (ns org.bdinetwork.connector.reverse-proxy
   (:require [aleph.http :as http]
+            [clojure.tools.logging :as log]
             [manifold.deferred :as d]
             [nl.jomco.http-status-codes :as http-status])
   (:import (java.net URL)))
@@ -11,28 +12,42 @@
 (def ingress-connection-pool
   (http/connection-pool {:connection-options {:keep-alive? true}}))
 
+(def service-unavailable-response
+  {:status  http-status/service-unavailable
+   :headers {"content-type" "text/plain"}
+   :body    "Service Unavailable"})
+
+(def bad-gateway-response
+  {:status  http-status/bad-gateway
+   :headers {"content-type" "text/plain"}
+   :body    "Bad Gateway"})
+
 (defn handler [rewrite-fn req]
-  (d/catch
-      (http/request (-> req
+  (try
+    (let [inbound-req (-> req
 
-                        ;; keep all relevant for request
-                        (select-keys [:protocol
-                                      :request-method :uri :headers
-                                      :query-string :body])
+                          ;; keep all relevant for request
+                          (select-keys [:protocol
+                                        :request-method :uri :headers
+                                        :query-string :body])
 
-                        ;; no magic
-                        (assoc :throw-exceptions? false
-                               :follow-redirects? false)
+                          ;; no magic
+                          (assoc :throw-exceptions? false
+                                 :follow-redirects? false)
 
-                        ;; a specialized connection pool
-                        (assoc :pool ingress-connection-pool)
+                          ;; a specialized connection pool
+                          (assoc :pool ingress-connection-pool)
 
-                        ;; rewrite request
-                        (rewrite-fn)))
-      (constantly
-        {:status  http-status/service-unavailable
-         :headers {"content-type" "text/plain"}
-         :body    "Service Unavailable"})))
+                          ;; rewrite request
+                          (rewrite-fn))]
+      (d/catch
+          (http/request inbound-req)
+          (fn handler-catch [e]
+            (log/error e "failed to launch inbound request for" inbound-req)
+            service-unavailable-response)))
+    (catch Exception e
+      (log/error e "failed to construct inbound request for" req)
+      bad-gateway-response)))
 
 (defn wrap-forwarded-headers
   "Add `x-forwarded-proto`, `x-forwarded-host` and `x-forwarded-port` headers to backend request.

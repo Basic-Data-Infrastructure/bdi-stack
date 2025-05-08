@@ -8,81 +8,17 @@
             [clojure.test :refer [deftest is testing use-fixtures]]
             [nl.jomco.http-status-codes :as http-status]
             [org.bdinetwork.connector.reverse-proxy :as sut]
-            [ring.adapter.jetty :refer [run-jetty]])
-  (:import (java.net Socket)))
-
-(def backend-scheme "http")
-(def backend-host "127.0.0.1")
-(def backend-port 11001)
-(def backend-url (str backend-scheme "://" backend-host ":" backend-port))
-
-(def proxy-scheme "http")
-(def proxy-host "127.0.0.2")
-(def proxy-port 11000)
-(def proxy-url (str proxy-scheme "://" proxy-host ":" proxy-port))
-
-(def wait-timeout 5000)
-(def wait-interval 10)
-
-(defn- connected? [host port]
-  (try
-    (.close (Socket. host port))
-    true
-    (catch Exception _
-      false)))
-
-(defn- wait-connection [f host port]
-  (let [r (f)]
-    (loop [n (/ wait-timeout wait-interval)]
-      (cond
-        (connected? host port)
-        r
-
-        (pos? n)
-        (do
-          (Thread/sleep wait-interval)
-          (recur (dec n)))
-
-        :else
-        (throw (ex-info "waiting timeout" {:host host, :port port}))))))
-
-(defn- backend-handler [req]
-  {:status  200
-   :headers {"content-type" "application/edn"
-             "set-cookie"   ["foo=1" "bar=2"]
-             "x-test"       "reverse-proxy"}
-   :body    (-> req
-                (update :body slurp)
-                (pr-str))})
-
-(defn- run-backend []
-  (wait-connection
-   #(run-jetty backend-handler
-               {:host  backend-host
-                :port  backend-port
-                :join? false})
-   backend-host backend-port))
-
-(def rewrite (sut/make-target-rewrite-fn backend-url))
-
-(defn- run-proxy []
-  (wait-connection
-   #(aleph.http/start-server (sut/make-handler rewrite)
-                             {:host             proxy-host
-                              :port             proxy-port
-                              :shutdown-timeout 0})
-   proxy-host proxy-port))
+            [org.bdinetwork.connector.reverse-proxy-test-helper :refer [backend-url proxy-host proxy-port proxy-scheme proxy-url start-backend start-proxy stop-backend stop-proxy]]))
 
 (use-fixtures :once
   (fn [f]
-    (let [backend (run-backend)
-          proxy   (run-proxy)]
+    (let [backend (start-backend)
+          proxy   (start-proxy (sut/make-target-rewrite-fn backend-url))]
       (try
         (f)
         (finally
-          (.close proxy)
-          (.wait-for-close proxy)
-          (.stop backend))))))
+          (stop-proxy proxy)
+          (stop-backend backend))))))
 
 (deftest base
   (let [{:keys [status headers]} @(http/get proxy-url {:throw-exceptions? false})]
