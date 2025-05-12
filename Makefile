@@ -1,11 +1,11 @@
-# SPDX-FileCopyrightText: 2024 Jomco B.V.
-# SPDX-FileCopyrightText: 2024 Topsector Logistiek
+# SPDX-FileCopyrightText: 2024, 2025 Jomco B.V.
+# SPDX-FileCopyrightText: 2024, 2025 Topsector Logistiek
 # SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
 # SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-.PHONY: lint test check clean test-config jar
+.PHONY: lint test check clean test-config jar watson
 
 test-config:
 	$(MAKE) -C test-config

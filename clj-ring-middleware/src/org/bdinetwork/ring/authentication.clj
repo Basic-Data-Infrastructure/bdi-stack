@@ -163,14 +163,44 @@
         (f request)))))
 
 (defn wrap-authentication
-  "Middleware to add a `/connect/token` endpoint.
+  "Middleware to add a `/connect/token` endpoint and sets `client-id` on the request when a valid access token is provided.
 
-   It requires both `ring.middleware.json/wrap-json-response` and
+  Expects at least the following:
+
+  - `server-id`
+
+    The party ID / client-id of the server.
+
+  - `public-key`
+
+    To validate access token signatures.
+
+  - `private-key`
+
+    To sign access tokens and client assertions when
+    accessing (remote) association register.
+
+  - `access-token-ttl-seconds`
+
+    The number of seconds an access token will be valid.
+
+  When no bearer token is provide the request passes through
+  untouched. When a bearer token is provided but is not a valid access
+  token, an `401 Unauthorized` response is generated.  This
+  unauthorized response can be customized by providing
+  `invalid-token-response` in `opts`.
+
+  WARNING: this middleware does not enforce authentication!  To
+  enforce authentication the handler should respond to the absence of
+  a `client-id` itself with some kind unauthorized response.
+
+  The returned handler requires both
+  `ring.middleware.json/wrap-json-response` and
   `ring.middleware.params/wrap-params` to function and expects an
   `association` on the request which implements
   `org.bdinetwork.ring.association/Association`."
-  [f {:keys [private-key server-id] :as opts}]
-  {:pre [private-key server-id]}
+  [f {:keys [server-id public-key private-key access-token-ttl-seconds] :as opts}]
+  {:pre [server-id public-key private-key access-token-ttl-seconds]}
   (-> f
       (wrap-client-assertion opts)
       (access-token/wrap-access-token opts)))
