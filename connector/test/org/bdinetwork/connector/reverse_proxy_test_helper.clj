@@ -6,7 +6,7 @@
   (:require [aleph.http :as http]
             [org.bdinetwork.connector.reverse-proxy :as sut]
             [ring.adapter.jetty :refer [run-jetty]])
-  (:import (java.net Socket)))
+  (:import (java.net InetSocketAddress Socket)))
 
 (def backend-scheme "http")
 (def backend-host "127.0.0.1")
@@ -21,27 +21,35 @@
 (def wait-timeout 5000)
 (def wait-interval 10)
 
+(def connect-timeout (/ wait-interval 2))
+
 (defn- connected? [host port]
   (try
-    (.close (Socket. host port))
+    (doto (Socket.)
+      (.connect (InetSocketAddress. host port) connect-timeout)
+      (.close))
     true
     (catch Exception _
       false)))
 
-(defn- wait-connection [f host port]
-  (let [r (f)]
-    (loop [n (/ wait-timeout wait-interval)]
-      (cond
-        (connected? host port)
-        r
+(defn- wait-connection [{:keys [start-fn stop-fn host port]}]
+  (let [r (start-fn)]
+    (try
+      (loop [n (/ wait-timeout wait-interval)]
+        (cond
+          (connected? host port)
+          r
 
-        (pos? n)
-        (do
-          (Thread/sleep wait-interval)
-          (recur (dec n)))
+          (pos? n)
+          (do
+            (Thread/sleep wait-interval)
+            (recur (dec n)))
 
-        :else
-        (throw (ex-info "waiting timeout" {:host host, :port port}))))))
+          :else
+          (throw (Exception. (str "wait timeout for " host ":" port)))))
+      (catch Exception e
+        (try (stop-fn r) (catch Exception _ nil))
+        (throw e)))))
 
 (defn- backend-handler [req]
   {:status  200
@@ -52,25 +60,29 @@
                 (update :body slurp)
                 (pr-str))})
 
-(defn start-backend []
-  (wait-connection
-   #(run-jetty backend-handler
-               {:host  backend-host
-                :port  backend-port
-                :join? false})
-   backend-host backend-port))
-
 (defn stop-backend [backend]
   (.stop backend))
+
+(defn start-backend []
+  (wait-connection {:start-fn
+                    #(run-jetty backend-handler
+                                {:host  backend-host
+                                 :port  backend-port
+                                 :join? false})
+                    :stop-fn stop-backend
+                    :host    backend-host
+                    :port    backend-port}))
 
 (defn stop-proxy [proxy]
   (.close proxy)
   (.wait-for-close proxy))
 
-(defn start-proxy [rewrite-fn]
-  (wait-connection
-   #(aleph.http/start-server (sut/make-handler rewrite-fn)
-                             {:host             proxy-host
-                              :port             proxy-port
-                              :shutdown-timeout 0})
-   proxy-host proxy-port))
+(defn start-proxy [rewrite]
+  (wait-connection {:start-fn
+                    #(aleph.http/start-server (sut/make-handler rewrite)
+                                              {:host             proxy-host
+                                               :port             proxy-port
+                                               :shutdown-timeout 0})
+                    :stop-fn stop-proxy
+                    :host    proxy-host
+                    :port    proxy-port}))
