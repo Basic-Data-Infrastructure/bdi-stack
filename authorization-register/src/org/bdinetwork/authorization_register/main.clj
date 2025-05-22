@@ -8,7 +8,7 @@
 (ns org.bdinetwork.authorization-register.main
   (:gen-class)
   (:require [environ.core :refer [env]]
-            [nl.jomco.resources :refer [close]]
+            [nl.jomco.resources :refer [close wait-until-interrupted]]
             [org.bdinetwork.authorization-register.system :as system]
             [org.bdinetwork.service-commons.config :refer [config server-party-opt-specs]]))
 
@@ -20,15 +20,6 @@
          :port                     ["Server HTTP Port" :int :default 8080]
          :policies-db              ["Directory to store policy data" :str]
          :access-token-ttl-seconds ["Access token time to live in seconds" :int :default 600]))
-
-(defn wait-until-interrupted
-  []
-  (loop []
-    (when-not (try (Thread/sleep 10000)
-                   false
-                   (catch InterruptedException _
-                     true))
-      (recur))))
 
 (defn start
   [env]
