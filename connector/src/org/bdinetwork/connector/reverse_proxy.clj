@@ -6,103 +6,96 @@
   (:require [aleph.http :as http]
             [clojure.tools.logging :as log]
             [manifold.deferred :as d]
-            [nl.jomco.http-status-codes :as http-status])
-  (:import (java.net URL)))
+            [org.bdinetwork.connector.response :as response]))
 
 (def ingress-connection-pool
   (http/connection-pool {:connection-options {:keep-alive? true}}))
 
-(def service-unavailable-response
-  {:status  http-status/service-unavailable
-   :headers {"content-type" "text/plain"}
-   :body    "Service Unavailable"})
-
-(def bad-gateway-response
-  {:status  http-status/bad-gateway
-   :headers {"content-type" "text/plain"}
-   :body    "Bad Gateway"})
-
-(defn handler [rewrite-fn req]
-  (try
-    (let [inbound-req (-> req
-
-                          ;; keep all relevant for request
-                          (select-keys [:protocol
-                                        :request-method :uri :headers
-                                        :query-string :body])
-
-                          ;; no magic
-                          (assoc :throw-exceptions? false
-                                 :follow-redirects? false)
-
-                          ;; a specialized connection pool
-                          (assoc :pool ingress-connection-pool)
-
-                          ;; rewrite request
-                          (rewrite-fn))]
-      (d/catch
-          (http/request inbound-req)
-          (fn handler-catch [e]
-            (log/error e "failed to launch inbound request for" inbound-req)
-            service-unavailable-response)))
-    (catch Exception e
-      (log/error e "failed to construct inbound request for" req)
-      bad-gateway-response)))
-
-(defn wrap-forwarded-headers
-  "Add `x-forwarded-proto`, `x-forwarded-host` and `x-forwarded-port` headers to backend request.
-
-  The allows the backend to create local redirects and set domain
-  cookies."
-  [f]
-  (fn forwarded-headers-wrapper
-    [{{:strs [host
-              x-forwarded-proto
-              x-forwarded-host
-              x-forwarded-port]} :headers
-      :keys                      [scheme server-port]
-      :as                        req}]
-    (let [proto       (or x-forwarded-proto (name scheme))
-          host        (or x-forwarded-host host)
-          port        (or x-forwarded-port server-port)]
-      (f (cond-> req
-           proto
-           (assoc-in [:headers "x-forwarded-proto"] proto)
-
-           host
-           (assoc-in [:headers "x-forwarded-host"] host)
-
-           port
-           (assoc-in [:headers "x-forwarded-port"] (str port)))))))
-
-(defn wrap-multi-set-cookies
+(defn- fix-cookies
   "Handle multiple `set-cookie` headers.
 
   The `set-cookie` header is the only header which can appear multiple
   times, aleph joins them together to a single string with a `,` which
   is not the way to set multiple cookies."
-  [handler]
-  (fn multi-set-cookies-wrapper [req]
-    (d/let-flow [{:keys [headers] :as res} (handler req)]
-      (if-let [v (try (http/get-all headers "set-cookie")
-                      ;; maybe on be a aleph.http.common/HeaderMap
-                      (catch Throwable _ nil))]
-        (assoc-in res [:headers "set-cookie"] (vec v))
-        res))))
+  [response]
+  (d/let-flow [{:keys [headers]} response]
+    (if-let [v (try (http/get-all headers "set-cookie")
+                    ;; maybe on be a aleph.http.common/HeaderMap
+                    (catch Throwable _ nil))]
+      (assoc-in response [:headers "set-cookie"] (vec v))
+      response)))
 
-(defn make-handler [rewrite-fn]
-  (-> (partial handler rewrite-fn)
-      (wrap-forwarded-headers)
-      (wrap-multi-set-cookies)))
+(defn pk [v] (prn v) v)
 
-(defn make-target-rewrite-fn [target-url]
-  (let [url    (URL. target-url)
-        target {:scheme      (keyword (.getProtocol url))
-                :server-name (.getHost url)
-                :server-port (.getPort url)}]
-    (fn target-rewrite-fn [req]
-      (merge req (select-keys target [:scheme :server-name :server-port])))))
+(defn proxy-request
+  [request]
+  (d/catch
+      (-> request
 
-(defn -main [target-url & [port]]
-  (http/start-server (make-handler (make-target-rewrite-fn target-url))
-                     {:port (if port (Integer/parseInt port) 8081)}))
+          ;; keep all relevant for request
+          (select-keys [:protocol
+                        :request-method
+
+                        :url
+
+                        :scheme
+                        :server-name
+                        :server-port
+                        :uri
+                        :query-string
+
+                        :headers
+                        :body])
+
+          ;; no magic
+          (assoc :throw-exceptions? false
+                 :follow-redirects? false)
+
+          (pk)
+
+          ;; a specialized connection pool
+          (assoc :pool ingress-connection-pool)
+
+          (http/request)
+          (fix-cookies))
+
+      (fn proxy-handler-catch [e]
+        (log/error e "failed to launch inbound request" request)
+        response/service-unavailable)))
+
+(def proxy-request-interceptor
+  ^{:doc "Execute proxy request and populate response."}
+  {:enter
+   (fn proxy-request-enter [{:keys [request] :as ctx}]
+     (log/debug "proxy-request-enter")
+     (assoc ctx :response
+            (proxy-request (-> request
+                               ;; get x-forwarded headers if available
+                               (update :headers merge (-> ctx :proxy-request :headers))))))})
+
+(def forwarded-headers-interceptor
+  ^{:doc "Add `x-forwarded-proto`, `x-forwarded-host` and `x-forwarded-port` headers to request for backend.
+
+  The allows the backend to create local redirects and set domain
+  cookies."}
+  {:enter
+   (fn forwarded-headers-enter
+     [{{{:strs [host
+                x-forwarded-proto
+                x-forwarded-host
+                x-forwarded-port]} :headers
+        :keys                      [scheme server-port]} :request
+       :as ctx}]
+     (log/debug "forwarded-headers-enter")
+     (let [proto (or x-forwarded-proto (name scheme))
+           host  (or x-forwarded-host host)
+           port  (or x-forwarded-port server-port)]
+       (cond-> ctx
+         proto
+         (assoc-in [:proxy-request :headers "x-forwarded-proto"] proto)
+
+         host
+         (assoc-in [:proxy-request :headers "x-forwarded-host"] host)
+
+         port
+         (assoc-in [:proxy-request :headers "x-forwarded-port"] (str port)))))})

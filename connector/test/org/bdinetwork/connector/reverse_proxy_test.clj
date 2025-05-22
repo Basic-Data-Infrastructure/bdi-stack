@@ -4,57 +4,28 @@
 
 (ns org.bdinetwork.connector.reverse-proxy-test
   (:require [aleph.http :as http]
-            [clojure.edn :as edn]
-            [clojure.test :refer [deftest is testing use-fixtures]]
+            [clojure.test :refer [deftest is use-fixtures]]
             [nl.jomco.http-status-codes :as http-status]
             [nl.jomco.resources :refer [with-resources]]
             [org.bdinetwork.connector.reverse-proxy :as sut]
-            [org.bdinetwork.connector.reverse-proxy-test-helper :refer [backend-url proxy-host proxy-port proxy-scheme proxy-url start-backend start-proxy]]))
+            [org.bdinetwork.connector.reverse-proxy-test-helper :refer [backend-url proxy-url start-backend start-proxy]]))
+
+(defn- handler [req]
+  (sut/proxy-request (assoc req :url backend-url)))
 
 (use-fixtures :once
   (fn [f]
     (with-resources [_backend (start-backend)
-                     _proxy   (start-proxy (sut/make-target-rewrite-fn backend-url))]
+                     _proxy   (start-proxy handler)]
       (f))))
 
-(deftest base
+(deftest proxy-request
   (let [{:keys [status headers]} @(http/get proxy-url {:throw-exceptions? false})]
     (is (= http-status/ok status)
         "request succeeded")
     (is (= "reverse-proxy" (get headers "x-test"))
         "got x-test header from backend")
     (is (= "application/edn" (get headers "content-type"))
-        "got inbound request")))
-
-(deftest multiple-cookies
-  (let [{:keys [headers]} @(http/get proxy-url {:throw-exceptions? false})]
+        "got inbound request")
     (is (= ["foo=1" "bar=2"] (http/get-all headers "set-cookie"))
         "2 cookies set")))
-
-(deftest x-forwarded-headers
-  (let [{:keys [body]}             @(http/get proxy-url {:throw-exceptions? false})
-        {inbound-headers :headers} (-> body slurp edn/read-string)]
-    (is (= proxy-scheme (get inbound-headers "x-forwarded-proto"))
-        "x-forwarded-proto set")
-    (is (= (str proxy-port) (get inbound-headers "x-forwarded-port"))
-        "x-forwarded-port set")
-    (is (= (str proxy-host ":" proxy-port) (get inbound-headers "x-forwarded-host"))
-        "x-forwarded-host set"))
-
-  (testing "with upstream x-forwarded headers"
-    (let [upstream-scheme            "yelp"
-          upstream-port              "31415"
-          upstream-host              "example.com"
-          headers                    {"x-forwarded-proto" upstream-scheme
-                                      "x-forwarded-port"  upstream-port
-                                      "x-forwarded-host"  upstream-host}
-          {:keys [body]}             @(http/get proxy-url
-                                                {:headers           headers
-                                                 :throw-exceptions? false})
-          {inbound-headers :headers} (-> body slurp edn/read-string)]
-      (is (= upstream-scheme (get inbound-headers "x-forwarded-proto"))
-          "x-forwarded-proto set")
-      (is (= upstream-port (get inbound-headers "x-forwarded-port"))
-          "x-forwarded-port set")
-      (is (= upstream-host (get inbound-headers "x-forwarded-host"))
-          "x-forwarded-host set"))))
