@@ -6,21 +6,10 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.authentication-service.system
-  (:require [clojure.string :as string]
-            [nl.jomco.resources :refer [mk-system Resource]]
+  (:require [nl.jomco.resources :refer [mk-system Resource]]
             [org.bdinetwork.authentication-service.web :as web]
             [org.bdinetwork.ring.remote-association :refer [remote-association]]
             [ring.adapter.jetty :refer [run-jetty]]))
-
-(defn x5c
-  "Read chain file into vector of certificates."
-  [cert-file]
-  (->> (-> cert-file
-           slurp
-           (string/replace-first #"(?s)\A.*?-+BEGIN CERTIFICATE-+\s+" "")
-           (string/replace #"(?s)\s*-+END CERTIFICATE-+\s*\Z" "")
-           (string/split #"(?s)\s*-+END CERTIFICATE-+.*?-+BEGIN CERTIFICATE-+\s*"))
-       (mapv #(string/replace % #"\s+" ""))))
 
 (extend-protocol Resource
   org.eclipse.jetty.server.Server

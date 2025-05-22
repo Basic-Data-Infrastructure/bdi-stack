@@ -14,13 +14,14 @@
             [org.bdinetwork.authentication-service.system :as system]
             [org.bdinetwork.ishare.client :as client]
             [org.bdinetwork.ishare.client.request :as request]
-            [org.bdinetwork.ring.in-memory-association :refer [read-source]]))
+            [org.bdinetwork.ring.in-memory-association :refer [read-source]]
+            [org.bdinetwork.service-commons.config :refer [split-x5c]]))
 
 (def association-config
   {:server-id                "EU.EORI.ASSOCIATION-REGISTER"
    :private-key              (keys/private-key "test-config/association_register.key.pem")
    :public-key               (keys/public-key "test-config/association_register.cert.pem")
-   :x5c                      (system/x5c "test-config/association_register.x5c.pem")
+   :x5c                      (split-x5c "test-config/association_register.x5c.pem")
    :data-source              (read-source "test-config/association-register-config.yml")
    :port                     9991
    :access-token-ttl-seconds 300})
@@ -29,7 +30,7 @@
   {:server-id                "EU.EORI.AUTHENTICATION-SERVICE"
    :private-key              (keys/private-key "test-config/authentication_service.key.pem")
    :public-key               (keys/public-key "test-config/authentication_service.cert.pem")
-   :x5c                      (system/x5c "test-config/authentication_service.x5c.pem")
+   :x5c                      (split-x5c "test-config/authentication_service.x5c.pem")
    :port                     9992
    :association-server-id    (:server-id association-config)
    :association-server-url   (str "http://localhost:" (:port association-config))
@@ -38,7 +39,7 @@
 (def client-config
   {:ishare/client-id          "EU.EORI.CLIENT"
    :ishare/private-key        (keys/private-key "test-config/client.key.pem")
-   :ishare/x5c                (system/x5c "test-config/client.x5c.pem")
+   :ishare/x5c                (split-x5c "test-config/client.x5c.pem")
    :ishare/satellite-id       (:server-id association-config)
    :ishare/satellite-base-url (str "http://localhost:" (:port association-config))
    :throw                     false ;; we test on status codes, so don't throw in the tests
