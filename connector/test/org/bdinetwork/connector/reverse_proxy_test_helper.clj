@@ -4,8 +4,7 @@
 
 (ns org.bdinetwork.connector.reverse-proxy-test-helper
   (:require [aleph.http :as http]
-            [nl.jomco.resources :refer [Resource closeable mk-system]]
-            [org.bdinetwork.connector.reverse-proxy :as sut]
+            [nl.jomco.resources :refer [closeable mk-system Resource]]
             [ring.adapter.jetty :refer [run-jetty]])
   (:import (java.net InetSocketAddress Socket)))
 
@@ -55,10 +54,10 @@
   (.close server)
   (.wait-for-close server))
 
-(defn start-proxy [rewrite]
+(defn start-proxy [handler]
   ;; using mk-system here because we want to wait for
   ;; aleph.http/start-server to be running before returning
-  (mk-system [server (closeable (aleph.http/start-server (sut/make-handler rewrite)
+  (mk-system [server (closeable (aleph.http/start-server handler
                                                          {:host             proxy-host
                                                           :port             proxy-port
                                                           :shutdown-timeout 0})

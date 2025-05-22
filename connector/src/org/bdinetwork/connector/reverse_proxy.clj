@@ -6,48 +6,44 @@
   (:require [aleph.http :as http]
             [clojure.tools.logging :as log]
             [manifold.deferred :as d]
-            [nl.jomco.http-status-codes :as http-status])
-  (:import (java.net URL)))
+            [org.bdinetwork.connector.response :as response]))
 
 (def ingress-connection-pool
   (http/connection-pool {:connection-options {:keep-alive? true}}))
 
-(def service-unavailable-response
-  {:status  http-status/service-unavailable
-   :headers {"content-type" "text/plain"}
-   :body    "Service Unavailable"})
+(defn- proxy-handler [{{req :request} :outgoing :as r}]
+  (let [res
+        (d/catch
+            (-> req
+                ;; keep all relevant for request
+                (select-keys [:protocol
+                              :request-method
 
-(def bad-gateway-response
-  {:status  http-status/bad-gateway
-   :headers {"content-type" "text/plain"}
-   :body    "Bad Gateway"})
+                              :url
 
-(defn handler [rewrite-fn req]
-  (try
-    (let [inbound-req (-> req
+                              :scheme
+                              :server-name
+                              :server-port
+                              :uri
+                              :query-string
 
-                          ;; keep all relevant for request
-                          (select-keys [:protocol
-                                        :request-method :uri :headers
-                                        :query-string :body])
+                              :headers
+                              :body])
 
-                          ;; no magic
-                          (assoc :throw-exceptions? false
-                                 :follow-redirects? false)
+                ;; no magic
+                (assoc :throw-exceptions? false
+                       :follow-redirects? false)
 
-                          ;; a specialized connection pool
-                          (assoc :pool ingress-connection-pool)
+                ;; a specialized connection pool
+                (assoc :pool ingress-connection-pool)
 
-                          ;; rewrite request
-                          (rewrite-fn))]
-      (d/catch
-          (http/request inbound-req)
-          (fn handler-catch [e]
-            (log/error e "failed to launch inbound request for" inbound-req)
-            service-unavailable-response)))
-    (catch Exception e
-      (log/error e "failed to construct inbound request for" req)
-      bad-gateway-response)))
+                (http/request))
+            (fn proxy-handler-catch [e]
+              (log/error e "failed to launch inbound request" r)
+              response/service-unavailable))]
+    (-> r
+        (assoc-in [:incoming :response] res)
+        (assoc-in [:outgoing :response] res))))
 
 (defn wrap-forwarded-headers
   "Add `x-forwarded-proto`, `x-forwarded-host` and `x-forwarded-port` headers to backend request.
@@ -56,24 +52,24 @@
   cookies."
   [f]
   (fn forwarded-headers-wrapper
-    [{{:strs [host
-              x-forwarded-proto
-              x-forwarded-host
-              x-forwarded-port]} :headers
-      :keys                      [scheme server-port]
-      :as                        req}]
-    (let [proto       (or x-forwarded-proto (name scheme))
-          host        (or x-forwarded-host host)
-          port        (or x-forwarded-port server-port)]
-      (f (cond-> req
+    [{{{{:strs [host
+                x-forwarded-proto
+                x-forwarded-host
+                x-forwarded-port]} :headers
+        :keys                      [scheme server-port]} :request}
+      :incoming :as r}]
+    (let [proto (or x-forwarded-proto (name scheme))
+          host  (or x-forwarded-host host)
+          port  (or x-forwarded-port server-port)]
+      (f (cond-> r
            proto
-           (assoc-in [:headers "x-forwarded-proto"] proto)
+           (assoc-in [:outgoing :request :headers "x-forwarded-proto"] proto)
 
            host
-           (assoc-in [:headers "x-forwarded-host"] host)
+           (assoc-in [:outgoing :request :headers "x-forwarded-host"] host)
 
            port
-           (assoc-in [:headers "x-forwarded-port"] (str port)))))))
+           (assoc-in [:outgoing :request :headers "x-forwarded-port"] (str port)))))))
 
 (defn wrap-multi-set-cookies
   "Handle multiple `set-cookie` headers.
@@ -82,27 +78,17 @@
   times, aleph joins them together to a single string with a `,` which
   is not the way to set multiple cookies."
   [handler]
-  (fn multi-set-cookies-wrapper [req]
-    (d/let-flow [{:keys [headers] :as res} (handler req)]
-      (if-let [v (try (http/get-all headers "set-cookie")
-                      ;; maybe on be a aleph.http.common/HeaderMap
-                      (catch Throwable _ nil))]
-        (assoc-in res [:headers "set-cookie"] (vec v))
-        res))))
+  (fn multi-set-cookies-wrapper [r]
+    (let [{{res :response} :incoming :as r} (handler r)]
+      (assoc-in r [:outgoing :response]
+                (d/let-flow [{:keys [headers]} res]
+                  (if-let [v (try (http/get-all headers "set-cookie")
+                                  ;; maybe on be a aleph.http.common/HeaderMap
+                                  (catch Throwable _ nil))]
+                    (assoc-in res [:headers "set-cookie"] (vec v))
+                    res))))))
 
-(defn make-handler [rewrite-fn]
-  (-> (partial handler rewrite-fn)
+(def handler
+  (-> proxy-handler
       (wrap-forwarded-headers)
       (wrap-multi-set-cookies)))
-
-(defn make-target-rewrite-fn [target-url]
-  (let [url    (URL. target-url)
-        target {:scheme      (keyword (.getProtocol url))
-                :server-name (.getHost url)
-                :server-port (.getPort url)}]
-    (fn target-rewrite-fn [req]
-      (merge req (select-keys target [:scheme :server-name :server-port])))))
-
-(defn -main [target-url & [port]]
-  (http/start-server (make-handler (make-target-rewrite-fn target-url))
-                     {:port (if port (Integer/parseInt port) 8081)}))

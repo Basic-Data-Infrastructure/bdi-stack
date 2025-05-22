@@ -10,9 +10,16 @@
             [org.bdinetwork.connector.reverse-proxy :as sut]
             [org.bdinetwork.connector.reverse-proxy-test-helper :refer [backend-url proxy-url start-proxy]]))
 
+(defn- handler [req]
+  (-> {:incoming {:request req}
+       :outgoing {:request (assoc req :url backend-url)}}
+      (sut/handler)
+      :outgoing
+      :response))
+
 (use-fixtures :once
   (fn [f]
-    (with-resources [_proxy (start-proxy (sut/make-target-rewrite-fn backend-url))]
+    (with-resources [_proxy (start-proxy handler)]
       (f))))
 
 (deftest service-unavailable
