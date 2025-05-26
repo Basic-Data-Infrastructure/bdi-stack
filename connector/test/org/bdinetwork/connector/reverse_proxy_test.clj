@@ -7,18 +7,15 @@
             [clojure.edn :as edn]
             [clojure.test :refer [deftest is testing use-fixtures]]
             [nl.jomco.http-status-codes :as http-status]
+            [nl.jomco.resources :refer [with-resources]]
             [org.bdinetwork.connector.reverse-proxy :as sut]
-            [org.bdinetwork.connector.reverse-proxy-test-helper :refer [backend-url proxy-host proxy-port proxy-scheme proxy-url start-backend start-proxy stop-backend stop-proxy]]))
+            [org.bdinetwork.connector.reverse-proxy-test-helper :refer [backend-url proxy-host proxy-port proxy-scheme proxy-url start-backend start-proxy]]))
 
 (use-fixtures :once
   (fn [f]
-    (let [backend (start-backend)
-          proxy   (start-proxy (sut/make-target-rewrite-fn backend-url))]
-      (try
-        (f)
-        (finally
-          (stop-proxy proxy)
-          (stop-backend backend))))))
+    (with-resources [_backend (start-backend)
+                     _proxy   (start-proxy (sut/make-target-rewrite-fn backend-url))]
+      (f))))
 
 (deftest base
   (let [{:keys [status headers]} @(http/get proxy-url {:throw-exceptions? false})]
