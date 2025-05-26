@@ -4,6 +4,7 @@
 
 (ns org.bdinetwork.connector.reverse-proxy-test-helper
   (:require [aleph.http :as http]
+            [nl.jomco.resources :refer [Resource closeable mk-system]]
             [org.bdinetwork.connector.reverse-proxy :as sut]
             [ring.adapter.jetty :refer [run-jetty]])
   (:import (java.net InetSocketAddress Socket)))
@@ -19,37 +20,12 @@
 (def proxy-url (str proxy-scheme "://" proxy-host ":" proxy-port))
 
 (def wait-timeout 5000)
-(def wait-interval 10)
 
-(def connect-timeout (/ wait-interval 2))
-
-(defn- connected? [host port]
-  (try
-    (doto (Socket.)
-      (.connect (InetSocketAddress. host port) connect-timeout)
-      (.close))
-    true
-    (catch Exception _
-      false)))
-
-(defn- wait-connection [{:keys [start-fn stop-fn host port]}]
-  (let [r (start-fn)]
-    (try
-      (loop [n (/ wait-timeout wait-interval)]
-        (cond
-          (connected? host port)
-          r
-
-          (pos? n)
-          (do
-            (Thread/sleep wait-interval)
-            (recur (dec n)))
-
-          :else
-          (throw (Exception. (str "wait timeout for " host ":" port)))))
-      (catch Exception e
-        (try (stop-fn r) (catch Exception _ nil))
-        (throw e)))))
+(defn- ensure-connection
+  [{:keys [host port]}]
+  (doto (Socket.)
+    (.connect (InetSocketAddress. host port) wait-timeout)
+    (.close)))
 
 (defn- backend-handler [req]
   {:status  200
@@ -60,29 +36,33 @@
                 (update :body slurp)
                 (pr-str))})
 
-(defn stop-backend [backend]
-  (.stop backend))
+(extend-protocol Resource
+  org.eclipse.jetty.server.Server
+  (close [server]
+    (.stop server)))
 
 (defn start-backend []
-  (wait-connection {:start-fn
-                    #(run-jetty backend-handler
-                                {:host  backend-host
-                                 :port  backend-port
-                                 :join? false})
-                    :stop-fn stop-backend
-                    :host    backend-host
-                    :port    backend-port}))
+  (run-jetty backend-handler
+             {:host  backend-host
+              :port  backend-port
+              :join? false}))
 
-(defn stop-proxy [proxy]
-  (.close proxy)
-  (.wait-for-close proxy))
+(defn close-aleph-server
+  "Blocking close of aleph HTTP server.
+
+  Blocks until server is shut down"
+  [server]
+  (.close server)
+  (.wait-for-close server))
 
 (defn start-proxy [rewrite]
-  (wait-connection {:start-fn
-                    #(aleph.http/start-server (sut/make-handler rewrite)
-                                              {:host             proxy-host
-                                               :port             proxy-port
-                                               :shutdown-timeout 0})
-                    :stop-fn stop-proxy
-                    :host    proxy-host
-                    :port    proxy-port}))
+  ;; using mk-system here because we want to wait for
+  ;; aleph.http/start-server to be running before returning
+  (mk-system [server (closeable (aleph.http/start-server (sut/make-handler rewrite)
+                                                         {:host             proxy-host
+                                                          :port             proxy-port
+                                                          :shutdown-timeout 0})
+                                close-aleph-server)]
+    (ensure-connection {:host proxy-host
+                        :port proxy-port})
+    {:server server}))

@@ -6,13 +6,14 @@
   (:require [aleph.http :as http]
             [clojure.test :refer [deftest is use-fixtures]]
             [nl.jomco.http-status-codes :as http-status]
+            [nl.jomco.resources :refer [with-resources]]
             [org.bdinetwork.connector.reverse-proxy :as sut]
-            [org.bdinetwork.connector.reverse-proxy-test-helper :refer [backend-url proxy-url start-proxy stop-proxy]]))
+            [org.bdinetwork.connector.reverse-proxy-test-helper :refer [backend-url proxy-url start-proxy]]))
 
 (use-fixtures :once
   (fn [f]
-    (let [proxy (start-proxy (sut/make-target-rewrite-fn backend-url))]
-      (try (f) (finally (stop-proxy proxy))))))
+    (with-resources [_proxy (start-proxy (sut/make-target-rewrite-fn backend-url))]
+      (f))))
 
 (deftest service-unavailable
   (let [{:keys [status]} @(http/get proxy-url {:throw-exceptions? false})]
