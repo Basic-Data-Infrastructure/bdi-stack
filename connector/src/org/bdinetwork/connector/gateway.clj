@@ -3,9 +3,11 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.connector.gateway
-  (:require [aleph.http :as http]
+  (:require [aero.core :as aero]
+            [clojure.java.io :as io]
             [clojure.tools.logging :as log]
             [org.bdinetwork.connector.response :as response]
+            [nl.jomco.resources :refer [closeable]]
             [org.bdinetwork.connector.rules :as rules]))
 
 (defn find-rule [rules _req]
@@ -36,12 +38,7 @@
           (log/error e "failed to process request" req)
           response/bad-gateway)))))
 
-(comment
-  (require '[clojure.java.io :as io])
-  (require '[aero.core :as aero])
-  (def s
-    (http/start-server (make-gateway (-> "rules.edn" io/file aero/read-config))
-                       {:port             8081
-                        :shutdown-timeout 0}))
-  (doto s .close .wait-for-close)
-  )
+(defn read-rules
+  [rules-file]
+  (-> rules-file io/file aero/read-config))
+

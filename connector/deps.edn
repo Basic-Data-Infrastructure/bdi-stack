@@ -8,11 +8,15 @@
          nl.jomco/with-resources        {:mvn/version "0.1.2"}
          nl.jomco/envopts               {:mvn/version "0.0.6"}
          aero/aero                      {:mvn/version "1.1.6"}}
- :paths ["src"]
+ :paths ["src" "classes"]
 
  :aliases
- {:dev  {:extra-deps {ch.qos.logback/logback-classic {:mvn/version "1.5.18"}}}
-  :test {:extra-deps  {lambdaisland/kaocha {:mvn/version "RELEASE"}
-                       ring/ring           {:mvn/version "1.14.1"}}
-         :extra-paths ["test"]
-         :main-opts   ["-m" "kaocha.runner"]}}}
+ {:dev     {:extra-deps {ch.qos.logback/logback-classic {:mvn/version "1.5.18"}}}
+  :test    {:extra-deps  {lambdaisland/kaocha {:mvn/version "RELEASE"}
+                          ring/ring           {:mvn/version "1.14.1"}}
+            :extra-paths ["test"]
+            :main-opts   ["-m" "kaocha.runner"]}
+  :uberjar {:replace-deps  {uberdeps/uberdeps {:mvn/version "RELEASE"}}
+            :replace-paths []
+            :main-opts     ["-m" "uberdeps.uberjar"
+                            "--main-class" "org.bdinetwork.connector.main"]}}}
