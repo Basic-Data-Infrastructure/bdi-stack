@@ -3,12 +3,8 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.connector.gateway
-  (:require [aleph.http :as http]
-            [clojure.tools.logging :as log]
-            [environ.core :refer [env]]
-            [org.bdinetwork.connector.response :as response]
-            [org.bdinetwork.connector.rules :as _rules]
-            [org.bdinetwork.service-commons.config :refer [config]]))
+  (:require [clojure.tools.logging :as log]
+            [org.bdinetwork.connector.response :as response]))
 
 (def eval-env
   {'assoc       assoc
@@ -46,25 +42,3 @@
       (catch Exception e
         (log/error e "failed to process request" req)
         response/bad-gateway))))
-
-(def opt-specs
-  {:hostname   ["Server hostname" :str :default "localhost"]
-   :port       ["Server HTTP Port" :int :default 8081]
-   :rules-file ["Rules EDN file" :rules-file]})
-
-(defn -main [& _]
-  (let [{:keys [hostname port rules-file]} (config env opt-specs)]
-    (http/start-server (make-gateway rules-file)
-                       {:hostname         hostname
-                        :port             port
-                        :shutdown-timeout 0})))
-
-(comment
-  (let [env {:hostname "localhost" :port "8081" :rules-file "rules.edn"}]
-    (def s
-      (let [{:keys [hostname port rules-file]} (config env opt-specs)]
-        (http/start-server (make-gateway rules-file)
-                           {:hostname         hostname
-                            :port             port
-                            :shutdown-timeout 0}))))
-  (.close s))

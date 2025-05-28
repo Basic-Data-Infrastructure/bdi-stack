@@ -7,7 +7,6 @@
             [clojure.java.io :as io]
             [clojure.tools.logging :as log]
             [manifold.deferred :as d]
-            [nl.jomco.envopts :as envopts]
             [org.bdinetwork.connector.eval :refer [evaluate]]
             [org.bdinetwork.connector.reverse-proxy :as reverse-proxy]))
 
@@ -53,12 +52,11 @@
   [_]
   reverse-proxy/proxy-request-interceptor)
 
-(defn parse-interceptors [rule]
+(defn- parse-interceptors [rule]
   (update rule :interceptors #(map rule->interceptor %)))
 
-(defn parse-rules [rules-file]
+(defn- parse-rules [rules-file]
   (update rules-file :rules #(map parse-interceptors %)))
 
-(defmethod envopts/parse :rules-file
-  [s _]
-  [(-> s io/file aero/read-config parse-rules)])
+(defn read-rules-file [file]
+  (-> file io/file aero/read-config parse-rules))
