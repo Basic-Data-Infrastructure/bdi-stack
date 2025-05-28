@@ -19,9 +19,7 @@ Not supported (yet).
 {:vars {backend-url "http://localhost:3000"
         auth        #b64 "demo1:31415"}
 
- :rules [{:match {:method :get
-                  :uri    #rx "something/.*"}
-
+ :rules [{:match {:request-method :get}
           :interceptors [reverse-proxy/forwarded-headers
                          [request/eval assoc
                           :scheme :http
@@ -56,10 +54,10 @@ Not supported (yet).
                            "vary"]]
                          reverse-proxy/proxy-request]}
 
-         {:match    _
-          :pipeline [[respond {:status  404
-                               :headers {"content-type" "text/plain"}
-                               :body    "not found"}]]}]}
+         {:match        {}
+          :interceptors [[respond {:status  405
+                                   :headers {"content-type" "text/plain"}
+                                   :body    "only get allowed"}]]}]}
 ```
 
 ## Running the test suite

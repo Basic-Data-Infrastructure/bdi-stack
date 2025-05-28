@@ -4,7 +4,15 @@
 
 (ns org.bdinetwork.connector.gateway
   (:require [clojure.tools.logging :as log]
+            [org.bdinetwork.connector.matcher :as matcher]
             [org.bdinetwork.connector.response :as response]))
+
+(defn find-rule [rules req]
+  (loop [rules rules]
+    (when-let [{:keys [match] :as rule} (first rules)]
+      (if-let [vars (matcher/match match req)]
+        (update rule :vars merge vars)
+        (recur (next rules))))))
 
 (def eval-env
   {'assoc       assoc
@@ -14,23 +22,22 @@
    'str         str
    'update      update})
 
-(defn find-rule [rules _req]
-  ;; TODO
-  (first rules))
-
 (defn make-gateway [{:keys [vars rules]}]
   (fn gateway [req]
     (try
-      (if-let [{:keys [interceptors]} (find-rule rules req)]
-        (loop [ctx   {:request req, :eval-env (merge eval-env vars)}
-               enter interceptors
-               leave []]
-          (if (:response ctx)
+      (if-let [{:keys [interceptors] :as rule} (find-rule rules req)]
+        (loop [{:keys [response] :as ctx} {:request req
+                                           :eval-env (merge eval-env
+                                                            vars
+                                                            (:vars rule))}
+               enter                      interceptors
+               leave                      []]
+          (if response
             (if-let [interceptor (first leave)]
               (recur ((or (:leave interceptor) identity) ctx)
                      nil
                      (next leave))
-              (:response ctx))
+              response)
             (if-let [interceptor (first enter)]
               (recur ((or (:enter interceptor) identity) ctx)
                      (next enter)

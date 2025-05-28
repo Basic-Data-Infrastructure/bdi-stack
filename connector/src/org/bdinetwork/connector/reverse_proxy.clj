@@ -25,8 +25,6 @@
       (assoc-in response [:headers "set-cookie"] (vec v))
       response)))
 
-(defn pk [v] (prn v) v)
-
 (defn proxy-request
   [request]
   (d/catch
@@ -50,8 +48,6 @@
           ;; no magic
           (assoc :throw-exceptions? false
                  :follow-redirects? false)
-
-          (pk)
 
           ;; a specialized connection pool
           (assoc :pool ingress-connection-pool)

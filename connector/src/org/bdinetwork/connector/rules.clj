@@ -23,6 +23,10 @@
 
 (defmulti rule->interceptor (fn [x] (if (vector? x) [(first x) '..] x)))
 
+(defmethod rule->interceptor :default
+  [spec]
+  (throw (ex-info "unknown interceptor" {:spec spec})))
+
 (defmethod rule->interceptor '[request/eval ..]
   [[_ & form]]
   {:enter
@@ -52,11 +56,15 @@
   [_]
   reverse-proxy/proxy-request-interceptor)
 
+(defmethod rule->interceptor '[respond ..]
+  [[_ response]]
+  {:enter (constantly {:response response})})
+
 (defn- parse-interceptors [rule]
-  (update rule :interceptors #(map rule->interceptor %)))
+  (update rule :interceptors #(mapv rule->interceptor %)))
 
 (defn- parse-rules [rules-file]
-  (update rules-file :rules #(map parse-interceptors %)))
+  (update rules-file :rules #(mapv parse-interceptors %)))
 
 (defn read-rules-file [file]
   (-> file io/file aero/read-config parse-rules))
