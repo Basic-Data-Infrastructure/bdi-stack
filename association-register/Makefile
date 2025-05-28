@@ -13,4 +13,4 @@ clean:
 bdi-association-register.jar: clean
 	mkdir classes
 	clojure -M -e "(compile 'org.bdinetwork.association-register.main)"
-	clojure -M:uberjar --target $@
+	clojure -M:uberjar --main-class org.bdinetwork.association_register.main --target $@
