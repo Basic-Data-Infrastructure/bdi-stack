@@ -5,10 +5,7 @@
 (ns org.bdinetwork.connector.rules
   (:require [aero.core :as aero]
             [clojure.java.io :as io]
-            [clojure.tools.logging :as log]
-            [manifold.deferred :as d]
-            [org.bdinetwork.connector.eval :refer [evaluate]]
-            [org.bdinetwork.connector.reverse-proxy :as reverse-proxy]))
+            [org.bdinetwork.connector.interceptors :as interceptors]))
 
 (defmethod aero/reader 'b64
   [_ _ value]
@@ -21,50 +18,13 @@
 
 
 
-(defmulti rule->interceptor (fn [x] (if (vector? x) [(first x) '..] x)))
-
-(defmethod rule->interceptor :default
-  [spec]
-  (throw (ex-info "unknown interceptor" {:spec spec})))
-
-(defmethod rule->interceptor '[request/eval ..]
-  [[_ & form]]
-  {:enter
-   (fn request-eval-enter [{:keys [request eval-env] :as ctx}]
-     (log/debug "request-eval-enter" form)
-     (let [form (list* (first form) 'request (drop 1 form))]
-       (assoc ctx :request
-              (evaluate form (assoc eval-env 'request request)))))})
-
-(defmethod rule->interceptor '[response/eval ..]
-  [[_ & form]]
-  {:leave
-   (fn response-eval-leave [{:keys [request response eval-env] :as ctx}]
-     (log/debug "response-eval-leave" form)
-     (let [form (list* (first form) 'response (drop 1 form))]
-       (assoc ctx :response
-              (d/let-flow [response response]
-                (evaluate form (assoc eval-env
-                                      'request request
-                                      'response response))))))})
-
-(defmethod rule->interceptor 'reverse-proxy/forwarded-headers
-  [_]
-  reverse-proxy/forwarded-headers-interceptor)
-
-(defmethod rule->interceptor 'reverse-proxy/proxy-request
-  [_]
-  reverse-proxy/proxy-request-interceptor)
-
-(defmethod rule->interceptor '[respond ..]
-  [[_ response]]
-  {:enter (constantly {:response response})})
-
 (defn- parse-interceptors [rule]
-  (update rule :interceptors #(mapv rule->interceptor %)))
+  (update rule :interceptors #(mapv interceptors/rule->interceptor %)))
 
 (defn- parse-rules [rules-file]
   (update rules-file :rules #(mapv parse-interceptors %)))
 
-(defn read-rules-file [file]
+(defn read-rules-file
+  "Read rules file and parse rules and interceptors."
+  [file]
   (-> file io/file aero/read-config parse-rules))
