@@ -21,7 +21,7 @@
    :association              (in-memory-association (read-source "test-config/association-register-config.yml"))
    :server-id                "EU.EORI.SERVER"
    :hostname                 "localhost"
-   :port                     8080
+   :port                     11000
    :access-token-ttl-seconds 600})
 
 (def handler
