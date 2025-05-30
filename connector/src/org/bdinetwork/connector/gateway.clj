@@ -16,6 +16,7 @@
 
 (def eval-env
   {'assoc       assoc
+   'assoc-in    assoc-in
    'get         get
    'merge       merge
    'select-keys select-keys
