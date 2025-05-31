@@ -92,20 +92,20 @@ This gateway comes with the following base interceptors:
 Here are example rules for a minimal reverse proxy to [httpbin](https://httpbin.org):
 
 ```edn
-[reverse-proxy/forwarded-headers
+[[reverse-proxy/forwarded-headers]
  [request/eval assoc
   :scheme :https, :server-name "httpbin.org", :server-port 443]
- reverse-proxy/proxy-request]
+ [reverse-proxy/proxy-request]]
 ```
 
 Note that if the backend relies on virtual hosting, the ["host" header](https://developer.mozilla.org/en-US/docs/Glossary/Host) needs to be added.
 
 ```edn
-[reverse-proxy/forwarded-headers
+[[reverse-proxy/forwarded-headers]
  [request/eval assoc
   :scheme :https, :server-name "httpbin.org", :server-port 443]
  [request/eval update :headers assoc "host" "httpbin.org"]
- reverse-proxy/proxy-request]
+ [reverse-proxy/proxy-request]]
 ```
 
 An alternative way of rewriting the request is to provide an `:url` on the request:
@@ -124,16 +124,16 @@ The following example is protected by a basic authentication username / password
 
 ```edn
 {:rules [{:match {:headers {"authorization"
-                            ["Basic " #b64 #join [#env "USER" ":" #env "PASS"]]}}
-          :interceptors [reverse-proxy/forwarded-headers
+                            #join ["Basic " #b64 #join [#env "USER" ":" #env "PASS"]]}}
+          :interceptors [[reverse-proxy/forwarded-headers]
                          [request/eval assoc
                           :scheme #keyword #env "BACKEND_PROTO"
                           :server-name #env "BACKEND_HOST"
                           :server-port #long #env "BACKEND_PORT"]
                          [request/eval update :headers assoc "authorization"
-                          ["Basic " #b64 #join [#env "BACKEND_USER" ":" #env "BACKEND_PASS"]]]
+                          #join ["Basic " #b64 #join [#env "BACKEND_USER" ":" #env "BACKEND_PASS"]]]
                          [response/eval update :headers assoc "x-bdi-connector" "passed"]
-                         reverse-proxy/proxy-request]}
+                         [reverse-proxy/proxy-request]]}
 
          {:match        {}
           :interceptors [[respond {:status  401

@@ -35,12 +35,12 @@
                leave                      []]
           (if response
             (if-let [interceptor (first leave)]
-              (recur ((or (:leave interceptor) identity) ctx)
+              (recur ((:leave interceptor) ctx)
                      nil
                      (next leave))
               response)
             (if-let [interceptor (first enter)]
-              (recur ((or (:enter interceptor) identity) ctx)
+              (recur ((:enter interceptor) ctx)
                      (next enter)
                      (into [interceptor] leave))
               (do

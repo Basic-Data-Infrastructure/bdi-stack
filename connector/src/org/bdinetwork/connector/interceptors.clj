@@ -8,80 +8,60 @@
             [org.bdinetwork.connector.eval :refer [evaluate]]
             [org.bdinetwork.connector.reverse-proxy :as reverse-proxy]))
 
-(defn interceptor [& {:keys [name args doc enter leave]}]
+(defn interceptor [& {:keys [name enter leave]}]
   {:pre [name (or enter leave)]}
-  (let [log-action (if args
-                     #(log/debug (str % " " name) args)
-                     #(log/debug (str % " " name)))]
-    (cond-> {:name name}
-      args
-      (assoc :args args)
+  (cond-> {:name name, :enter identity, :leave identity}
+    enter
+    (assoc :enter #(do (log/debug (str "ENTER " name)) (enter %)))
 
-      doc
-      (assoc :doc doc)
-
-      enter
-      (assoc :enter #(do (log-action "ENTER") (enter %)))
-
-      leave
-      (assoc :leave #(do (log-action "LEAVE") (leave %))))))
-
-(defmulti rule->interceptor (fn [x] (if (vector? x) [(first x) '..] x)))
-
-(defmethod rule->interceptor :default
-  [spec]
-  (throw (ex-info "unknown interceptor" {:spec spec})))
-
+    leave
+    (assoc :leave #(do (log/debug (str "LEAVE " name)) (leave %)))))
 
 
-(defmethod rule->interceptor '[respond ..]
-  [[_ response]]
-  (interceptor
-    :name "respond"
-    :doc  "Respond with given value."
-    :enter
-    (fn [ctx] (assoc ctx :response response))))
+(def interceptors
+  {'respond
+   (fn [id response]
+     (interceptor
+      :name (str id " " (pr-str response))
+      :doc  "Respond with given value."
+      :enter
+      (fn [ctx] (assoc ctx :response response))))
 
-(defmethod rule->interceptor '[request/eval ..]
-  [[_ & form]]
-  (interceptor
-    :name "request/eval"
-    :doc  "Update the incoming request using eval on the request object."
-    :args form
-    :enter
-    (fn  [{:keys [request eval-env] :as ctx}]
-      (let [form (list* (first form) 'request (drop 1 form))]
-        (assoc ctx :request
-               (evaluate form (assoc eval-env 'request request)))))))
+   'request/eval
+   (fn [id & form]
+     (interceptor
+      :name (str id " " (pr-str form))
+      :doc  "Update the incoming request using eval on the request object."
+      :enter
+      (fn  [{:keys [request eval-env] :as ctx}]
+        (let [form (list* (first form) 'request (drop 1 form))]
+          (assoc ctx :request
+                 (evaluate form (assoc eval-env 'request request)))))))
 
-
+   'response/eval
+   (fn [id & form]
+     (interceptor
+      :name (str id " " (pr-str form))
+      :doc  "Update the outgoing request using eval on the response object."
+      :args form
+      :leave
+      (fn response-eval-leave [{:keys [request response eval-env] :as ctx}]
+        (let [form (list* (first form) 'response (drop 1 form))]
+          (assoc ctx :response
+                 (d/let-flow [response response]
+                   (evaluate form (assoc eval-env
+                                         'request request
+                                         'response response))))))))
 
-(defmethod rule->interceptor '[response/eval ..]
-  [[_ & form]]
-  (interceptor
-    :name "response/eval"
-    :doc  "Update the outgoing request using eval on the response object."
-    :args form
-    :leave
-    (fn response-eval-leave [{:keys [request response eval-env] :as ctx}]
-      (let [form (list* (first form) 'response (drop 1 form))]
-        (assoc ctx :response
-               (d/let-flow [response response]
-                 (evaluate form (assoc eval-env
-                                       'request request
-                                       'response response))))))))
-
-
-
-(defmethod rule->interceptor 'reverse-proxy/forwarded-headers
-  [_]
-  (interceptor
-    :name "reverse-proxy/forwarded-headers"
-    :doc  "Add `x-forwarded-proto`, `x-forwarded-host` and `x-forwarded-port` headers to request for backend.
+   'reverse-proxy/forwarded-headers
+   (fn [id]
+     (interceptor
+      :name (str id)
+      :doc  "Add `x-forwarded-proto`, `x-forwarded-host` and `x-forwarded-port` headers to request for backend.
 
   The allows the backend to create local redirects and set domain
   cookies."
-    :enter (fn forwarded-headers-enter
+      :enter (fn forwarded-headers-enter
                [{{{:strs [host
                           x-forwarded-proto
                           x-forwarded-host
@@ -101,13 +81,20 @@
                    port
                    (assoc-in [:proxy-request :headers "x-forwarded-port"] (str port)))))))
 
-(defmethod rule->interceptor 'reverse-proxy/proxy-request
-  [_]
-  (interceptor
-    :name "reverse-proxy/proxy-request"
-    :doc  "Execute proxy request and populate response."
-    :enter
-    (fn proxy-request-enter
-      [{:keys [request proxy-request-overrides] :as ctx}]
-      (assoc ctx :response
-             (reverse-proxy/proxy-request (merge-with merge request proxy-request-overrides))))))
+   'reverse-proxy/proxy-request
+   (fn [id]
+     (interceptor
+      :name (str id)
+      :doc  "Execute proxy request and populate response."
+      :enter
+      (fn proxy-request-enter
+        [{:keys [request proxy-request-overrides] :as ctx}]
+        (assoc ctx :response
+               (reverse-proxy/proxy-request (merge-with merge request proxy-request-overrides))))))})
+
+
+
+(defn rule->interceptor [[rule-id & args :as rule]]
+  (if-let [make-interceptor (get interceptors rule-id)]
+    (apply make-interceptor rule-id args)
+    (throw (ex-info "unknown interceptor for rule" {:rule rule}))))
