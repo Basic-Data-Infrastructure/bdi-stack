@@ -79,15 +79,25 @@ An interceptor operates on either the "entering" or "leaving" phase of an intera
 
 This gateway comes with the following base interceptors:
 
-- `response` produces a literal response in the "entering" phase
+- `response` produces a literal response in the "entering" phase.
 
-- `request/eval` evaluates an update on the request in the "entering" phase
+- `request/eval` evaluates an update on the request in the "entering" phase, includes `request` in the evaluation environment.
 
-- `response/eval` evaluates an update on the response in the "leaving" phase
+- `response/eval` evaluates an update on the response in the "leaving" phase, includes `request` and `response` in the evaluation environment.
 
-- `reverse-proxy/forwarded-headers` record information for "x-forwarded" headers on the request in the "entering" phase
+- `reverse-proxy/forwarded-headers` record information for "x-forwarded" headers on the request in the "entering" phase.
 
-- `reverse-proxy/proxy-request` produce a response by executing the (modified!) request (including the recorded "x-forwarded" headers information) in the "entering" phase
+- `reverse-proxy/proxy-request` produce a response by executing the (modified!) request (including the recorded "x-forwarded" headers information) in the "entering" phase.
+
+The "eval" interceptors support the following functions:
+
+- `assoc`
+- `assoc-in`
+- `get`
+- `merge`
+- `select-keys`
+- `str`
+- `update`
 
 Here are example rules for a minimal reverse proxy to [httpbin](https://httpbin.org):
 

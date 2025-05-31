@@ -14,23 +14,12 @@
         (update rule :vars merge vars)
         (recur (next rules))))))
 
-(def eval-env
-  {'assoc       assoc
-   'assoc-in    assoc-in
-   'get         get
-   'merge       merge
-   'select-keys select-keys
-   'str         str
-   'update      update})
-
 (defn make-gateway [{:keys [vars rules]}]
   (fn gateway [req]
     (try
       (if-let [{:keys [interceptors] :as rule} (find-rule rules req)]
         (loop [{:keys [response] :as ctx} {:request req
-                                           :eval-env (merge eval-env
-                                                            vars
-                                                            (:vars rule))}
+                                           :vars    (merge vars (:vars rule))}
                enter                      interceptors
                leave                      []]
           (if response

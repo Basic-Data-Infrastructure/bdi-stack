@@ -16,7 +16,17 @@
 
     leave
     (assoc :leave #(do (log/debug (str "LEAVE " name)) (leave %)))))
+
 
+
+(def eval-env
+  {'assoc       assoc
+   'assoc-in    assoc-in
+   'get         get
+   'merge       merge
+   'select-keys select-keys
+   'str         str
+   'update      update})
 
 (def interceptors
   {'respond
@@ -33,10 +43,12 @@
       :name (str id " " (pr-str form))
       :doc  "Update the incoming request using eval on the request object."
       :enter
-      (fn  [{:keys [request eval-env] :as ctx}]
+      (fn  [{:keys [request vars] :as ctx}]
         (let [form (list* (first form) 'request (drop 1 form))]
           (assoc ctx :request
-                 (evaluate form (assoc eval-env 'request request)))))))
+                 (evaluate form (-> eval-env
+                                    (merge vars)
+                                    (assoc 'request request))))))))
 
    'response/eval
    (fn [id & form]
@@ -45,13 +57,14 @@
       :doc  "Update the outgoing request using eval on the response object."
       :args form
       :leave
-      (fn response-eval-leave [{:keys [request response eval-env] :as ctx}]
+      (fn response-eval-leave [{:keys [request response vars] :as ctx}]
         (let [form (list* (first form) 'response (drop 1 form))]
           (assoc ctx :response
                  (d/let-flow [response response]
-                   (evaluate form (assoc eval-env
-                                         'request request
-                                         'response response))))))))
+                   (evaluate form (-> eval-env
+                                      (merge vars)
+                                      (assoc 'request request
+                                             'response response)))))))))
 
    'reverse-proxy/forwarded-headers
    (fn [id]

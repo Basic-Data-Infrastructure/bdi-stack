@@ -66,16 +66,16 @@
                      :vars         {'rule1 "1st"}
                      :interceptors [(interceptor
                                       :name "1st"
-                                      :enter (fn [{:keys [eval-env] :as ctx}] (assoc ctx :response eval-env)))]}
+                                      :enter (fn [{:keys [vars] :as ctx}] (assoc ctx :response vars)))]}
                     {:match        {:example "2nd"}
                      :vars         {'rule2 "2nd"}
                      :interceptors [(interceptor
                                       :name "2nd"
-                                      :enter (fn [{:keys [eval-env] :as ctx}] (assoc ctx :response eval-env)))]}
+                                      :enter (fn [{:keys [vars] :as ctx}] (assoc ctx :response vars)))]}
                     {:match        {:example 'last-rule}
                      :interceptors [(interceptor
                                       :name "last"
-                                      :enter (fn [{:keys [eval-env] :as ctx}] (assoc ctx :response eval-env)))]}]})]
+                                      :enter (fn [{:keys [vars] :as ctx}] (assoc ctx :response vars)))]}]})]
       (is (= {'global "vars"
               'rule1  "1st"}
              (-> (gateway {:example "1st"})
