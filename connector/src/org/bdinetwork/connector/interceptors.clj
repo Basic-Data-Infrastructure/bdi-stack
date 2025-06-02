@@ -86,13 +86,13 @@
                      port  (or x-forwarded-port server-port)]
                  (cond-> ctx
                    proto
-                   (assoc-in [:proxy-request :headers "x-forwarded-proto"] proto)
+                   (assoc-in [:proxy-request-overrides :headers "x-forwarded-proto"] proto)
 
                    host
-                   (assoc-in [:proxy-request :headers "x-forwarded-host"] host)
+                   (assoc-in [:proxy-request-overrides :headers "x-forwarded-host"] host)
 
                    port
-                   (assoc-in [:proxy-request :headers "x-forwarded-port"] (str port)))))))
+                   (assoc-in [:proxy-request-overrides :headers "x-forwarded-port"] (str port)))))))
 
    'reverse-proxy/proxy-request
    (fn [id]

@@ -18,11 +18,6 @@
   (closeable (http/start-server handler config)
              stop-server))
 
-(def opt-specs
-  {:hostname   ["Server hostname" :str :default "localhost"]
-   :port       ["Server HTTP Port" :int :default 8081]
-   :rules-file ["Rules EDN file" :rules-file]})
-
 (defn run-system
   [{:keys [rules-file] :as config}]
   (mk-system [gateway (gateway/make-gateway (rules/read-rules-file rules-file))

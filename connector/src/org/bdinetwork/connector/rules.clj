@@ -4,7 +4,6 @@
 
 (ns org.bdinetwork.connector.rules
   (:require [aero.core :as aero]
-            [clojure.java.io :as io]
             [org.bdinetwork.connector.interceptors :as interceptors]))
 
 (defmethod aero/reader 'b64
@@ -27,4 +26,4 @@
 (defn read-rules-file
   "Read rules file and parse rules and interceptors."
   [file]
-  (-> file io/file aero/read-config parse-rules))
+  (-> file aero/read-config parse-rules))

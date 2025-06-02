@@ -8,15 +8,24 @@
             [nl.jomco.http-status-codes :as http-status]
             [nl.jomco.resources :refer [with-resources]]
             [org.bdinetwork.connector.reverse-proxy :as sut]
-            [org.bdinetwork.connector.reverse-proxy-test-helper :refer [backend-url proxy-url start-backend start-proxy]]))
+            [org.bdinetwork.connector.test-helper :refer [backend-url proxy-url start-backend start-proxy]]))
 
-(defn- handler [req]
+(defn- backend-handler [req]
+  {:status  200
+   :headers {"content-type" "application/edn"
+             "set-cookie"   ["foo=1" "bar=2"]
+             "x-test"       "reverse-proxy"}
+   :body    (-> req
+                (update :body slurp)
+                (pr-str))})
+
+(defn- proxy-handler [req]
   (sut/proxy-request (assoc req :url backend-url)))
 
 (use-fixtures :once
   (fn [f]
-    (with-resources [_backend (start-backend)
-                     _proxy   (start-proxy handler)]
+    (with-resources [_backend (start-backend backend-handler)
+                     _proxy   (start-proxy proxy-handler)]
       (f))))
 
 (deftest proxy-request

@@ -1,0 +1,20 @@
+;;; SPDX-FileCopyrightText: 2025 Jomco B.V.
+;;; SPDX-FileCopyrightText: 2025 Topsector Logistiek
+;;; SPDX-License-Identifier: AGPL-3.0-or-later
+
+{:rules [{:match {:headers {"authorization" #join ["Basic " #b64 #join ["foo" ":" "bar"]]}}
+          :interceptors [[reverse-proxy/forwarded-headers]
+                         [request/eval assoc
+                          :scheme #keyword "http"
+                          :server-name "localhost"
+                          :server-port #long "1234"]
+                         [request/eval update :headers assoc "authorization"
+                          #join ["Basic " #b64 "zoo:quux"]]
+                         [response/eval update :headers assoc "x-bdi-connector" "passed"]
+                         [reverse-proxy/proxy-request]]}
+
+         {:match        {}
+          :interceptors [[respond {:status  401
+                                   :headers {"content-type" "text/plain"
+                                             "www-authenticate" "Basic realm=\"secret\""}
+                                   :body    "not allowed"}]]}]}

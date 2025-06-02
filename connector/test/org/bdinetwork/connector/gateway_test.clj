@@ -3,55 +3,60 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.connector.gateway-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [aleph.http :as http]
+            [clojure.edn :as edn]
+            [clojure.test :refer [deftest is testing use-fixtures]]
+            [nl.jomco.http-status-codes :as http-status]
+            [nl.jomco.resources :refer [with-resources]]
             [org.bdinetwork.connector.gateway :as sut]
-            [org.bdinetwork.connector.interceptors :refer [interceptor]]
-            [org.bdinetwork.connector.response :as response]))
+            [org.bdinetwork.connector.interceptors :as interceptors :refer [interceptor]]
+            [org.bdinetwork.connector.response :as r]
+            [org.bdinetwork.connector.test-helper :refer [backend-host backend-port backend-scheme proxy-host proxy-port proxy-url start-backend start-proxy]]))
 
 (deftest make-gateway
   (testing "minimal"
     (let [gateway
           (sut/make-gateway {:rules [{:match        {:method :test}
                                       :interceptors [(interceptor
-                                                       :name  "test"
-                                                       :doc   "test"
-                                                       :enter (fn [_] {:response 'response}))]}]})]
+                                                      :name  "test"
+                                                      :doc   "test"
+                                                      :enter (fn [_] {:response 'response}))]}]})]
       (is (= 'response (gateway {:method :test})))))
 
   (testing "no response"
     (let [gateway
           (sut/make-gateway {:rules [{:match        {}
                                       :interceptors []}]})]
-      (is (= response/bad-gateway (gateway {})))))
+      (is (= r/bad-gateway (gateway {})))))
 
   (testing "no match"
     (let [gateway
           (sut/make-gateway {:rules [{:match        {:method :test}
                                       :interceptors []}]})]
-      (is (= response/not-found (gateway {:method :dummy})))))
+      (is (= r/not-found (gateway {:method :dummy})))))
 
   (testing "entering and leaving"
     (let [gateway
           (sut/make-gateway
            {:rules [{:match        {}
                      :interceptors [(interceptor
-                                      :name  "primi"
-                                      :enter (fn [{{:keys [primi]} :request :as ctx}]
-                                               (assoc ctx :primi-portion primi))
-                                      :leave (fn [{:keys [primi-portion] :as ctx}]
-                                               (assoc-in ctx [:response :primi-interceptor-leave] primi-portion)))
+                                     :name  "primi"
+                                     :enter (fn [{{:keys [primi]} :request :as ctx}]
+                                              (assoc ctx :primi-portion primi))
+                                     :leave (fn [{:keys [primi-portion] :as ctx}]
+                                              (assoc-in ctx [:response :primi-interceptor-leave] primi-portion)))
                                     (interceptor
-                                      :name "secondi"
-                                      :enter (fn [{{:keys [secondi]} :request :as ctx}]
-                                                 (-> ctx
-                                                     (assoc :secondi-portion secondi)
-                                                     (assoc-in [:response :secondi-interceptor-enter] secondi)))
-                                      :leave (fn [{:keys [secondi-portion] :as ctx}]
-                                                 (assoc-in ctx [:response :secondi-interceptor-leave] secondi-portion)))
+                                     :name "secondi"
+                                     :enter (fn [{{:keys [secondi]} :request :as ctx}]
+                                              (-> ctx
+                                                  (assoc :secondi-portion secondi)
+                                                  (assoc-in [:response :secondi-interceptor-enter] secondi)))
+                                     :leave (fn [{:keys [secondi-portion] :as ctx}]
+                                              (assoc-in ctx [:response :secondi-interceptor-leave] secondi-portion)))
                                     (interceptor
-                                      :name "unreachable"
-                                      :enter (fn [ctx]
-                                               (throw (ex-info "unreachable interceptor" ctx))))]}]})]
+                                     :name "unreachable"
+                                     :enter (fn [ctx]
+                                              (throw (ex-info "unreachable interceptor" ctx))))]}]})]
       (is (= {:primi-interceptor-leave   'a-pinch
               :secondi-interceptor-enter 'a-scoop
               :secondi-interceptor-leave 'a-scoop}
@@ -65,17 +70,17 @@
             :rules [{:match        {:example "1st"}
                      :vars         {'rule1 "1st"}
                      :interceptors [(interceptor
-                                      :name "1st"
-                                      :enter (fn [{:keys [vars] :as ctx}] (assoc ctx :response vars)))]}
+                                     :name "1st"
+                                     :enter (fn [{:keys [vars] :as ctx}] (assoc ctx :response vars)))]}
                     {:match        {:example "2nd"}
                      :vars         {'rule2 "2nd"}
                      :interceptors [(interceptor
-                                      :name "2nd"
-                                      :enter (fn [{:keys [vars] :as ctx}] (assoc ctx :response vars)))]}
+                                     :name "2nd"
+                                     :enter (fn [{:keys [vars] :as ctx}] (assoc ctx :response vars)))]}
                     {:match        {:example 'last-rule}
                      :interceptors [(interceptor
-                                      :name "last"
-                                      :enter (fn [{:keys [vars] :as ctx}] (assoc ctx :response vars)))]}]})]
+                                     :name "last"
+                                     :enter (fn [{:keys [vars] :as ctx}] (assoc ctx :response vars)))]}]})]
       (is (= {'global "vars"
               'rule1  "1st"}
              (-> (gateway {:example "1st"})
@@ -88,3 +93,53 @@
               'last-rule "other"}
              (-> (gateway {:example "other"})
                  (select-keys var-keys)))))))
+
+
+
+(def rules
+  {:rules [{:match {:uri "/test"}
+            :interceptors (mapv interceptors/rule->interceptor
+                                [['reverse-proxy/forwarded-headers]
+                                 ['request/eval 'assoc
+                                  :scheme backend-scheme
+                                  :server-name backend-host
+                                  :server-port backend-port]
+                                 ['response/eval 'update :headers 'assoc "x-gateway" "passed"]
+                                 ['reverse-proxy/proxy-request]])}]})
+
+(def proxy-handler (sut/make-gateway rules))
+
+(defn backend-handler [req]
+  {:status  http-status/ok
+   :headers {"content-type" "application/edn"}
+   :body    (-> req
+                (select-keys [:request-method :uri :headers :body])
+                (update :body slurp)
+                (pr-str))})
+
+(use-fixtures :once
+  (fn [f]
+    (with-resources [_backend (start-backend backend-handler)
+                     _proxy   (start-proxy proxy-handler)]
+      (f))))
+
+(deftest e2e
+  (let [{:keys [status]} @(http/get proxy-url {:throw-exceptions? false})]
+    (is (= http-status/not-found status)
+        "request not found"))
+  (let [{:keys [status headers body]} @(http/get (str proxy-url "/test") {:throw-exceptions? false})]
+    (is (= http-status/ok status)
+        "request ok")
+    (is (= "application/edn" (get headers "content-type"))
+        "got edn")
+
+    (testing "what did the backend see"
+      (let [{:keys [request-method uri headers]} (-> body (slurp) (edn/read-string))]
+        (is (= :get request-method))
+        (is (= "/test" uri))
+        (is (= {"host" (str proxy-host ":" proxy-port)
+                "content-length" "0"
+                "x-forwarded-proto" "http"
+                "x-forwarded-host"  (str proxy-host ":" proxy-port)
+                "x-forwarded-port"  (str proxy-port)}
+               headers))))))
