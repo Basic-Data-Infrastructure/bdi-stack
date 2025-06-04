@@ -26,4 +26,11 @@
   (testing "vars"
     (is (= {'foo "bar"}
            (sut/match [{:foo 'foo} 1 #"huh.*"]
-                      [{:foo "bar"} 1 "huh!"])))))
+                      [{:foo "bar"} 1 "huh!"])))
+
+    (is (= {'foo 1}
+           (sut/match {:foo 'foo, :bar 'foo}
+                      {:foo 1, :bar 1})))
+    (is (= false
+           (sut/match {:foo 'foo, :bar 'foo}
+                      {:foo 1, :bar 2})))))

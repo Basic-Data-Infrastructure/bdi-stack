@@ -24,13 +24,17 @@
   Examples:
 
     (match {:foo \"bar\"} {:foo \"foo\"}) ; => false
-    (match2 {:foo \"bar\"} {:foo \"bar\"}) ; => {}
-    (match2 [{:foo 'foo} 1 #\"huh.*\"] [{:foo \"bar\"} 1 \"huh!\"]) ; => {foo \"bar\"}
+    (match {:foo \"bar\"} {:foo \"bar\"}) ; => {}
+    (match [{:foo 'foo} 1 #\"huh.*\"] [{:foo \"bar\"} 1 \"huh!\"]) ; => {foo \"bar\"}
 "
-  [expr value]
+  [expr value & [vars]]
   (cond
+    ;; already captured value should match pre-existing
+    (and (symbol? expr) (find vars expr) (not= value (get vars expr)))
+    false
+
     (symbol? expr)
-    {expr value}
+    (assoc vars expr value)
 
     (= expr value)
     {}
@@ -43,7 +47,7 @@
     (and (map? expr) (map? value))
     (reduce (fn [vars [k v]]
               (if-let [r (and (find value k)
-                              (match v (get value k)))]
+                              (match v (get value k) vars))]
                 (merge vars r)
                 (reduced false)))
             {}
@@ -51,7 +55,7 @@
 
     (and (coll? expr) (coll? value) (<= (count expr) (count value)))
     (reduce (fn [vars [expr value]]
-              (if-let [r (match expr value)]
+              (if-let [r (match expr value vars)]
                 (merge vars r)
                 (reduced false)))
             {}
