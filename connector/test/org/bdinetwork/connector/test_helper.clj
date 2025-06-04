@@ -3,8 +3,7 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.connector.test-helper
-  (:require [aleph.http :as http]
-            [nl.jomco.resources :refer [closeable mk-system Resource]]
+  (:require [nl.jomco.resources :refer [Resource]]
             [org.bdinetwork.connector.system :as system]
             [ring.adapter.jetty :refer [run-jetty]])
   (:import (java.net InetSocketAddress Socket)))
@@ -39,13 +38,10 @@
               :join? false}))
 
 (defn start-proxy [handler]
-  ;; using mk-system here because we want to wait for
-  ;; aleph.http/start-server to be running before returning
-  (mk-system [server (closeable (aleph.http/start-server handler
-                                                         {:host             proxy-host
-                                                          :port             proxy-port
-                                                          :shutdown-timeout 0})
-                                system/stop-server)]
+  (let [proxy (system/start-server handler
+                                   {:host             proxy-host
+                                    :port             proxy-port
+                                    :shutdown-timeout 0})]
     (ensure-connection {:host proxy-host
                         :port proxy-port})
-    {:server server}))
+    proxy))
