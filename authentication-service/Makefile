@@ -13,4 +13,4 @@ clean:
 bdi-authentication-service.jar: clean
 	mkdir classes
 	clojure -M -e "(compile 'org.bdinetwork.authentication-service.main)"
-	clojure -M:uberjar --target $@
+	clojure -M:uberjar --main-class org.bdinetwork.authentication_service.main --target $@

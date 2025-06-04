@@ -85,7 +85,7 @@ jobs:
           password: ${{ secrets.ACR_PASSWORD }}
 
       - name: Build and Push Association Register to ACR
-        uses: docker/build-push-action@v6.17.0
+        uses: docker/build-push-action@v6
         with:
           push: true
           file: "association-register.dockerfile"
@@ -94,7 +94,7 @@ jobs:
             ${{ vars.ACR_HOSTNAME }}/association-register:latest
 
       - name: Build and Push Authorization Register to ACR
-        uses: docker/build-push-action@v6.17.0
+        uses: docker/build-push-action@v6
         with:
           push: true
           file: "authorization-register.dockerfile"
@@ -103,7 +103,7 @@ jobs:
             ${{ vars.ACR_HOSTNAME }}/authorization-register:latest
 
       - name: Build and Push Authentication Service to ACR
-        uses: docker/build-push-action@v6.17.0
+        uses: docker/build-push-action@v6
         with:
           push: true
           file: "authentication-service.dockerfile"

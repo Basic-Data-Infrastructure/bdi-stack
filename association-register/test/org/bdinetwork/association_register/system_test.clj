@@ -18,7 +18,7 @@
 ;; TODO: make port numbers configurable for tests / automatically use free port
 
 (def client-config
-  {:ishare/satellite-base-url "http://localhost:8080"
+  {:ishare/satellite-base-url "http://localhost:11000"
    :ishare/satellite-id       "EU.EORI.SERVER"
    :ishare/client-id          "EU.EORI.CLIENT"
    :ishare/private-key        (client/private-key "test-config/client.key.pem")
@@ -31,7 +31,7 @@
    :data-source              (read-source "test-config/association-register-config.yml")
    :server-id                "EU.EORI.SERVER"
    :hostname                 "localhost"
-   :port                     8080
+   :port                     11000
    :access-token-ttl-seconds 600})
 
 (deftest test-system
