@@ -5,7 +5,7 @@
 ;;;
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(ns org.bdinetwork.ring.authentication.x5c
+(ns org.bdinetwork.authentication.x5c
   "Validate x5c chains."
   (:require [buddy.core.certificates :as certificates]
             [buddy.core.codecs :as codecs]
@@ -92,3 +92,13 @@
             ;; c1 is a trusted root certificate
             (and (certificates/valid-on-date? c1)
                  (trusted-cert? c1 trusted-list))))))))
+
+(defn pem->x5c
+  "Read chain file into vector of certificates."
+  [cert-file]
+  (->> (-> cert-file
+           slurp
+           (string/replace-first #"(?s)\A.*?-+BEGIN CERTIFICATE-+\s+" "")
+           (string/replace #"(?s)\s*-+END CERTIFICATE-+\s*\Z" "")
+           (string/split #"(?s)\s*-+END CERTIFICATE-+.*?-+BEGIN CERTIFICATE-+\s*"))
+       (mapv #(string/replace % #"\s+" ""))))

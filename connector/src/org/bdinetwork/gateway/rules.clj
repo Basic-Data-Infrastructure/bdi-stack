@@ -15,13 +15,19 @@
   [_ _ value]
   (re-pattern value))
 
-(defn- parse-interceptors [rule]
-  (update rule :interceptors #(mapv interceptors/->interceptor %)))
+(defn- parse-interceptors [rule & args]
+  (update rule :interceptors
+          (fn [specs]
+            (mapv #(apply interceptors/->interceptor % args)
+                  specs))))
 
-(defn- parse-rules [rules-file]
-  (update rules-file :rules #(mapv parse-interceptors %)))
+(defn- parse-rules [rules-file & args]
+  (update rules-file :rules
+          (fn [rules]
+            (mapv #(apply parse-interceptors % args)
+                  rules))))
 
 (defn read-rules-file
   "Read rules file and parse rules and interceptors."
-  [file]
-  (-> file aero/read-config parse-rules))
+  [file & args]
+  (apply parse-rules (-> file aero/read-config) args))

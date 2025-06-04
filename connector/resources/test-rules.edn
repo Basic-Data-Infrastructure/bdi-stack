@@ -4,6 +4,7 @@
 
 {:rules [{:match {:headers {"authorization" #join ["Basic " #b64 #join ["foo" ":" "bar"]]}}
           :interceptors [[reverse-proxy/forwarded-headers]
+                         [dummy-with-args]
                          [request/update assoc
                           :scheme :http
                           :server-name "localhost"

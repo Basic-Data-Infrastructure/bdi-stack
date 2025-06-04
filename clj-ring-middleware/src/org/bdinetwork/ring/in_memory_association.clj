@@ -1,5 +1,5 @@
-;;; SPDX-FileCopyrightText: 2024 Jomco B.V.
-;;; SPDX-FileCopyrightText: 2024 Topsector Logistiek
+;;; SPDX-FileCopyrightText: 2024, 2025 Jomco B.V.
+;;; SPDX-FileCopyrightText: 2024, 2025 Topsector Logistiek
 ;;; SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
 ;;; SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
 ;;;
@@ -8,8 +8,8 @@
 (ns org.bdinetwork.ring.in-memory-association
   (:require [buddy.core.certificates :as certificates]
             [buddy.core.codecs :as codecs]
+            [org.bdinetwork.authentication.x5c :refer [fingerprint subject-name]]
             [org.bdinetwork.ring.association :refer [Association]]
-            [org.bdinetwork.ring.authentication.x5c :refer [fingerprint subject-name]]
             [org.bdinetwork.ring.ishare-validator :refer [parse-yaml validate]]))
 
 (defrecord InMemoryAssociation [source]

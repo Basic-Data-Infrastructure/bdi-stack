@@ -1,15 +1,12 @@
-;;; SPDX-FileCopyrightText: 2024 Jomco B.V.
-;;; SPDX-FileCopyrightText: 2024 Topsector Logistiek
+;;; SPDX-FileCopyrightText: 2024, 2025 Jomco B.V.
+;;; SPDX-FileCopyrightText: 2024, 2025 Topsector Logistiek
 ;;; SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
 ;;; SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
 ;;;
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(ns org.bdinetwork.ring.authentication.access-token
-  (:require [buddy.sign.jwt :as jwt]
-            [clojure.tools.logging :as log]
-            [nl.jomco.http-status-codes :as status]
-            [org.bdinetwork.ring.diagnostic-context :refer [with-context]])
+(ns org.bdinetwork.authentication.access-token
+  (:require [buddy.sign.jwt :as jwt])
   (:import java.time.Instant
            java.util.UUID))
 
@@ -82,37 +79,9 @@
           :else
           sub)))
 
-(defn- get-bearer-token
+(defn get-bearer-token
+  "Extract bearer token from request."
   [request]
-  (when-let [auth-header (-> request
-                             (get-in [:headers "authorization"]))]
-    (second (re-matches #"Bearer (\S+)" auth-header))))
-
-(defn wrap-access-token
-  "Middleware to set client-id from access-token.
-
-  Fetches access token as bearer token from authorization header.
-  Sets `:client-id` on request if a valid access token is passed. If
-  no bearer token is passed, passes request as is.
-
-  If access token is invalid, return \"401 Unauthorized\" response,
-  configurable in `opts` as `invalid-token-response`."
-  [f {:keys [invalid-token-response]
-      :or   {invalid-token-response {:status status/unauthorized
-                                     :body   "Invalid access token"}}
-      :as   opts}]
-  (fn access-token-wrapper [request]
-    (if-let [access-token (get-bearer-token request)]
-      ;; This (if-let [... (try ...)] ...) construct is messy.
-      ;;
-      ;; We want to capture exceptions thrown when parsing access
-      ;; tokens but exceptions in (f request) should be left
-      ;; alone.
-      (if-let [client-id (try (access-token->client-id access-token opts)
-                              (catch Exception e
-                                (log/error "Invalid access token" e)
-                                nil))]
-        (with-context [:client-id client-id]
-          (f (assoc request :client-id client-id)))
-        invalid-token-response)
-      (f request))))
+  (let [auth-header (get-in request [:headers "authorization"])
+        [_ token]   (and auth-header (re-matches #"Bearer (\S+)" auth-header))]
+    token))

@@ -1,5 +1,5 @@
-;;; SPDX-FileCopyrightText: 2024 Jomco B.V.
-;;; SPDX-FileCopyrightText: 2024 Topsector Logistiek
+;;; SPDX-FileCopyrightText: 2024, 2025 Jomco B.V.
+;;; SPDX-FileCopyrightText: 2024, 2025 Topsector Logistiek
 ;;; SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
 ;;; SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
 ;;;
@@ -10,10 +10,11 @@
             [clojure.string :as string]
             [clojure.tools.logging :as log]
             [nl.jomco.http-status-codes :as status]
+            [org.bdinetwork.authentication.access-token :as access-token]
+            [org.bdinetwork.authentication.x5c :as x5c]
             [org.bdinetwork.ishare.jwt :as ishare.jwt]
             [org.bdinetwork.ring.association :as association]
-            [org.bdinetwork.ring.authentication.access-token :as access-token]
-            [org.bdinetwork.ring.authentication.x5c :as x5c]))
+            [org.bdinetwork.ring.diagnostic-context :refer [with-context]]))
 
 ;; Client assertions may only be used once. We keep track of the
 ;; client assertions seen.
@@ -162,6 +163,35 @@
         (client-assertion-response request (assoc opts :jti-cache-atom jti-cache-atom))
         (f request)))))
 
+(defn wrap-access-token
+  "Middleware to set client-id from access-token.
+
+  Fetches access token as bearer token from authorization header.
+  Sets `:client-id` on request if a valid access token is passed. If
+  no bearer token is passed, passes request as is.
+
+  If access token is invalid, return \"401 Unauthorized\" response,
+  configurable in `opts` as `invalid-token-response`."
+  [f {:keys [invalid-token-response]
+      :or   {invalid-token-response {:status status/unauthorized
+                                     :body   "Invalid access token"}}
+      :as   opts}]
+  (fn access-token-wrapper [request]
+    (if-let [access-token (access-token/get-bearer-token request)]
+      ;; This (if-let [... (try ...)] ...) construct is messy.
+      ;;
+      ;; We want to capture exceptions thrown when parsing access
+      ;; tokens but exceptions in (f request) should be left
+      ;; alone.
+      (if-let [client-id (try (access-token/access-token->client-id access-token opts)
+                              (catch Exception e
+                                (log/error e "Invalid access token")
+                                nil))]
+        (with-context [:client-id client-id]
+          (f (assoc request :client-id client-id)))
+        invalid-token-response)
+      (f request))))
+
 (defn wrap-authentication
   "Middleware to add a `/connect/token` endpoint.
 
@@ -173,4 +203,4 @@
   {:pre [private-key server-id]}
   (-> f
       (wrap-client-assertion opts)
-      (access-token/wrap-access-token opts)))
+      (wrap-access-token opts)))

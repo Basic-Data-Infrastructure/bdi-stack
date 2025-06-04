@@ -79,8 +79,6 @@
 (defn stop! []
   (close system))
 
-(defn mk-access-token [client-id]
-  (let [cnf (config/config authentication-env
-                           authentication-service.main/opt-specs)]
-    (access-token/mk-access-token (assoc cnf
-                                         :client-id client-id))))
+(defn mk-access-token [client-id server-env]
+  (let [cnf (config/config server-env config/server-party-opt-specs)]
+    (access-token/mk-access-token (assoc cnf :client-id client-id))))

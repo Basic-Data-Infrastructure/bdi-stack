@@ -31,10 +31,11 @@
   [(split-x5c s)])
 
 (def server-party-opt-specs
-  {:private-key ["Server private key pem file" :private-key]
-   :public-key  ["Server public key pem file" :public-key]
-   :x5c         ["Server certificate chain pem file" :x5c]
-   :server-id   ["Server ID (EORI)" :str]})
+  {:private-key              ["Server private key pem file" :private-key]
+   :public-key               ["Server public key pem file" :public-key]
+   :x5c                      ["Server certificate chain pem file" :x5c]
+   :server-id                ["Server ID (EORI)" :str]
+   :access-token-ttl-seconds ["Access Token TTL in seconds" :int :default 600]})
 
 (defn config
   [env opt-specs]

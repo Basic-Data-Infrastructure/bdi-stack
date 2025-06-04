@@ -18,21 +18,21 @@
     leave
     (assoc :leave #(do (log/debug (str "LEAVE " name)) (leave %)))))
 
-(defmulti ->interceptor first)
+(defmulti ->interceptor (fn [[id & _] & _] id))
 
 
 
 (defmethod ->interceptor 'respond
-  [[id response]]
+  [[id response] & _]
   (interceptor
-    :name (str id " " (pr-str response))
-    :doc  "Respond with given value."
-    :enter
-    (fn [ctx] (assoc ctx :response response))))
+   :name (str id " " (pr-str response))
+   :doc  "Respond with given value."
+   :enter
+   (fn [ctx] (assoc ctx :response response))))
 
 
 (defmethod ->interceptor 'request/rewrite
-  [[id url]]
+  [[id url] & _]
   (let [url    (URL. url)
         scheme (keyword (.getProtocol url))
         host   (.getHost url)
@@ -63,7 +63,7 @@
    'update      update})
 
 (defmethod ->interceptor 'request/update
-  [[id & form]]
+  [[id & form] & _]
   (interceptor
    :name (str id " " (pr-str form))
    :doc  "Update the incoming request using eval on the request object."
@@ -76,7 +76,7 @@
                                  (assoc 'request request))))))))
 
 (defmethod ->interceptor 'response/update
-  [[id & form]]
+  [[id & form] & _]
   (interceptor
    :name (str id " " (pr-str form))
    :doc  "Update the outgoing request using eval on the response object."
@@ -92,7 +92,7 @@
                                                     'response response)))))))))
 
 (defmethod ->interceptor 'reverse-proxy/forwarded-headers
-  [[id]]
+  [[id] & _]
   (interceptor
    :name (str id)
    :doc  "Add `x-forwarded-proto`, `x-forwarded-host` and `x-forwarded-port` headers to request for backend.
@@ -120,7 +120,7 @@
                 (assoc-in [:proxy-request-overrides :headers "x-forwarded-port"] (str port)))))))
 
 (defmethod ->interceptor 'reverse-proxy/proxy-request
-  [[id]]
+  [[id] & _]
   (interceptor
    :name (str id)
    :doc  "Execute proxy request and populate response."

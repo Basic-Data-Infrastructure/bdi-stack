@@ -12,12 +12,15 @@
             [nl.jomco.envopts :as envopts]
             [nl.jomco.resources :refer [wait-until-interrupted with-resources]]
             [org.bdinetwork.connector.system :as system]
-            [org.bdinetwork.service-commons.config :refer [config]]))
+            [org.bdinetwork.service-commons.config :refer [config server-party-opt-specs]]))
 
 (def opt-specs
-  {:rules-file ["EDN file specifying request processing rules" :file]
-   :hostname   ["Server hostname" :str :default "localhost"]
-   :port       ["Server HTTP Port" :int :default 8081]})
+  (merge server-party-opt-specs
+         {:rules-file ["EDN file specifying request processing rules" :file]
+          :hostname   ["Server hostname" :str :default "localhost"]
+          :port       ["Server HTTP Port" :int :default 8081]
+
+          :access-token-ttl-seconds ["Access token time to live in seconds" :int :default 600]}))
 
 (defmethod envopts/parse :file
   [s _opt-spec]

@@ -8,6 +8,10 @@
             [org.bdinetwork.gateway :as gateway]
             [org.bdinetwork.gateway.rules :as rules]))
 
+;; force loading BDI interceptor multi methods
+#_{:clj-kondo/ignore [:unused-namespace]}
+(require '[org.bdinetwork.connector.interceptors :as _bdi-interceptors])
+
 (defn stop-server
   [s]
   (.close s)
@@ -20,5 +24,7 @@
 
 (defn run-system
   [{:keys [rules-file] :as config}]
-  (mk-system [gateway (gateway/make-gateway (rules/read-rules-file rules-file))
+  (mk-system [gateway (-> rules-file
+                          (rules/read-rules-file config)
+                          (gateway/make-gateway))
               _server (start-server gateway config)]))

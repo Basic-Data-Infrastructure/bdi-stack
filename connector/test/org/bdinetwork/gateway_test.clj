@@ -98,7 +98,7 @@
 
 (def rules
   {:rules [{:match {:uri "/test"}
-            :interceptors (mapv interceptors/->interceptor
+            :interceptors (mapv #(interceptors/->interceptor % {})
                                 [['reverse-proxy/forwarded-headers]
                                  ['request/rewrite backend-url]
                                  ['response/update 'update :headers 'assoc "x-gateway" "passed"]

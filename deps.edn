@@ -8,6 +8,7 @@
 {:deps  {org.bdinetwork/association-register   {:local/root "./association-register"}
          org.bdinetwork/authorization-register {:local/root "./authorization-register"}
          org.bdinetwork/authentication-service {:local/root "./authentication-service"}
+         org.bdinetwork/clj-authentication     {:local/root "./clj-authentication"}
          org.bdinetwork/clj-ring-middleware    {:local/root "./clj-ring-middleware"}
          org.bdinetwork/connector              {:local/root "./connector"}}
  :paths ["resources"]

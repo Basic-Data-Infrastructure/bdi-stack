@@ -91,6 +91,8 @@ This gateway comes with the following base interceptors:
 
 - `reverse-proxy/proxy-request` produce a response by executing the (modified!) request (including the recorded "x-forwarded" headers information in `:proxy-request-overrides`) in the "entering" phase.
 
+- `bdi/authenticate` validate bearer token on incoming request, when none given responds with "401 Unauthorized", otherwise adds "X-Bdi-Client-Id" request header for consumption downstream.
+
 The "eval" interceptors support the following functions:
 
 - `assoc`
