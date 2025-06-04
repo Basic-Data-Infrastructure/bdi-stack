@@ -14,9 +14,9 @@
            (->> rules :rules (map :match)))
         "aero magic applied")
     (is (= [["reverse-proxy/forwarded-headers"
-             "request/eval (assoc :scheme :http :server-name \"localhost\" :server-port 1234)"
-             "request/eval (update :headers assoc \"authorization\" \"Basic em9vOnF1dXg=\")"
-             "response/eval (update :headers assoc \"x-bdi-connector\" \"passed\")"
+             "request/update (assoc :scheme :http :server-name \"localhost\" :server-port 1234)"
+             "request/update (update :headers assoc \"authorization\" \"Basic em9vOnF1dXg=\")"
+             "response/update (update :headers assoc \"x-bdi-connector\" \"passed\")"
              "reverse-proxy/proxy-request"]
             ["respond {:status 401, :headers {\"content-type\" \"text/plain\", \"www-authenticate\" \"Basic realm=\\\"secret\\\"\"}, :body \"not allowed\"}"]]
            (->> rules :rules (map :interceptors) (map #(map :name %))))

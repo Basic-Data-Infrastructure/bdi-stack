@@ -37,7 +37,7 @@
       :enter
       (fn [ctx] (assoc ctx :response response))))
 
-   'request/eval
+   'request/update
    (fn [id & form]
      (interceptor
       :name (str id " " (pr-str form))
@@ -50,7 +50,7 @@
                                     (merge vars)
                                     (assoc 'request request))))))))
 
-   'response/eval
+   'response/update
    (fn [id & form]
      (interceptor
       :name (str id " " (pr-str form))
@@ -107,7 +107,7 @@
 
 
 
-(defn rule->interceptor [[rule-id & args :as rule]]
-  (if-let [make-interceptor (get interceptors rule-id)]
-    (apply make-interceptor rule-id args)
-    (throw (ex-info "unknown interceptor for rule" {:rule rule}))))
+(defn ->interceptor [[interceptor-id & args :as interceptor]]
+  (if-let [make-interceptor (get interceptors interceptor-id)]
+    (apply make-interceptor interceptor-id args)
+    (throw (ex-info "unknown interceptor for interceptor" {:interceptor interceptor}))))

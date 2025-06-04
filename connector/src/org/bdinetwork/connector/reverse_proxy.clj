@@ -8,7 +8,7 @@
             [manifold.deferred :as d]
             [org.bdinetwork.connector.response :as response]))
 
-(def ingress-connection-pool
+(def connection-pool
   (http/connection-pool {:connection-options {:keep-alive? true}}))
 
 (defn- fix-cookies
@@ -50,7 +50,7 @@
                  :follow-redirects? false)
 
           ;; a specialized connection pool
-          (assoc :pool ingress-connection-pool)
+          (assoc :pool connection-pool)
 
           (http/request)
           (fix-cookies))

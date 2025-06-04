@@ -15,10 +15,8 @@
   [_ _ value]
   (re-pattern value))
 
-
-
 (defn- parse-interceptors [rule]
-  (update rule :interceptors #(mapv interceptors/rule->interceptor %)))
+  (update rule :interceptors #(mapv interceptors/->interceptor %)))
 
 (defn- parse-rules [rules-file]
   (update rules-file :rules #(mapv parse-interceptors %)))

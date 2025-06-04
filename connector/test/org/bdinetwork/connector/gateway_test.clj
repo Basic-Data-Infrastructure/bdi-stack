@@ -98,13 +98,13 @@
 
 (def rules
   {:rules [{:match {:uri "/test"}
-            :interceptors (mapv interceptors/rule->interceptor
+            :interceptors (mapv interceptors/->interceptor
                                 [['reverse-proxy/forwarded-headers]
-                                 ['request/eval 'assoc
+                                 ['request/update 'assoc
                                   :scheme backend-scheme
                                   :server-name backend-host
                                   :server-port backend-port]
-                                 ['response/eval 'update :headers 'assoc "x-gateway" "passed"]
+                                 ['response/update 'update :headers 'assoc "x-gateway" "passed"]
                                  ['reverse-proxy/proxy-request]])}]})
 
 (def proxy-handler (sut/make-gateway rules))

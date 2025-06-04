@@ -7,31 +7,30 @@
             [org.bdinetwork.connector.matcher :as matcher]
             [org.bdinetwork.connector.response :as response]))
 
-(defn find-rule [rules req]
-  (loop [rules rules]
-    (when-let [{:keys [match] :as rule} (first rules)]
-      (if-let [vars (matcher/match match req)]
-        (update rule :vars merge vars)
-        (recur (next rules))))))
+(defn match-rule [rules req]
+  (some (fn [{:keys [match] :as rule}]
+          (when-let [vars (matcher/match match req)]
+            (update rule :vars merge vars)))
+        rules))
 
 (defn make-gateway [{:keys [vars rules]}]
   (fn gateway [req]
     (try
-      (if-let [{:keys [interceptors] :as rule} (find-rule rules req)]
+      (if-let [{:keys [interceptors] :as rule} (match-rule rules req)]
         (loop [{:keys [response] :as ctx} {:request req
                                            :vars    (merge vars (:vars rule))}
-               enter                      interceptors
-               leave                      []]
+               enter-stack                interceptors
+               leave-stack                []]
           (if response
-            (if-let [interceptor (first leave)]
-              (recur ((:leave interceptor) ctx)
+            (if-let [{:keys [leave]} (first leave-stack)]
+              (recur (leave ctx)
                      nil
-                     (next leave))
+                     (next leave-stack))
               response)
-            (if-let [interceptor (first enter)]
-              (recur ((:enter interceptor) ctx)
-                     (next enter)
-                     (into [interceptor] leave))
+            (if-let [{:keys [enter] :as interceptor} (first enter-stack)]
+              (recur (enter ctx)
+                     (next enter-stack)
+                     (into [interceptor] leave-stack))
               (do
                 (log/error "interceptors depleted without a response")
                 response/bad-gateway))))

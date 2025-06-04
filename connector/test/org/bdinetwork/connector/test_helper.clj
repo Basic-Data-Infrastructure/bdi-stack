@@ -5,6 +5,7 @@
 (ns org.bdinetwork.connector.test-helper
   (:require [aleph.http :as http]
             [nl.jomco.resources :refer [closeable mk-system Resource]]
+            [org.bdinetwork.connector.system :as system]
             [ring.adapter.jetty :refer [run-jetty]])
   (:import (java.net InetSocketAddress Socket)))
 
@@ -31,20 +32,11 @@
   (close [server]
     (.stop server)))
 
-
 (defn start-backend [handler]
   (run-jetty handler
              {:host  backend-host
               :port  backend-port
               :join? false}))
-
-(defn- close-aleph-server
-  "Blocking close of aleph HTTP server.
-
-  Blocks until server is shut down"
-  [server]
-  (.close server)
-  (.wait-for-close server))
 
 (defn start-proxy [handler]
   ;; using mk-system here because we want to wait for
@@ -53,7 +45,7 @@
                                                          {:host             proxy-host
                                                           :port             proxy-port
                                                           :shutdown-timeout 0})
-                                close-aleph-server)]
+                                system/stop-server)]
     (ensure-connection {:host proxy-host
                         :port proxy-port})
     {:server server}))

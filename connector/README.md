@@ -81,13 +81,13 @@ This gateway comes with the following base interceptors:
 
 - `response` produces a literal response in the "entering" phase.
 
-- `request/eval` evaluates an update on the request in the "entering" phase, includes `request` in the evaluation environment.
+- `request/update` evaluates an update on the request in the "entering" phase, includes `request` in the evaluation environment.
 
-- `response/eval` evaluates an update on the response in the "leaving" phase, includes `request` and `response` in the evaluation environment.
+- `response/update` evaluates an update on the response in the "leaving" phase, includes `request` and `response` in the evaluation environment.
 
-- `reverse-proxy/forwarded-headers` record information for "x-forwarded" headers on the request in the "entering" phase.
+- `reverse-proxy/forwarded-headers` record information for "x-forwarded" headers on the request in the "entering" phase on the `:proxy-request-overrides`.  Note: put this interceptor near the top to prevent overwriting request properties by other interceptors like `request/update`.
 
-- `reverse-proxy/proxy-request` produce a response by executing the (modified!) request (including the recorded "x-forwarded" headers information) in the "entering" phase.
+- `reverse-proxy/proxy-request` produce a response by executing the (modified!) request (including the recorded "x-forwarded" headers information in `:proxy-request-overrides`) in the "entering" phase.
 
 The "eval" interceptors support the following functions:
 
@@ -103,7 +103,7 @@ Here are example rules for a minimal reverse proxy to [httpbin](https://httpbin.
 
 ```edn
 [[reverse-proxy/forwarded-headers]
- [request/eval assoc
+ [request/update assoc
   :scheme :https, :server-name "httpbin.org", :server-port 443]
  [reverse-proxy/proxy-request]]
 ```
@@ -112,16 +112,16 @@ Note that if the backend relies on virtual hosting, the ["host" header](https://
 
 ```edn
 [[reverse-proxy/forwarded-headers]
- [request/eval assoc
+ [request/update assoc
   :scheme :https, :server-name "httpbin.org", :server-port 443]
- [request/eval update :headers assoc "host" "httpbin.org"]
+ [request/update update :headers assoc "host" "httpbin.org"]
  [reverse-proxy/proxy-request]]
 ```
 
 An alternative way of rewriting the request is to provide an `:url` on the request:
 
 ```edn
-[request/eval assoc :url
+[request/update assoc :url
  (str "https://httpbin.org/"
       (get request :uri)
       "?" (get request :query-string))]
@@ -136,13 +136,13 @@ The following example is protected by a basic authentication username / password
 {:rules [{:match {:headers {"authorization"
                             #join ["Basic " #b64 #join [#env "USER" ":" #env "PASS"]]}}
           :interceptors [[reverse-proxy/forwarded-headers]
-                         [request/eval assoc
+                         [request/update assoc
                           :scheme #keyword #env "BACKEND_PROTO"
                           :server-name #env "BACKEND_HOST"
                           :server-port #long #env "BACKEND_PORT"]
-                         [request/eval update :headers assoc "authorization"
+                         [request/update update :headers assoc "authorization"
                           #join ["Basic " #b64 #join [#env "BACKEND_USER" ":" #env "BACKEND_PASS"]]]
-                         [response/eval update :headers assoc "x-bdi-connector" "passed"]
+                         [response/update update :headers assoc "x-bdi-connector" "passed"]
                          [reverse-proxy/proxy-request]]}
 
          {:match        {}
