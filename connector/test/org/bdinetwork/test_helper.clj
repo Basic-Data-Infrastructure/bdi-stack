@@ -2,7 +2,7 @@
 ;;; SPDX-FileCopyrightText: 2025 Topsector Logistiek
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(ns org.bdinetwork.connector.test-helper
+(ns org.bdinetwork.test-helper
   (:require [nl.jomco.resources :refer [Resource]]
             [org.bdinetwork.connector.system :as system]
             [ring.adapter.jetty :refer [run-jetty]])

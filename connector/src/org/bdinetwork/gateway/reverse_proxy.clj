@@ -2,11 +2,11 @@
 ;;; SPDX-FileCopyrightText: 2025 Topsector Logistiek
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(ns org.bdinetwork.connector.reverse-proxy
+(ns org.bdinetwork.gateway.reverse-proxy
   (:require [aleph.http :as http]
             [clojure.tools.logging :as log]
             [manifold.deferred :as d]
-            [org.bdinetwork.connector.response :as response]))
+            [org.bdinetwork.gateway.response :as response]))
 
 (def connection-pool
   (http/connection-pool {:connection-options {:keep-alive? true}}))

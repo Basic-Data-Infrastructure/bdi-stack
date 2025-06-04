@@ -2,9 +2,9 @@
 ;;; SPDX-FileCopyrightText: 2025 Topsector Logistiek
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(ns org.bdinetwork.connector.rules
+(ns org.bdinetwork.gateway.rules
   (:require [aero.core :as aero]
-            [org.bdinetwork.connector.interceptors :as interceptors]))
+            [org.bdinetwork.gateway.interceptors :as interceptors]))
 
 (defmethod aero/reader 'b64
   [_ _ value]

@@ -2,11 +2,11 @@
 ;;; SPDX-FileCopyrightText: 2025 Topsector Logistiek
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(ns org.bdinetwork.connector.interceptors
+(ns org.bdinetwork.gateway.interceptors
   (:require [clojure.tools.logging :as log]
             [manifold.deferred :as d]
-            [org.bdinetwork.connector.eval :refer [evaluate]]
-            [org.bdinetwork.connector.reverse-proxy :as reverse-proxy])
+            [org.bdinetwork.gateway.eval :refer [evaluate]]
+            [org.bdinetwork.gateway.reverse-proxy :as reverse-proxy])
   (:import (java.net URL)))
 
 (defn interceptor [& {:keys [name enter leave]}]

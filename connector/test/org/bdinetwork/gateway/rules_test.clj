@@ -2,10 +2,10 @@
 ;;; SPDX-FileCopyrightText: 2025 Topsector Logistiek
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(ns org.bdinetwork.connector.rules-test
+(ns org.bdinetwork.gateway.rules-test
   (:require [clojure.java.io :as io]
             [clojure.test :refer [deftest is]]
-            [org.bdinetwork.connector.rules :as sut]))
+            [org.bdinetwork.gateway.rules :as sut]))
 
 (deftest read-rules-file
   (let [rules (sut/read-rules-file (io/resource "test-rules.edn"))]

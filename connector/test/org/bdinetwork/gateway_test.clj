@@ -2,16 +2,16 @@
 ;;; SPDX-FileCopyrightText: 2025 Topsector Logistiek
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(ns org.bdinetwork.connector.gateway-test
+(ns org.bdinetwork.gateway-test
   (:require [aleph.http :as http]
             [clojure.edn :as edn]
             [clojure.test :refer [deftest is testing use-fixtures]]
             [nl.jomco.http-status-codes :as http-status]
             [nl.jomco.resources :refer [with-resources]]
-            [org.bdinetwork.connector.gateway :as sut]
-            [org.bdinetwork.connector.interceptors :as interceptors :refer [interceptor]]
-            [org.bdinetwork.connector.response :as r]
-            [org.bdinetwork.connector.test-helper :refer [backend-host backend-port backend-url proxy-host proxy-port proxy-url start-backend start-proxy]]))
+            [org.bdinetwork.gateway :as sut]
+            [org.bdinetwork.gateway.interceptors :as interceptors :refer [interceptor]]
+            [org.bdinetwork.gateway.response :as r]
+            [org.bdinetwork.test-helper :refer [backend-host backend-port backend-url proxy-host proxy-port proxy-url start-backend start-proxy]]))
 
 (deftest make-gateway
   (testing "minimal"

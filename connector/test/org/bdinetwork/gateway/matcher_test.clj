@@ -2,9 +2,9 @@
 ;;; SPDX-FileCopyrightText: 2025 Topsector Logistiek
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(ns org.bdinetwork.connector.matcher-test
+(ns org.bdinetwork.gateway.matcher-test
   (:require [clojure.test :refer [deftest is testing]]
-            [org.bdinetwork.connector.matcher :as sut]))
+            [org.bdinetwork.gateway.matcher :as sut]))
 
 (deftest match
   (testing "exact matches"

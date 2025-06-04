@@ -5,8 +5,8 @@
 (ns org.bdinetwork.connector.system
   (:require [aleph.http :as http]
             [nl.jomco.resources :refer [mk-system closeable]]
-            [org.bdinetwork.connector.gateway :as gateway]
-            [org.bdinetwork.connector.rules :as rules]))
+            [org.bdinetwork.gateway :as gateway]
+            [org.bdinetwork.gateway.rules :as rules]))
 
 (defn stop-server
   [s]

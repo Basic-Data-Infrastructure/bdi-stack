@@ -2,7 +2,7 @@
 ;;; SPDX-FileCopyrightText: 2025 Topsector Logistiek
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(ns org.bdinetwork.connector.matcher)
+(ns org.bdinetwork.gateway.matcher)
 
 (defn match
   "Match `value` with `expr` where `expr` is some subset of `value`, returns false or a map of captured values.

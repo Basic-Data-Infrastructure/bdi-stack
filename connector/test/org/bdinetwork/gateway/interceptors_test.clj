@@ -2,9 +2,9 @@
 ;;; SPDX-FileCopyrightText: 2025 Topsector Logistiek
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(ns org.bdinetwork.connector.interceptors-test
+(ns org.bdinetwork.gateway.interceptors-test
   (:require [clojure.test :refer [deftest is testing]]
-            [org.bdinetwork.connector.interceptors :as sut]))
+            [org.bdinetwork.gateway.interceptors :as sut]))
 
 (deftest ->interceptor
   (testing "request/rewrite"

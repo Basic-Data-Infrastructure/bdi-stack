@@ -2,7 +2,7 @@
 ;;; SPDX-FileCopyrightText: 2025 Topsector Logistiek
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(ns org.bdinetwork.connector.response
+(ns org.bdinetwork.gateway.response
   (:require [nl.jomco.http-status-codes :as http-status]))
 
 (def not-found

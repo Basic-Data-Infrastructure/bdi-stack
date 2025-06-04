@@ -2,10 +2,10 @@
 ;;; SPDX-FileCopyrightText: 2025 Topsector Logistiek
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(ns org.bdinetwork.connector.gateway
+(ns org.bdinetwork.gateway
   (:require [clojure.tools.logging :as log]
-            [org.bdinetwork.connector.matcher :as matcher]
-            [org.bdinetwork.connector.response :as response]))
+            [org.bdinetwork.gateway.matcher :as matcher]
+            [org.bdinetwork.gateway.response :as response]))
 
 (defn match-rule [rules req]
   (some (fn [{:keys [match] :as rule}]

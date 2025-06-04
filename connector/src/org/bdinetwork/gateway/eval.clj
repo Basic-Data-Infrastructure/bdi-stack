@@ -2,7 +2,7 @@
 ;;; SPDX-FileCopyrightText: 2025 Topsector Logistiek
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(ns org.bdinetwork.connector.eval)
+(ns org.bdinetwork.gateway.eval)
 
 (defn evaluate
   "Evaluate expression.

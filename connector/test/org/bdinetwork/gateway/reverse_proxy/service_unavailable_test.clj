@@ -2,13 +2,13 @@
 ;;; SPDX-FileCopyrightText: 2025 Topsector Logistiek
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(ns org.bdinetwork.connector.reverse-proxy.service-unavailable-test
+(ns org.bdinetwork.gateway.reverse-proxy.service-unavailable-test
   (:require [aleph.http :as http]
             [clojure.test :refer [deftest is use-fixtures]]
             [nl.jomco.http-status-codes :as http-status]
             [nl.jomco.resources :refer [with-resources]]
-            [org.bdinetwork.connector.reverse-proxy :as sut]
-            [org.bdinetwork.connector.test-helper :refer [backend-url proxy-url start-proxy]]))
+            [org.bdinetwork.gateway.reverse-proxy :as sut]
+            [org.bdinetwork.test-helper :refer [backend-url proxy-url start-proxy]]))
 
 (defn- handler [req]
   (sut/proxy-request (assoc req :url backend-url)))
