@@ -81,6 +81,8 @@ This gateway comes with the following base interceptors:
 
 - `response` produces a literal response in the "entering" phase.
 
+- `request/rewrite` rewrites the server part of the request to the given URL.
+
 - `request/update` evaluates an update on the request in the "entering" phase, includes `request` in the evaluation environment.
 
 - `response/update` evaluates an update on the response in the "leaving" phase, includes `request` and `response` in the evaluation environment.
@@ -103,28 +105,8 @@ Here are example rules for a minimal reverse proxy to [httpbin](https://httpbin.
 
 ```edn
 [[reverse-proxy/forwarded-headers]
- [request/update assoc
-  :scheme :https, :server-name "httpbin.org", :server-port 443]
+ [request/rewrite "https://httpbin.org"]
  [reverse-proxy/proxy-request]]
-```
-
-Note that if the backend relies on virtual hosting, the ["host" header](https://developer.mozilla.org/en-US/docs/Glossary/Host) needs to be added.
-
-```edn
-[[reverse-proxy/forwarded-headers]
- [request/update assoc
-  :scheme :https, :server-name "httpbin.org", :server-port 443]
- [request/update update :headers assoc "host" "httpbin.org"]
- [reverse-proxy/proxy-request]]
-```
-
-An alternative way of rewriting the request is to provide an `:url` on the request:
-
-```edn
-[request/update assoc :url
- (str "https://httpbin.org/"
-      (get request :uri)
-      "?" (get request :query-string))]
 ```
 
 #### Example

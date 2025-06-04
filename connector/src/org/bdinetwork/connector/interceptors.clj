@@ -6,7 +6,8 @@
   (:require [clojure.tools.logging :as log]
             [manifold.deferred :as d]
             [org.bdinetwork.connector.eval :refer [evaluate]]
-            [org.bdinetwork.connector.reverse-proxy :as reverse-proxy]))
+            [org.bdinetwork.connector.reverse-proxy :as reverse-proxy])
+  (:import (java.net URL)))
 
 (defn interceptor [& {:keys [name enter leave]}]
   {:pre [name (or enter leave)]}
@@ -36,6 +37,28 @@
       :doc  "Respond with given value."
       :enter
       (fn [ctx] (assoc ctx :response response))))
+
+   'request/rewrite
+   (fn [id url]
+     (let [url    (URL. url)
+           scheme (keyword (.getProtocol url))
+           host   (.getHost url)
+           port   (.getPort url)
+           port   (if (= -1 port) (.getDefaultPort url) port)]
+       (when-not (#{"/" ""} (.getFile url))
+         (throw (ex-info "Only URL without path or query string allowed"
+                         {:interceptor id, :url url})))
+
+       (interceptor
+        :name (str id " " url)
+        :doc  "Rewrite server part of request."
+        :enter
+        (fn [ctx]
+          (-> ctx
+              (assoc-in [:request :scheme] scheme)
+              (assoc-in [:request :server-name] host)
+              (assoc-in [:request :server-port] port)
+              (assoc-in [:request :headers "host"] (str host ":" port)))))))
 
    'request/update
    (fn [id & form]

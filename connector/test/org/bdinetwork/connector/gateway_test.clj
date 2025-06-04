@@ -11,7 +11,7 @@
             [org.bdinetwork.connector.gateway :as sut]
             [org.bdinetwork.connector.interceptors :as interceptors :refer [interceptor]]
             [org.bdinetwork.connector.response :as r]
-            [org.bdinetwork.connector.test-helper :refer [backend-host backend-port backend-scheme proxy-host proxy-port proxy-url start-backend start-proxy]]))
+            [org.bdinetwork.connector.test-helper :refer [backend-host backend-port backend-url proxy-host proxy-port proxy-url start-backend start-proxy]]))
 
 (deftest make-gateway
   (testing "minimal"
@@ -100,10 +100,7 @@
   {:rules [{:match {:uri "/test"}
             :interceptors (mapv interceptors/->interceptor
                                 [['reverse-proxy/forwarded-headers]
-                                 ['request/update 'assoc
-                                  :scheme backend-scheme
-                                  :server-name backend-host
-                                  :server-port backend-port]
+                                 ['request/rewrite backend-url]
                                  ['response/update 'update :headers 'assoc "x-gateway" "passed"]
                                  ['reverse-proxy/proxy-request]])}]})
 
@@ -137,7 +134,7 @@
       (let [{:keys [request-method uri headers]} (-> body (slurp) (edn/read-string))]
         (is (= :get request-method))
         (is (= "/test" uri))
-        (is (= {"host" (str proxy-host ":" proxy-port)
+        (is (= {"host" (str backend-host ":" backend-port)
                 "content-length" "0"
                 "x-forwarded-proto" "http"
                 "x-forwarded-host"  (str proxy-host ":" proxy-port)
