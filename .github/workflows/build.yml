@@ -26,8 +26,8 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: "~/.m2"
-          key: "deps-${{ hashFiles('deps.edn') }}"
-          restore-keys: "deps-"
+          key: "prep-deps-${{ hashFiles('deps.edn') }}"
+          restore-keys: "prep-deps-"
 
       - uses: actions/setup-java@v4
         with:
@@ -40,6 +40,11 @@ jobs:
           curl -L -O https://github.com/clojure/brew-install/releases/latest/download/posix-install.sh
           chmod +x posix-install.sh
           sudo ./posix-install.sh
+
+      - name: Prep deps
+        run: |
+          cd "$HOME"
+          clojure -P
 
       - name: version
         # need some shenanigans to get simple tag name from repo/tags/tagname ref
@@ -71,8 +76,8 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: "~/.m2"
-          key: "deps-${{ hashFiles('deps.edn') }}"
-          restore-keys: "deps-"
+          key: "prep-deps${{ hashFiles('deps.edn') }}"
+          restore-keys: "prep-deps"
 
       - uses: actions/setup-java@v4
         with:
@@ -130,8 +135,8 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: "~/.m2"
-          key: "deps-${{ hashFiles('deps.edn') }}"
-          restore-keys: "deps-"
+          key: "prep-deps${{ hashFiles('deps.edn') }}"
+          restore-keys: "prep-deps"
 
       - uses: actions/setup-java@v4
         with:
