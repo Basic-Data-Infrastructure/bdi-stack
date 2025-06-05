@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-22.04
     outputs:
       version: ${{ steps.version.outputs.version }}
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
       
     permissions:
       # needed to create releases
@@ -93,7 +94,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
           asset_path: bdi-${{ matrix.service }}-${{ needs.create_release.outputs.version }}.zip
           asset_name: bdi-${{ matrix.service }}-${{ needs.create_release.outputs.version }}.zip
           asset_content_type: application/octet-stream
