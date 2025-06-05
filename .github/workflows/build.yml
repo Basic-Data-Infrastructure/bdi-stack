@@ -128,6 +128,7 @@ jobs:
       # needed to create releases
       contents: write
     strategy:
+      max-parallel: 1 # order of release is important because of dependencies on published previous lib
       matrix:
         lib: [clj-ishare-jwt, clj-ishare-client, clj-ring-middleware]
     steps:      
