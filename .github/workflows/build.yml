@@ -53,7 +53,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
-      - name: Build artifacs
+      - name: Build artifacts
         run: make bdi-association-register-${{ steps.version.outputs.version }}.zip bdi-authorization-register-${{ steps.version.outputs.version }}.zip
 
       - name: Upload association-register
@@ -110,6 +110,15 @@ jobs:
           tags: |
             ${{ vars.ACR_HOSTNAME }}/authentication-service:${{ steps.version.outputs.version }}
             ${{ vars.ACR_HOSTNAME }}/authentication-service:latest
+
+      - name: Build and Push Connector to ACR
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          file: "connector.dockerfile"
+          tags: |
+            ${{ vars.ACR_HOSTNAME }}/connector:${{ steps.version.outputs.version }}
+            ${{ vars.ACR_HOSTNAME }}/connector:latest
 
       # publish libs to clojars
       - name: Build and push clj-ishare-jwt to clojars

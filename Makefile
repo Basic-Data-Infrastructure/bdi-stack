@@ -72,3 +72,9 @@ bdi-authorization-register-%.zip: authorization-register/bdi-authorization-regis
 	mkdir -p "$(basename $@)"
 	cp -r $^ "$(basename $@)/"
 	zip -r $@ "$(basename $@)"
+
+bdi-connector-%.zip: connector/bdi-connector.jar connector/README.md LICENSES
+	rm -rf "$(basename $@)"
+	mkdir -p "$(basename $@)"
+	cp -r $^ "$(basename $@)/"
+	zip -r $@ "$(basename $@)"

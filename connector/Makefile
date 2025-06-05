@@ -5,7 +5,7 @@
 .PHONY: clean
 
 clean:
-	rm -rf ./classes ./target ./bdi-association-register.jar
+	rm -rf ./classes ./target ./bdi-connector.jar
 
 bdi-connector.jar: clean
 	mkdir classes
