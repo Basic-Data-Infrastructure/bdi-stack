@@ -54,7 +54,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
 
       - name: Build artifacts
-        run: make bdi-association-register-${{ steps.version.outputs.version }}.zip bdi-authorization-register-${{ steps.version.outputs.version }}.zip bdi-connector-${{ steps.version.outputs.version }}.zip
+        run: make bdi-association-register-${{ steps.version.outputs.version }}.zip bdi-authorization-register-${{ steps.version.outputs.version }}.zip bdi-connector-${{ steps.version.outputs.version }}.zip  bdi-authentication-service-${{ steps.version.outputs.version }}.zip
 
       - name: Upload association-register
         uses: actions/upload-release-asset@v1
