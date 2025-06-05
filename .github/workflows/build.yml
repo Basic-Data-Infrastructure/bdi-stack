@@ -42,9 +42,7 @@ jobs:
           sudo ./posix-install.sh
 
       - name: Prep deps
-        run: |
-          cd "$HOME"
-          clojure -P
+        run: clojure -P
 
       - name: version
         # need some shenanigans to get simple tag name from repo/tags/tagname ref
