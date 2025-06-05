@@ -90,6 +90,16 @@ in the top-level directory.
 `make test` in the top-level directory runs all tests after ensuring
 that the `test-config` is populated correctly.
 
+## CHANGES
+### v1.0.1
+  - Added `authentication-service`, a standalone service that provides
+    an access token endpoint generating trusted JWTs.
+  - Improve logging
+  - Internal refactoring: split out `service-commons`, improve tests.
+    
+### v1.0.0 
+  - Initial public release
+
 ## Copying
 
 Copyright (C) 2024-2025 Jomco B.V.
