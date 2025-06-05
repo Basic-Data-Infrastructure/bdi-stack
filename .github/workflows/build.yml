@@ -86,14 +86,14 @@ jobs:
           asset_name: bdi-connector-${{ steps.version.outputs.version }}.zip
           asset_content_type: application/octet-stream
 
-      - name: Upload authorization-service
+      - name: Upload authentication-service
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: bdi-authorization-service-${{ steps.version.outputs.version }}.zip
-          asset_name: bdi-authorization-service-${{ steps.version.outputs.version }}.zip
+          asset_path: bdi-authentication-service-${{ steps.version.outputs.version }}.zip
+          asset_name: bdi-authentication-service-${{ steps.version.outputs.version }}.zip
           asset_content_type: application/octet-stream
           
       # publish to docker hub
