@@ -26,9 +26,9 @@ The BDI Stack contains standalone services and libraries.
 
 ## Libraries
 
-- [clj-share-jwt](./clj-ishare-jwt) - A Clojure Library for creating
+- [clj-ishare-jwt](./clj-ishare-jwt) - A Clojure Library for creating
   and validating iSHARE compatible JWTs
-- [clj-share-client](./clj-ishare-client) - A Clojure Library for
+- [clj-ishare-client](./clj-ishare-client) - A Clojure Library for
   accessing iSHARE compatible services
 - [clj-ring-middleware](./clj-ring-middleware) -
   Ring middleware for authenticating iSHARE compatible clients
@@ -92,8 +92,8 @@ that the `test-config` is populated correctly.
 
 ## Copying
 
-Copyright (C) 2024 Jomco B.V.
+Copyright (C) 2024-2025 Jomco B.V.
 
-Copyright (C) 2024 Topsector Logistiek
+Copyright (C) 2024-2025 Topsector Logistiek
 
 [AGPL-3.0-or-later](LICENSES/AGPL-3.0-or-later.txt)
