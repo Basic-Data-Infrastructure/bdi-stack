@@ -1,5 +1,5 @@
-# SPDX-FileCopyrightText: 2024 Jomco B.V.
-# SPDX-FileCopyrightText: 2024 Topsector Logistiek
+# SPDX-FileCopyrightText: 2024, 2025 Jomco B.V.
+# SPDX-FileCopyrightText: 2024, 2025 Topsector Logistiek
 # SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
 # SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
 #
@@ -7,7 +7,7 @@
 
 # these parties are defined in the association; we need to generate
 # keys and certificates for thme.
-PARTIES=authorization_register association_register authentication_service client nlsmartphon
+PARTIES=authorization_register association_register authentication_service client connector nlsmartphon
 
 %.cert.pem %.key.pem : intermediate.cert.pem  intermediate.key.pem
 	openssl req \

@@ -1,37 +1,39 @@
-;;; SPDX-FileCopyrightText: 2024 Jomco B.V.
-;;; SPDX-FileCopyrightText: 2024 Topsector Logistiek
+;;; SPDX-FileCopyrightText: 2024, 2025 Jomco B.V.
+;;; SPDX-FileCopyrightText: 2024, 2025 Topsector Logistiek
 ;;; SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
 ;;; SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
 ;;;
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-{:deps {org.bdinetwork/association-register   {:local/root "./association-register"}
-        org.bdinetwork/authorization-register {:local/root "./authorization-register"}
-        org.bdinetwork/authentication-service {:local/root "./authentication-service"}
-        org.bdinetwork/clj-ring-middleware    {:local/root "./clj-ring-middleware"}
-        org.bdinetwork/connector              {:local/root "./connector"}}
+{:deps  {org.bdinetwork/association-register   {:local/root "./association-register"}
+         org.bdinetwork/authorization-register {:local/root "./authorization-register"}
+         org.bdinetwork/authentication-service {:local/root "./authentication-service"}
+         org.bdinetwork/clj-ring-middleware    {:local/root "./clj-ring-middleware"}
+         org.bdinetwork/connector              {:local/root "./connector"}}
  :paths ["resources"]
  :aliases
- {:test   {:extra-deps {lambdaisland/kaocha {:mvn/version "RELEASE"}
+ {:dev  {:extra-paths ["dev"]}
 
-                        ;; clj-ishare-client tests
-                        org.clojure/core.async {:mvn/version "1.8.741"}
+  :test {:extra-deps {lambdaisland/kaocha {:mvn/version "RELEASE"}
 
-                        ;; connector tests
-                        ring/ring {:mvn/version "1.14.1"}}
-           :main-opts  ["-m" "kaocha.runner"]}
+                      ;; clj-ishare-client tests
+                      org.clojure/core.async {:mvn/version "1.8.741"}
 
-  :lint   {:extra-deps {clj-kondo/clj-kondo {:mvn/version "RELEASE"}}
-           :main-opts  ["-m" "clj-kondo.main"]}
+                      ;; connector tests
+                      ring/ring {:mvn/version "1.14.1"}}
+         :main-opts ["-m" "kaocha.runner"]}
 
-  :build  {:deps       {io.github.clojure/tools.build {:mvn/version "0.10.9"}
-                        slipset/deps-deploy           {:mvn/version "RELEASE"}}
-           :ns-default build-lib}
+  :lint {:extra-deps {clj-kondo/clj-kondo {:mvn/version "RELEASE"}}
+         :main-opts  ["-m" "clj-kondo.main"]}
 
-  :watson {:paths []
+  :build {:deps       {io.github.clojure/tools.build {:mvn/version "0.10.9"}
+                       slipset/deps-deploy           {:mvn/version "RELEASE"}}
+          :ns-default build-lib}
+
+  :watson {:paths        []
            :replace-deps {io.github.clj-holmes/clj-watson {:git/tag "v6.0.1"
                                                            :git/sha "b5203518d023d50e70a240d59a0770ccbacf3867"}}
-           :main-opts ["-m" "clj-watson.cli"]}
+           :main-opts    ["-m" "clj-watson.cli"]}
 
-  :antq   {:replace-deps {com.github.liquidz/antq {:mvn/version "RELEASE"}}
-           :ns-default   antq.tool}}}
+  :antq {:replace-deps {com.github.liquidz/antq {:mvn/version "RELEASE"}}
+         :ns-default   antq.tool}}}
