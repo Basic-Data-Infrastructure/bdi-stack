@@ -12,7 +12,7 @@
             [nl.jomco.http-status-codes :as http-status]
             [org.bdinetwork.association-register.system :as system]
             [org.bdinetwork.association-register.web :as web]
-            [org.bdinetwork.ring.in-memory-association :refer [in-memory-association read-source]]))
+            [org.bdinetwork.authentication.in-memory-association :refer [in-memory-association read-source]]))
 
 (def system-config
   {:private-key              (keys/private-key "test-config/association_register.key.pem")

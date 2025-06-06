@@ -11,9 +11,9 @@
             [nl.jomco.http-status-codes :as http-status]
             [nl.jomco.resources :refer [with-resources]]
             [org.bdinetwork.association-register.system :as system]
+            [org.bdinetwork.authentication.in-memory-association :refer [read-source]]
             [org.bdinetwork.ishare.client :as client]
-            [org.bdinetwork.ishare.client.request :as request]
-            [org.bdinetwork.ring.in-memory-association :refer [read-source]]))
+            [org.bdinetwork.ishare.client.request :as request]))
 
 ;; TODO: make port numbers configurable for tests / automatically use free port
 

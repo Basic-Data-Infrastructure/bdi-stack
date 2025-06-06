@@ -5,7 +5,8 @@
 ;;;
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-{:deps  {org.bdinetwork/clj-ring-middleware {:local/root "../clj-ring-middleware"}
+{:deps  {org.bdinetwork/clj-authentication  {:local/root "../clj-authentication"}
+         org.bdinetwork/clj-ring-middleware {:local/root "../clj-ring-middleware"}
          org.bdinetwork/service-commons     {:local/root "../service-commons"}
          ch.qos.logback/logback-classic     {:mvn/version "1.5.18"}
          nl.jomco/with-resources            {:mvn/version "0.1.2"}

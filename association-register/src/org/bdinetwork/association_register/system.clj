@@ -9,7 +9,7 @@
   (:require [clojure.string :as string]
             [nl.jomco.resources :refer [Resource mk-system closeable]]
             [org.bdinetwork.association-register.web :as web]
-            [org.bdinetwork.ring.in-memory-association :refer [in-memory-association]]
+            [org.bdinetwork.authentication.in-memory-association :refer [in-memory-association]]
             [ring.adapter.jetty :refer [run-jetty]]))
 
 (defn x5c

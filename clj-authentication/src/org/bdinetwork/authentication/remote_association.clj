@@ -5,13 +5,13 @@
 ;;;
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(ns org.bdinetwork.ring.remote-association
-  "Implement org.bdinetwork.ring.association.Assocation protocol by querying a BDI Assocation Register."
+(ns org.bdinetwork.authentication.remote-association
+  "Implement org.bdinetwork.association.Assocation protocol by querying a BDI Assocation Register."
   (:require [clojure.walk :as walk]
+            [org.bdinetwork.authentication.association :refer [Association]]
             [org.bdinetwork.ishare.client :as client]
             [org.bdinetwork.ishare.client.interceptors :as interceptors]
-            [org.bdinetwork.ishare.client.request :as request]
-            [org.bdinetwork.ring.association :refer [Association]]))
+            [org.bdinetwork.ishare.client.request :as request]))
 
 (defn ensure-ok
   [{:keys [status] :as response}]

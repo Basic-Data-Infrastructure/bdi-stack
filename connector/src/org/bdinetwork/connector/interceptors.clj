@@ -6,7 +6,12 @@
   (:require [clojure.tools.logging :as log]
             [nl.jomco.http-status-codes :as http-status]
             [org.bdinetwork.authentication.access-token :as access-token]
-            [org.bdinetwork.gateway.interceptors :refer [->interceptor interceptor]]))
+            [org.bdinetwork.authentication.client-assertion :as client-assertion]
+            [org.bdinetwork.authentication.in-memory-association :refer [in-memory-association read-source]]
+            [org.bdinetwork.authentication.remote-association :refer [remote-association]]
+            [org.bdinetwork.gateway.interceptors :refer [->interceptor interceptor]]
+            [ring.middleware.json :as ring-json]
+            [ring.middleware.params :as ring-params]))
 
 (defn extract-client-id [request config]
   (let [auth (get-in request [:headers "authorization"])]
@@ -41,3 +46,36 @@
    :enter
    (fn [ctx]
      (update-in ctx [:request :headers] dissoc "x-bdi-client-id"))))
+
+(defn ->association
+  "Setup an association interface from the given `config`."
+  [{:keys [in-memory-association-data-source
+           server-id x5c private-key association-server-id association-server-url]}]
+  (if in-memory-association-data-source
+    (in-memory-association (read-source in-memory-association-data-source))
+    (remote-association #:ishare {:client-id          server-id
+                                  :x5c                x5c
+                                  :private-key        private-key
+                                  :satellite-id       association-server-id
+                                  :satellite-base-url association-server-url})))
+
+(defn client-assertion-response [{:keys [association] :as config} request]
+  (-> request
+      (ring-params/params-request)
+      (assoc :association association)
+      (client-assertion/client-assertion-response config)
+      (ring-json/json-response {})))
+
+(defmethod ->interceptor 'bdi/connect-token
+  [[id] {:keys [server-id] :as config}]
+  (interceptor
+   :name (str id " " server-id)
+   :doc "Provide a connect/token endpoint to acquire a authentication
+   token."
+   :enter
+   (let [jti-cache-atom (client-assertion/mk-jti-cache-atom)
+         config         (assoc config
+                               :jti-cache-atom jti-cache-atom
+                               :association (->association config))]
+     (fn [{:keys [request] :as ctx}]
+       (assoc ctx :response (client-assertion-response config request))))))

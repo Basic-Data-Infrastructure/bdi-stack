@@ -7,7 +7,7 @@
 
 (ns org.bdinetwork.authentication-service.web
   (:require [compojure.core :refer [defroutes]]
-            [org.bdinetwork.ring.association :refer [wrap-association]]
+            [org.bdinetwork.authentication.association :refer [wrap-association]]
             [org.bdinetwork.ring.authentication :as authentication]
             [org.bdinetwork.ring.diagnostic-context :refer [wrap-request-context]]
             [org.bdinetwork.ring.logging :refer [wrap-logging wrap-server-error]]

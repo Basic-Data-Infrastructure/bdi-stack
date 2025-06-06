@@ -11,7 +11,7 @@
             [nl.jomco.envopts :as envopts]
             [nl.jomco.resources :refer [wait-until-interrupted with-resources]]
             [org.bdinetwork.association-register.system :as system]
-            [org.bdinetwork.ring.in-memory-association :refer [read-source]]
+            [org.bdinetwork.authentication.in-memory-association :refer [read-source]]
             [org.bdinetwork.service-commons.config :refer [config server-party-opt-specs]]))
 
 (def opt-specs

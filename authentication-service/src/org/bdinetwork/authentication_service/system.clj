@@ -8,7 +8,7 @@
 (ns org.bdinetwork.authentication-service.system
   (:require [nl.jomco.resources :refer [mk-system Resource]]
             [org.bdinetwork.authentication-service.web :as web]
-            [org.bdinetwork.ring.remote-association :refer [remote-association]]
+            [org.bdinetwork.authentication.remote-association :refer [remote-association]]
             [ring.adapter.jetty :refer [run-jetty]]))
 
 (extend-protocol Resource

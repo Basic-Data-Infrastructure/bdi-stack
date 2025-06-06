@@ -15,12 +15,15 @@
   ([v k] (prn k v) v))
 
 (ns user
-  (:require [nl.jomco.resources :refer [defresource close mk-system]]
+  (:require [aleph.http :as http]
+            [clojure.data.json :as json]
+            [nl.jomco.resources :refer [defresource close mk-system]]
             [org.bdinetwork.association-register.main :as association-register.main]
             [org.bdinetwork.authentication-service.main :as authentication-service.main]
             [org.bdinetwork.authentication.access-token :as access-token]
             [org.bdinetwork.authorization-register.main :as authorization-register.main]
             [org.bdinetwork.connector.main :as connector.main]
+            [org.bdinetwork.ishare.jwt :as ishare-jwt]
             [org.bdinetwork.service-commons.config :as config]))
 
 (def association-env
@@ -65,6 +68,12 @@
    :hostname         "localhost"
    :port             "8081"})
 
+(def client-env
+  {:private-key            "test-config/client.key.pem"
+   :public-key             "test-config/client.cert.pem"
+   :x5c                    "test-config/client.x5c.pem"
+   :server-id              "EU.EORI.CLIENT"})
+
 #_{:clj-kondo/ignore [:uninitialized-var]}
 (defresource system)
 
@@ -82,3 +91,36 @@
 (defn mk-access-token [client-id server-env]
   (let [cnf (config/config server-env config/server-party-opt-specs)]
     (access-token/mk-access-token (assoc cnf :client-id client-id))))
+
+(defn mk-client-assertion [client-env server-env]
+  (let [client-config (config/config client-env config/server-party-opt-specs)
+        server-config (config/config server-env config/server-party-opt-specs)]
+    (ishare-jwt/make-client-assertion {:ishare/client-id   (:server-id client-config)
+                                       :ishare/server-id   (:server-id server-config)
+                                       :ishare/x5c         (:x5c client-config)
+                                       :ishare/private-key (:private-key client-config)})))
+
+
+(comment
+  (let [req (-> "http://localhost:8081/connect/token"
+                (http/post
+                  {:throw-exceptions? false
+                   :headers           {"content-type" "application/x-www-form-urlencoded"}
+                   :body
+                   (-> {:grant_type            "client_credentials"
+                        :scope                 "iSHARE"
+                        :client_id             (:server-id client-env)
+                        :client_assertion_type "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
+                        :client_assertion      (mk-client-assertion client-env connector-env)}
+                       (ring.util.codec/form-encode))})
+                (deref)
+                (update :body slurp))]
+    (if (= 200 (:status req))
+      (let [{:strs [access_token]} (-> req :body json/read-str)]
+        (-> "http://localhost:8081/"
+            (http/get
+             {:throw-exceptions? false
+              :headers {"authorization" (str "Bearer " access_token)}})
+            (deref)
+            (update :body slurp)))
+      req)))
