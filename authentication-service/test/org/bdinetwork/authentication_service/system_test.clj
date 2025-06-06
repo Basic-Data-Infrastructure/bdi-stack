@@ -12,9 +12,9 @@
             [nl.jomco.resources :refer [with-resources]]
             [org.bdinetwork.association-register.system :as association]
             [org.bdinetwork.authentication-service.system :as system]
+            [org.bdinetwork.authentication.in-memory-association :refer [read-source]]
             [org.bdinetwork.ishare.client :as client]
             [org.bdinetwork.ishare.client.request :as request]
-            [org.bdinetwork.ring.in-memory-association :refer [read-source]]
             [org.bdinetwork.service-commons.config :refer [split-x5c]]))
 
 (def association-config

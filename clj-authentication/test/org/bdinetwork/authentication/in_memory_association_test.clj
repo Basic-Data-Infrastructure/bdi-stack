@@ -5,11 +5,11 @@
 ;;;
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(ns org.bdinetwork.ring.in-memory-association-test
+(ns org.bdinetwork.authentication.in-memory-association-test
   (:require [clojure.test :refer [deftest is]]
+            [org.bdinetwork.authentication.association :as association]
             [org.bdinetwork.authentication.x5c :as x5c]
-            [org.bdinetwork.ring.association :as association]
-            [org.bdinetwork.ring.in-memory-association :refer [in-memory-association read-source]]))
+            [org.bdinetwork.in-memory-association :refer [in-memory-association read-source]]))
 
 (def ds
   (in-memory-association (read-source "test-config/association-register-config.yml")))

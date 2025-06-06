@@ -8,9 +8,9 @@
 (ns org.bdinetwork.authorization-register.system
   (:require [clojure.string :as string]
             [nl.jomco.resources :refer [mk-system Resource]]
+            [org.bdinetwork.authentication.remote-association :refer [remote-association]]
             [org.bdinetwork.authorization-register.datascript-policies :refer [file-backed-policies]]
             [org.bdinetwork.authorization-register.web :as web]
-            [org.bdinetwork.ring.remote-association :refer [remote-association]]
             [ring.adapter.jetty :refer [run-jetty]]))
 
 (defn x5c

@@ -10,17 +10,18 @@
             [clojure.string :as string]
             [clojure.test :refer [deftest is]]
             [nl.jomco.http-status-codes :as status]
+            [org.bdinetwork.authentication.client-assertion :as client-assertion]
+            [org.bdinetwork.authentication.in-memory-association :refer [in-memory-association read-source]]
             [org.bdinetwork.ishare.jwt :as jwt]
-            [org.bdinetwork.ring.authentication :as auth]
-            [org.bdinetwork.ring.in-memory-association :refer [in-memory-association read-source]]))
+            [org.bdinetwork.ring.authentication :as auth]))
 
 (deftest jti
-  (let [c (auth/mk-jti-cache-atom)]
-    (is (auth/new-jti?! c "one"))
-    (is (not (auth/new-jti?! c "one")))
-    (is (auth/new-jti?! c "two"))
-    (is (not (auth/new-jti?! c "two")))
-    (is (not (auth/new-jti?! c "one")))))
+  (let [c (client-assertion/mk-jti-cache-atom)]
+    (is (client-assertion/new-jti?! c "one"))
+    (is (not (client-assertion/new-jti?! c "one")))
+    (is (client-assertion/new-jti?! c "two"))
+    (is (not (client-assertion/new-jti?! c "two")))
+    (is (not (client-assertion/new-jti?! c "one")))))
 
 (def client-id "EU.EORI.CLIENT")
 (def server-id "EU.EORI.SERVER")

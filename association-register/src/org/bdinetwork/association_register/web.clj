@@ -8,8 +8,8 @@
 (ns org.bdinetwork.association-register.web
   (:require [compojure.core :refer [defroutes GET]]
             [nl.jomco.http-status-codes :as http-status]
+            [org.bdinetwork.authentication.association :as association :refer [wrap-association]]
             [org.bdinetwork.ishare.jwt :as ishare.jwt]
-            [org.bdinetwork.ring.association :as association :refer [wrap-association]]
             [org.bdinetwork.ring.authentication :as authentication]
             [org.bdinetwork.ring.logging :refer [wrap-logging wrap-server-error]]
             [ring.middleware.json :refer [wrap-json-params wrap-json-response]]

@@ -6,7 +6,9 @@
   (:require [clojure.tools.logging :as log]
             [nl.jomco.http-status-codes :as http-status]
             [org.bdinetwork.authentication.access-token :as access-token]
-            [org.bdinetwork.gateway.interceptors :refer [->interceptor interceptor]]))
+            [org.bdinetwork.authentication.client-assertion :as client-assertion]
+            [org.bdinetwork.gateway.interceptors :refer [->interceptor interceptor]]
+            [ring.middleware.params :as ring-params]))
 
 (defn extract-client-id [request config]
   (let [auth (get-in request [:headers "authorization"])]
@@ -41,3 +43,20 @@
    :enter
    (fn [ctx]
      (update-in ctx [:request :headers] dissoc "x-bdi-client-id"))))
+
+(defmethod ->interceptor 'bdi/connect-token
+  [[id] {:keys [server-id] :as config}]
+  (interceptor
+   :name (str id " " server-id)
+   :doc "Provide a connect/token endpoint to acquire a authentication
+   token."
+   :enter
+   (let [jti-cache-atom (client-assertion/mk-jti-cache-atom)
+         config         (assoc config :jti-cache-atom jti-cache-atom)
+         association    'TODO]
+     (fn [{:keys [request] :as ctx}]
+       (let [request  (-> request
+                          (ring-params/params-request request)
+                          (assoc :association association))
+             response (client-assertion/client-assertion-response request config)]
+         (assoc ctx :response response))))))
