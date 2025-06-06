@@ -93,6 +93,8 @@ This gateway comes with the following base interceptors:
 
 - `bdi/authenticate` validate bearer token on incoming request, when none given responds with "401 Unauthorized", otherwise adds "X-Bdi-Client-Id" request header for consumption downstream.
 
+- `bdi/deauthenticate` ensure the "X-Bdi-Client-Id" request header is **not** already set on a request for public endpoints which do not need authentication.  This prevents clients from fooling the backend into being authenticated.
+
 The "eval" interceptors support the following functions:
 
 - `assoc`

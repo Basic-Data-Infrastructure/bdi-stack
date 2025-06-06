@@ -21,8 +21,9 @@
   [[id] {:keys [server-id] :as config}]
   (interceptor
    :name (str id " " server-id)
-   :doc "Enforce BDI authentication on incoming requests.  Responds with
-   401 Unauthorized when request is no access allowed."
+   :doc "Enforce BDI authentication on incoming requests and add
+   \"x-bdi-client-id\" request header.  Responds with 401 Unauthorized
+   when request is not allowed."
    :enter
    (fn [{:keys [request] :as ctx}]
      (if-let [client-id (extract-client-id request config)]
@@ -30,3 +31,13 @@
        (assoc ctx :response
               {:status  http-status/unauthorized
                :headers {"www-authenticate" "Bearer scope=\"BDI\""}})))))
+
+(defmethod ->interceptor 'bdi/deauthenticate
+  [[id] _]
+  (interceptor
+   :name (str id)
+   :doc "Remove \"x-bdi-client-id\" request header for avoid clients
+   from fooling backend into being authenticated."
+   :enter
+   (fn [ctx]
+     (update-in ctx [:request :headers] dissoc "x-bdi-client-id"))))

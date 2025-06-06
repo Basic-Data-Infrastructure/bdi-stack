@@ -47,3 +47,15 @@
                     response]} (enter {:request {:headers {"authorization" (str "Bearer " token)}}})]
         (is (not response) "no response yet")
         (is (= client-id (get-in request [:headers "x-bdi-client-id"])))))))
+
+(deftest bdi-deauthenticate
+  (let [{:keys [name enter]} (->interceptor ['bdi/deauthenticate] config)]
+    (is (= "bdi/deauthenticate" name))
+
+    (let [req  {:headers {"x-test" "test"}}
+          req' {:headers {"x-test" "test", "x-bdi-client-id" "test"}}]
+      (testing "without x-bdi-client-id request header"
+        (is (= req (:request (enter {:request req})))))
+
+      (testing "with x-bdi-client-id request header"
+        (is (= req (:request (enter {:request req'}))))))))
