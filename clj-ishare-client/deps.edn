@@ -6,7 +6,7 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 {:deps  {org.bdinetwork/clj-ishare-jwt {:local/root "../clj-ishare-jwt"}
-         org.babashka/http-client      {:mvn/version "0.4.22"}
+         org.babashka/http-client      {:mvn/version "0.4.23"}
          org.babashka/json             {:mvn/version "0.1.6"}
          org.clojure/tools.logging     {:mvn/version "1.3.0"}
          org.clojure/core.memoize      {:mvn/version "1.1.266"}}
