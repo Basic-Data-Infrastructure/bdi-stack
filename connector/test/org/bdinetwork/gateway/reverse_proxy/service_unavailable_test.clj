@@ -5,13 +5,17 @@
 (ns org.bdinetwork.gateway.reverse-proxy.service-unavailable-test
   (:require [aleph.http :as http]
             [clojure.test :refer [deftest is use-fixtures]]
+            [manifold.deferred :as d]
             [nl.jomco.http-status-codes :as http-status]
             [nl.jomco.resources :refer [with-resources]]
+            [org.bdinetwork.gateway.response :as response]
             [org.bdinetwork.gateway.reverse-proxy :as sut]
             [org.bdinetwork.test-helper :refer [backend-url proxy-url start-proxy]]))
 
 (defn- handler [req]
-  (sut/proxy-request (assoc req :url backend-url)))
+  (d/catch
+      (sut/proxy-request (assoc req :url backend-url))
+      (fn [_] response/service-unavailable)))
 
 (use-fixtures :once
   (fn [f]

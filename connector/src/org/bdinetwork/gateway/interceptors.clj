@@ -3,10 +3,14 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.gateway.interceptors
-  (:require [manifold.deferred :as d]
+  (:require [clojure.string :as string]
+            [clojure.tools.logging :as log]
+            [manifold.deferred :as d]
             [org.bdinetwork.gateway.eval :refer [evaluate]]
+            [org.bdinetwork.gateway.response :as response]
             [org.bdinetwork.gateway.reverse-proxy :as reverse-proxy])
-  (:import (java.net URL)))
+  (:import (java.net URL)
+           (java.util UUID)))
 
 (defn interceptor [& {:keys [name enter leave error]}]
   {:pre [name (or enter leave error)]}
@@ -18,6 +22,40 @@
 (defmulti ->interceptor (fn [[id & _] & _] id))
 
 
+
+(defn- log-response
+  [{:keys [response trace-id ::logger-enter-ctm] :as ctx}]
+  (assoc ctx :response
+         (d/let-flow [{:keys [status]} response]
+           (log/infof "Status: %d (duration %dms) [%s]"
+                      status
+                      (- (System/currentTimeMillis) logger-enter-ctm)
+                      trace-id)
+           response)))
+
+(defmethod ->interceptor 'logger
+  [[id] & _]
+
+  (interceptor
+   :name (str id)
+   :doc "Log incoming requests at `info` level and duration at `debug` level."
+   :enter
+   (fn [{{:keys [request-method scheme server-name server-port uri protocol]} :request :as ctx}]
+     (let [trace-id (UUID/randomUUID)]
+       (log/infof "%s %s://%s:%d%s %s [%s]"
+                  (string/upper-case (name request-method))
+                  (name scheme)
+                  server-name
+                  server-port
+                  uri
+                  protocol
+                  trace-id)
+       (assoc ctx
+              :trace-id trace-id
+              ::logger-enter-ctm (System/currentTimeMillis))))
+
+   :leave log-response
+   :error log-response))
 
 (defmethod ->interceptor 'respond
   [[id response] & _]
@@ -83,10 +121,10 @@
      (let [form (list* (first form) 'response (drop 1 form))]
        (assoc ctx :response
               (d/let-flow [response response]
-                          (evaluate form (-> eval-env
-                                             (merge vars)
-                                             (assoc 'request request
-                                                    'response response)))))))))
+                (evaluate form (-> eval-env
+                                   (merge vars)
+                                   (assoc 'request request
+                                          'response response)))))))))
 
 (defmethod ->interceptor 'reverse-proxy/forwarded-headers
   [[id] & _]
@@ -123,6 +161,12 @@
    :doc  "Execute proxy request and populate response."
    :enter
    (fn proxy-request-enter
-     [{:keys [request proxy-request-overrides] :as ctx}]
+     [{:keys [request proxy-request-overrides trace-id] :as ctx}]
      (assoc ctx :response
-            (reverse-proxy/proxy-request (merge-with merge request proxy-request-overrides))))))
+            (d/catch
+                (reverse-proxy/proxy-request (merge-with merge request proxy-request-overrides))
+                (fn proxy-handler-catch [e]
+                  (log/error e (str "Failed to launch request"
+                                    (when trace-id (str " [" trace-id "]")))
+                             request)
+                  response/service-unavailable))))))

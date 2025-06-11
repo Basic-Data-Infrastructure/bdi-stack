@@ -79,6 +79,13 @@ An interceptor operates on either the "entering" or "leaving" phase of an intera
 
 This gateway comes with the following base interceptors:
 
+- `logger` logs incoming requests (method, url and protocol) and response (status and duration) at `info` level with a `trace-id` which is available for other interceptor in `ctx`.  Note: put this interception in the first position to get proper duration information.
+
+   Example:
+
+   - `GET http://localhost:8081/ HTTP/1.1 [d2dcc39c-b19f-4386-8023-0c90bbce1c10]`
+   - `Status: 200 (duration 370ms) [d2dcc39c-b19f-4386-8023-0c90bbce1c10]`
+
 - `response` produces a literal response in the "entering" phase.
 
 - `request/rewrite` rewrites the server part of the request to the given URL.
@@ -123,7 +130,8 @@ The following example is protected by a basic authentication username / password
 ```edn
 {:rules [{:match {:headers {"authorization"
                             #join ["Basic " #b64 #join [#env "USER" ":" #env "PASS"]]}}
-          :interceptors [[reverse-proxy/forwarded-headers]
+          :interceptors [[logger]
+                         [reverse-proxy/forwarded-headers]
                          [request/update assoc
                           :scheme #keyword #env "BACKEND_PROTO"
                           :server-name #env "BACKEND_HOST"
@@ -134,7 +142,8 @@ The following example is protected by a basic authentication username / password
                          [reverse-proxy/proxy-request]]}
 
          {:match        {}
-          :interceptors [[respond {:status  401
+          :interceptors [[logger]
+                         [respond {:status  401
                                    :headers {"content-type" "text/plain"
                                              "www-authenticate" "Basic realm=\"secret\""}
                                    :body    "not allowed"}]]}]}

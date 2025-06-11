@@ -3,10 +3,12 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 {:rules [{:match {:uri "/connect/token"}
-          :interceptors [[bdi/connect-token]
+          :interceptors [[logger]
+                         [bdi/connect-token]
                          [response/update update :headers assoc "x-bdi-connector" "passed"]]}
          {:match {}
-          :interceptors [[bdi/authenticate]
+          :interceptors [[logger]
+                         [bdi/authenticate]
                          [reverse-proxy/forwarded-headers]
                          [request/rewrite "http://example.com"]
                          [response/update update :headers assoc "x-bdi-connector" "passed"]

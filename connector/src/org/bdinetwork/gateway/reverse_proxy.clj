@@ -4,9 +4,7 @@
 
 (ns org.bdinetwork.gateway.reverse-proxy
   (:require [aleph.http :as http]
-            [clojure.tools.logging :as log]
-            [manifold.deferred :as d]
-            [org.bdinetwork.gateway.response :as response]))
+            [manifold.deferred :as d]))
 
 (def connection-pool
   (http/connection-pool {:connection-options {:keep-alive? true}}))
@@ -27,34 +25,29 @@
 
 (defn proxy-request
   [request]
-  (d/catch
-      (-> request
+  (-> request
 
-          ;; keep all relevant for request
-          (select-keys [:protocol
-                        :request-method
+      ;; keep all relevant for request
+      (select-keys [:protocol
+                    :request-method
 
-                        :url
+                    :url
 
-                        :scheme
-                        :server-name
-                        :server-port
-                        :uri
-                        :query-string
+                    :scheme
+                    :server-name
+                    :server-port
+                    :uri
+                    :query-string
 
-                        :headers
-                        :body])
+                    :headers
+                    :body])
 
-          ;; no magic
-          (assoc :throw-exceptions? false
-                 :follow-redirects? false)
+      ;; no magic
+      (assoc :throw-exceptions? false
+             :follow-redirects? false)
 
-          ;; a specialized connection pool
-          (assoc :pool connection-pool)
+      ;; a specialized connection pool
+      (assoc :pool connection-pool)
 
-          (http/request)
-          (fix-cookies))
-
-      (fn proxy-handler-catch [e]
-        (log/error e "Failed to launch inbound request" request)
-        response/service-unavailable)))
+      (http/request)
+      (fix-cookies)))
