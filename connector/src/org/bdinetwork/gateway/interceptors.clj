@@ -3,20 +3,17 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.gateway.interceptors
-  (:require [clojure.tools.logging :as log]
-            [manifold.deferred :as d]
+  (:require [manifold.deferred :as d]
             [org.bdinetwork.gateway.eval :refer [evaluate]]
             [org.bdinetwork.gateway.reverse-proxy :as reverse-proxy])
   (:import (java.net URL)))
 
-(defn interceptor [& {:keys [name enter leave]}]
-  {:pre [name (or enter leave)]}
-  (cond-> {:name name, :enter identity, :leave identity}
-    enter
-    (assoc :enter #(do (log/debug (str "ENTER " name)) (enter %)))
-
-    leave
-    (assoc :leave #(do (log/debug (str "LEAVE " name)) (leave %)))))
+(defn interceptor [& {:keys [name enter leave error]}]
+  {:pre [name (or enter leave error)]}
+  (cond-> {:name  name, :enter identity, :leave identity, :error identity}
+    enter (assoc :enter enter)
+    leave (assoc :leave leave)
+    error (assoc :error error)))
 
 (defmulti ->interceptor (fn [[id & _] & _] id))
 

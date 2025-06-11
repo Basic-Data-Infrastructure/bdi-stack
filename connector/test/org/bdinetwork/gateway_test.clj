@@ -62,6 +62,33 @@
               :secondi-interceptor-leave 'a-scoop}
              (gateway {:primi 'a-pinch, :secondi 'a-scoop})))))
 
+  (testing "error"
+    (testing "catch all interceptor"
+      (let [gateway
+            (sut/make-gateway
+             {:rules [{:match        {}
+                       :interceptors [(interceptor
+                                       :name  "catch all"
+                                       :error (fn [{{:keys [exception]} :error :as ctx}]
+                                                (assoc ctx :response {:body (.getMessage exception)})))
+                                      (interceptor
+                                       :name  "throw"
+                                       :enter (fn [_] (throw (Exception. "boom"))))]}]})]
+        (is (= {:body "boom"}
+               (gateway {})))))
+
+    (testing "self catching"
+      (let [gateway
+            (sut/make-gateway
+             {:rules [{:match        {}
+                       :interceptors [(interceptor
+                                       :name  "throw and catch"
+                                       :enter (fn [_] (throw (Exception. "boom")))
+                                       :error (fn [{{:keys [exception]} :error :as ctx}]
+                                                (assoc ctx :response {:body (.getMessage exception)})))]}]})]
+        (is (= {:body "boom"}
+               (gateway {}))))))
+
   (testing "vars"
     (let [var-keys ['global 'rule1 'rule2 'last-rule]
           gateway

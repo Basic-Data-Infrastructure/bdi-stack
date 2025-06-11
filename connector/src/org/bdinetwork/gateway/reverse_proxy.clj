@@ -56,5 +56,5 @@
           (fix-cookies))
 
       (fn proxy-handler-catch [e]
-        (log/error e "failed to launch inbound request" request)
+        (log/error e "Failed to launch inbound request" request)
         response/service-unavailable)))
