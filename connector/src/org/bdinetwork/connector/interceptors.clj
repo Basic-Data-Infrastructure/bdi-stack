@@ -70,8 +70,9 @@
   [[id] {:keys [server-id] :as config}]
   (interceptor
    :name (str id " " server-id)
-   :doc "Provide a connect/token endpoint to acquire a authentication
-   token."
+   :doc "Provide a access token (M2M) endpoint to acquire a
+   authentication token.  Note: this interceptor does not match on an
+   `uri`, use a `:match` in the rules for that."
    :enter
    (let [jti-cache-atom (client-assertion/mk-jti-cache-atom)
          config         (assoc config

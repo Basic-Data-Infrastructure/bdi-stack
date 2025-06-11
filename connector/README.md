@@ -95,7 +95,7 @@ This gateway comes with the following base interceptors:
 
 - `bdi/deauthenticate` ensure the "X-Bdi-Client-Id" request header is **not** already set on a request for public endpoints which do not need authentication.  This prevents clients from fooling the backend into being authenticated.
 
-- `bdi/connect-token` provide a `/connect/token` endpoint to provide access tokens.  Note: this interceptor does no matching, so it needs to be added to a separate rule with a match like: `{:uri "/connect/token", :request-method :post}`.
+- `bdi/connect-token` provide a access token (M2M) endpoint to provide access tokens.  Note: this interceptor does no matching, so it needs to be added to a separate rule with a match like: `{:uri "/connect/token", :request-method :post}`.
 
 The "eval" interceptors support the following functions:
 
