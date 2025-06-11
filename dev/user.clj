@@ -15,33 +15,34 @@
   ([v k] (prn k v) v))
 
 (ns user
-  (:require [aleph.http :as http]
-            [clojure.data.json :as json]
-            [nl.jomco.resources :refer [defresource close mk-system]]
+  (:require [nl.jomco.resources :refer [defresource close mk-system]]
             [org.bdinetwork.association-register.main :as association-register.main]
             [org.bdinetwork.authentication-service.main :as authentication-service.main]
             [org.bdinetwork.authentication.access-token :as access-token]
             [org.bdinetwork.authorization-register.main :as authorization-register.main]
             [org.bdinetwork.connector.main :as connector.main]
+            [org.bdinetwork.ishare.client :as ishare-client]
             [org.bdinetwork.ishare.jwt :as ishare-jwt]
             [org.bdinetwork.service-commons.config :as config]))
 
 (def association-env
-  {:private-key            "test-config/association_register.key.pem"
-   :public-key             "test-config/association_register.cert.pem"
-   :x5c                    "test-config/association_register.x5c.pem"
-   :server-id              "EU.EORI.ASSOCIATION-REGISTER"
+  {:private-key "test-config/association_register.key.pem"
+   :public-key  "test-config/association_register.cert.pem"
+   :x5c         "test-config/association_register.x5c.pem"
+   :server-id   "EU.EORI.ASSOCIATION-REGISTER"
+   :hostname    "localhost"
+   :port        "8880"
+   :data-source "test-config/association-register-config.yml"})
 
-   :data-source            "test-config/association-register-config.yml"
-   :port                   "8880"})
+(def association-url (str "http://" (:hostname association-env) ":" (:port association-env)))
 
 (def authentication-env
   {:private-key            "test-config/authentication_service.key.pem"
    :public-key             "test-config/authentication_service.cert.pem"
    :x5c                    "test-config/authentication_service.x5c.pem"
    :server-id              "EU.EORI.AUTHENTICATION-SERVICE"
-   :association-server-id  "EU.EORI.ASSOCIATION-REGISTER"
-   :association-server-url (str "http://localhost:" (:port association-env))
+   :association-server-id  (:server-id association-env)
+   :association-server-url association-url
 
    :port                   "8881"})
 
@@ -50,8 +51,8 @@
    :public-key             "test-config/authorization_register.cert.pem"
    :x5c                    "test-config/authorization_register.x5c.pem"
    :server-id              "EU.EORI.AUTHORIZATION-REGISTER"
-   :association-server-id  "EU.EORI.ASSOCIATION-REGISTER"
-   :association-server-url (str "http://localhost:" (:port association-env))
+   :association-server-id  (:server-id association-env)
+   :association-server-url association-url
 
    :port                   "8882"
    :policies-db            "policies.db"})
@@ -61,10 +62,10 @@
    :public-key             "test-config/connector.cert.pem"
    :x5c                    "test-config/connector.x5c.pem"
    :server-id              "EU.EORI.CONNECTOR"
-   :association-server-id  "EU.EORI.ASSOCIATION-REGISTER"
-   :association-server-url (str "http://localhost:" (:port association-env))
+   :association-server-id  (:server-id association-env)
+   :association-server-url association-url
 
-   :rules-file       "rules.edn"
+   :rules-file       "test-config/rules.edn"
    :hostname         "localhost"
    :port             "8081"})
 
@@ -72,7 +73,9 @@
   {:private-key            "test-config/client.key.pem"
    :public-key             "test-config/client.cert.pem"
    :x5c                    "test-config/client.x5c.pem"
-   :server-id              "EU.EORI.CLIENT"})
+   :server-id              "EU.EORI.CLIENT"
+   :association-server-id  (:server-id association-env)
+   :association-server-url association-url})
 
 #_{:clj-kondo/ignore [:uninitialized-var]}
 (defresource system)
@@ -100,27 +103,17 @@
                                        :ishare/x5c         (:x5c client-config)
                                        :ishare/private-key (:private-key client-config)})))
 
-
 (comment
-  (let [req (-> "http://localhost:8081/connect/token"
-                (http/post
-                  {:throw-exceptions? false
-                   :headers           {"content-type" "application/x-www-form-urlencoded"}
-                   :body
-                   (-> {:grant_type            "client_credentials"
-                        :scope                 "iSHARE"
-                        :client_id             (:server-id client-env)
-                        :client_assertion_type "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
-                        :client_assertion      (mk-client-assertion client-env connector-env)}
-                       (ring.util.codec/form-encode))})
-                (deref)
-                (update :body slurp))]
-    (if (= 200 (:status req))
-      (let [{:strs [access_token]} (-> req :body json/read-str)]
-        (-> "http://localhost:8081/"
-            (http/get
-             {:throw-exceptions? false
-              :headers {"authorization" (str "Bearer " access_token)}})
-            (deref)
-            (update :body slurp)))
-      req)))
+  (let [client-config (config/config client-env config/server-party-opt-specs)
+        connector-url (str "http://" (:hostname connector-env) ":" (:port connector-env))]
+    (-> {:throw                     false
+         :url                       (str connector-url "/test")
+         :ishare/base-url           connector-url
+         :ishare/client-id          (:server-id client-env)
+         :ishare/server-id          (:server-id connector-env)
+         :ishare/x5c                (:x5c client-config)
+         :ishare/private-key        (:private-key client-config)
+         :ishare/satellite-id       (:association-server-id client-env)
+         :ishare/satellite-base-url (:association-server-url client-env)}
+        (ishare-client/exec)
+        (select-keys [:status :headers :body]))))
