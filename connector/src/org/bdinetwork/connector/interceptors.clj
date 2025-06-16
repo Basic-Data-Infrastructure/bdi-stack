@@ -10,7 +10,7 @@
             [org.bdinetwork.authentication.in-memory-association :refer [in-memory-association read-source]]
             [org.bdinetwork.authentication.remote-association :refer [remote-association]]
             [org.bdinetwork.connector.interceptors.audit-log :refer [audit-log-response]]
-            [org.bdinetwork.gateway.interceptors :refer [->interceptor interceptor]]
+            [org.bdinetwork.gateway.interceptors :refer [->interceptor comp-interceptors evaluate interceptor]]
             [ring.middleware.json :as ring-json]
             [ring.middleware.params :as ring-params]))
 
@@ -83,6 +83,32 @@
                                :association (->association config))]
      (fn [{:keys [request] :as ctx}]
        (assoc ctx :response (client-assertion-response config request))))))
+
+(defmethod ->interceptor 'bdi/authorize-prepare-mask
+  [[id mask & [desc]] _]
+  (interceptor
+   :name (cond-> (str id) desc (str " " desc))
+   :doc "Evaluate delegation mask and put in on `ctx` with key `:bdi-delegation-mask`."
+   :enter
+   (fn [ctx]
+     (assoc ctx :bdi-delegation-mask (evaluate ctx mask)))))
+
+(defmethod ->interceptor 'bdi/authorize-validate-mask
+  [[id] _]
+  (interceptor
+   :name (str id)
+   :doc "Apply and validate delegation mask.  Return 403 Forbidden if
+   not compliant."
+   :enter
+   (fn [{:keys [bdi-delegation-mask] :as ctx}]
+     (assoc ctx :TODO bdi-delegation-mask))))
+
+(defmethod ->interceptor 'bdi/authorize
+  [[id mask & [desc]] config]
+  (comp-interceptors [(->interceptor ['bdi/authorize-prepare-mask mask] config)
+                      (->interceptor ['bdi/authorize-validate-mask] config)]
+                     :name (cond-> (str id) desc (str " " desc))
+                     :doc "Prepare, apply and validate delegation mask."))
 
 (defmethod ->interceptor 'demo/audit-log
   [[id {:keys [json-file] :as opts}] _]

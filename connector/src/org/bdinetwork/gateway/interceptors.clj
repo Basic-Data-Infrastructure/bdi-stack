@@ -22,6 +22,21 @@
 
 (defmulti ->interceptor (fn [[id & _] & _] id))
 
+(defn comp-interceptors
+  "Compose multiple `interceptors` into one interceptor."
+  [interceptors & {:keys [name doc]}]
+  (cond->
+      (reduce (fn [{prev-name  :name, prev-enter :enter, prev-leave :leave}
+                   {:keys [name enter leave]}]
+                (interceptor
+                 :name (str prev-name " / " name)
+                 :enter (comp enter prev-enter)
+                 :leave (comp prev-leave leave)))
+              (first interceptors)
+              (rest interceptors))
+      name (assoc :name name)
+      doc  (assoc :doc doc)))
+
 
 
 (defn- log-response
@@ -107,18 +122,22 @@
    'str         str
    'update      update})
 
+(defn evaluate [{:keys [vars request response]} form]
+  (eval/evaluate form
+                 (-> eval-env
+                     (merge vars)
+                     (assoc 'request request)
+                     (cond-> response (assoc 'response response)))))
+
 (defmethod ->interceptor 'request/update
   [[id & form] & _]
   (interceptor
    :name (str id " " (pr-str form))
    :doc  "Update the incoming request using eval on the request object."
    :enter
-   (fn  [{:keys [request vars] :as ctx}]
+   (fn  [ctx]
      (let [form (list* (first form) 'request (drop 1 form))]
-       (assoc ctx :request
-              (eval/evaluate form (-> eval-env
-                                      (merge vars)
-                                      (assoc 'request request))))))))
+       (assoc ctx :request (evaluate ctx form))))))
 
 (defmethod ->interceptor 'response/update
   [[id & form] & _]
@@ -127,14 +146,11 @@
    :doc  "Update the outgoing request using eval on the response object."
    :args form
    :leave
-   (fn response-eval-leave [{:keys [request response vars] :as ctx}]
+   (fn response-eval-leave [{:keys [response] :as ctx}]
      (let [form (list* (first form) 'response (drop 1 form))]
        (assoc ctx :response
               (d/let-flow [response response]
-                (eval/evaluate form (-> eval-env
-                                        (merge vars)
-                                        (assoc 'request request
-                                               'response response)))))))))
+                (evaluate (assoc ctx :response response) form)))))))
 
 (defmethod ->interceptor 'reverse-proxy/forwarded-headers
   [[id] & _]

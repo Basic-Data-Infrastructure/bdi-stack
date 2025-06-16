@@ -13,7 +13,7 @@
          org.bdinetwork/connector              {:local/root "./connector"}}
  :paths ["resources"]
  :aliases
- {:dev  {:extra-paths ["dev"]}
+ {:dev  {:extra-paths ["dev" "connector/test" "clj-ishare-client/test"]}
 
   :test {:extra-deps {lambdaisland/kaocha {:mvn/version "RELEASE"}
 

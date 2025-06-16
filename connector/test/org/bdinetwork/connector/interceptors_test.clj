@@ -114,3 +114,29 @@
 
         (let [{:strs [token_type]} (json/read-str (:body response))]
           (is (= "Bearer" token_type)))))))
+
+(deftest bdi-authorize-prepare-mask
+  (let [{:keys [name enter]} (->interceptor '[bdi/authorize-prepare-mask
+                                              {:policy/issuer         owner-id
+                                               :target/access-subject client-id}
+                                              "test"]
+                                            config)]
+    (is (= "bdi/authorize-prepare-mask test" name))
+    (is (= {:policy/issuer "EU.EORI.OWNER"
+            :target/access-subject "EU.EORI.CLIENT"}
+           (:bdi-delegation-mask
+            (enter {:vars {'client-id "EU.EORI.CLIENT"
+                           'owner-id  "EU.EORI.OWNER"}}))))))
+
+(deftest bdi-authorize
+  (let [{:keys [name enter]} (->interceptor '[bdi/authorize
+                                              {:policy/issuer         owner-id
+                                               :target/access-subject client-id}
+                                              "test"]
+                                            config)]
+    (is (= "bdi/authorize test" name))
+    (is (= {:policy/issuer "EU.EORI.OWNER"
+            :target/access-subject "EU.EORI.CLIENT"}
+           (:TODO
+            (enter {:vars {'client-id "EU.EORI.CLIENT"
+                           'owner-id  "EU.EORI.OWNER"}}))))))
