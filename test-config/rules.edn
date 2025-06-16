@@ -7,8 +7,8 @@
                          [bdi/connect-token]
                          [response/update update :headers assoc "x-bdi-connector" "passed"]]}
          {:match {}
-          :interceptors [[logger]
-                         [bdi/authenticate]
+          :interceptors [[bdi/authenticate]
+                         [logger {:client-id x-bdi-client-id}]
                          [reverse-proxy/forwarded-headers]
                          [request/rewrite "http://example.com"]
                          [response/update update :headers assoc "x-bdi-connector" "passed"]

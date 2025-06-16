@@ -32,7 +32,9 @@
    :enter
    (fn [{:keys [request] :as ctx}]
      (if-let [client-id (extract-client-id request config)]
-       (assoc-in ctx [:request :headers "x-bdi-client-id"] client-id)
+       (-> ctx
+           (assoc-in [:request :headers "x-bdi-client-id"] client-id)
+           (assoc-in [:vars 'x-bdi-client-id] client-id))
        (assoc ctx :response
               {:status  http-status/unauthorized
                :headers {"www-authenticate" "Bearer scope=\"BDI\""}})))))
