@@ -83,8 +83,17 @@ This gateway comes with the following base interceptors:
 
    Example:
 
-   - `GET http://localhost:8081/ HTTP/1.1 [d2dcc39c-b19f-4386-8023-0c90bbce1c10]`
-   - `Status: 200 (duration 370ms) [d2dcc39c-b19f-4386-8023-0c90bbce1c10]`
+   - `[f0cacc1a-d0d0-c0de-cafe-c0ffeeacac1a] GET http://localhost:8081/ HTTP/1.1`
+   - `[f0cacc1a-d0d0-c0de-cafe-c0ffeeacac1a] Status: 200 (duration 370ms)`
+
+  Passing an extra data structure will add MDC (Mapped Diagnostic Context) to the request log line with captured variables.
+
+  Example:
+
+  - match: `:match {:query-params {"pageNr" page-nr}}`
+  - interceptor: `[logger page-nr]`
+  - request: `http://localhost:8081/test?pageNr=31415`
+  - log line: `[f0cacc1a-d0d0-c0de-cafe-c0ffeeacac1a] GET http://localhost:8081/ HTTP/1.1 page-nr=31415`
 
 - `response` produces a literal response in the "entering" phase.
 
@@ -98,9 +107,9 @@ This gateway comes with the following base interceptors:
 
 - `reverse-proxy/proxy-request` produce a response by executing the (modified!) request (including the recorded "x-forwarded" headers information in `:proxy-request-overrides`) in the "entering" phase.
 
-- `bdi/authenticate` validate bearer token on incoming request, when none given responds with "401 Unauthorized", otherwise adds "X-Bdi-Client-Id" request header for consumption downstream.
+- `bdi/authenticate` validate bearer token on incoming request, when none given responds with "401 Unauthorized", otherwise adds "X-Bdi-Client-Id" request header and vars for consumption downstream.  Note: put this interceptor *before* `logger` when logging the client-id.
 
-- `bdi/deauthenticate` ensure the "X-Bdi-Client-Id" request header is **not** already set on a request for public endpoints which do not need authentication.  This prevents clients from fooling the backend into being authenticated.
+- `bdi/deauthenticate` ensure the "X-Bdi-Client-Id" request header is **not** already set on a request for public endpoints which do not need authentication.  This prevents clients from fooling the backend into being authenticated.  **Always use this on public routes when authentication is optional downstream.**
 
 - `bdi/connect-token` provide a access token (M2M) endpoint to provide access tokens.  Note: this interceptor does no matching, so it needs to be added to a separate rule with a match like: `{:uri "/connect/token", :request-method :post}`.
 

@@ -6,9 +6,9 @@
           :interceptors [[logger]
                          [bdi/connect-token]
                          [response/update update :headers assoc "x-bdi-connector" "passed"]]}
-         {:match {}
-          :interceptors [[logger]
-                         [bdi/authenticate]
+         {:match {:headers {"user-agent" user-agent}}
+          :interceptors [[bdi/authenticate]
+                         [logger x-bdi-client-id user-agent]
                          [reverse-proxy/forwarded-headers]
                          [request/rewrite "http://localhost:9991"]
                          [response/update update :headers assoc "x-bdi-connector" "passed"]
