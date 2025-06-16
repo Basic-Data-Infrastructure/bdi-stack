@@ -109,7 +109,7 @@ This gateway comes with the following base interceptors:
 
 - `bdi/authenticate` validate bearer token on incoming request, when none given responds with "401 Unauthorized", otherwise adds "X-Bdi-Client-Id" request header and vars for consumption downstream.  Note: put this interceptor *before* `logger` when logging the client-id.
 
-- `bdi/deauthenticate` ensure the "X-Bdi-Client-Id" request header is **not** already set on a request for public endpoints which do not need authentication.  This prevents clients from fooling the backend into being authenticated.
+- `bdi/deauthenticate` ensure the "X-Bdi-Client-Id" request header is **not** already set on a request for public endpoints which do not need authentication.  This prevents clients from fooling the backend into being authenticated.  **Always use this on public routes when authentication is optional downstream.**
 
 - `bdi/connect-token` provide a access token (M2M) endpoint to provide access tokens.  Note: this interceptor does no matching, so it needs to be added to a separate rule with a match like: `{:uri "/connect/token", :request-method :post}`.
 
