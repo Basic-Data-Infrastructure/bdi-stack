@@ -10,7 +10,8 @@
             [org.bdinetwork.gateway.response :as response]
             [org.bdinetwork.gateway.reverse-proxy :as reverse-proxy])
   (:import (java.net URL)
-           (java.util UUID)))
+           (java.util UUID)
+           (org.slf4j MDC)))
 
 (defn interceptor [& {:keys [name enter leave error]}]
   {:pre [name (or enter leave error)]}
@@ -33,8 +34,14 @@
                       (- (System/currentTimeMillis) logger-enter-ctm))
            response)))
 
+(defn with-diagnostics [[k & keys] vars f]
+  (if k
+    (with-open [_ (MDC/putCloseable (str k) (str (get vars k)))]
+      (with-diagnostics keys vars f))
+    (f)))
+
 (defmethod ->interceptor 'logger
-  [[id more] & _]
+  [[id & more] & _]
 
   (interceptor
    :name (str id)
@@ -44,17 +51,15 @@
          :keys [vars]
          :as ctx}]
      (let [trace-id (UUID/randomUUID)]
-       (log/infof "[%s] %s %s://%s:%d%s %s"
-                  trace-id
-                  (string/upper-case (name request-method))
-                  (name scheme)
-                  server-name
-                  server-port
-                  uri
-                  protocol)
-       (when more
-         (log/info (str "[" trace-id "]")
-                   (eval/substitute-symbols vars more)))
+       (with-diagnostics more vars
+         #(log/infof "[%s] %s %s://%s:%d%s %s"
+                     trace-id
+                     (string/upper-case (name request-method))
+                     (name scheme)
+                     server-name
+                     server-port
+                     uri
+                     protocol))
        (assoc ctx
               :trace-id trace-id
               ::logger-enter-ctm (System/currentTimeMillis))))

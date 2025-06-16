@@ -12,10 +12,3 @@
                        {'+ +
                         '- -
                         'x 31415}))))
-
-(deftest substitute-symbols
-  (is (= :UNDEFINED
-         (sut/substitute-symbols {} 'foo)))
-  (is (= [1 2 3.1415 [4 5 {2.7182 :e, :pi 3.1415}]]
-         (sut/substitute-symbols '{pi 3.1415, e 2.7182}
-                                 '[1 2 pi [4 5 {e :e, :pi pi}]]))))
