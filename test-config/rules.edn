@@ -10,6 +10,6 @@
           :interceptors [[logger]
                          [bdi/authenticate]
                          [reverse-proxy/forwarded-headers]
-                         [request/rewrite "http://example.com"]
+                         [request/rewrite "http://localhost:9991"]
                          [response/update update :headers assoc "x-bdi-connector" "passed"]
                          [reverse-proxy/proxy-request]]}]}

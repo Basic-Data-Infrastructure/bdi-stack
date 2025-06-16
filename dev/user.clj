@@ -21,6 +21,7 @@
             [org.bdinetwork.authentication.access-token :as access-token]
             [org.bdinetwork.authorization-register.main :as authorization-register.main]
             [org.bdinetwork.connector.main :as connector.main]
+            [org.bdinetwork.example.backend :as example-backend]
             [org.bdinetwork.ishare.client :as ishare-client]
             [org.bdinetwork.ishare.jwt :as ishare-jwt]
             [org.bdinetwork.service-commons.config :as config]))
@@ -77,6 +78,9 @@
    :association-server-id  (:server-id association-env)
    :association-server-url association-url})
 
+(def example-backend-config
+  {:port 9991})
+
 #_{:clj-kondo/ignore [:uninitialized-var]}
 (defresource system)
 
@@ -86,6 +90,7 @@
     (mk-system [association (association-register.main/start association-env)
                 authentication (authentication-service.main/start authentication-env)
                 authorization (authorization-register.main/start authorization-env)
+                example-backend (example-backend/start example-backend-config)
                 connector (connector.main/start connector-env)])))
 
 (defn stop! []
@@ -107,7 +112,7 @@
   (let [client-config (config/config client-env config/server-party-opt-specs)
         connector-url (str "http://" (:hostname connector-env) ":" (:port connector-env))]
     (-> {:throw                     false
-         :url                       (str connector-url "/test")
+         :url                       (str connector-url "/v3/events")
          :ishare/base-url           connector-url
          :ishare/client-id          (:server-id client-env)
          :ishare/server-id          (:server-id connector-env)
