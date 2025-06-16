@@ -1,0 +1,122 @@
+[
+  {
+    "metadata": {
+      "eventID": "ID1",
+      "eventType": "EQUIPMENT"
+    },
+    "payload": {
+      "eventClassifierCode": "ACT",
+      "eventDateTime": "2025-06-06T16:29:00+0200",
+      "equipmentEventTypeCode": "GTOUT",
+      "equipmentReference": "MRKU0674130",
+      "emptyIndicatorCode": "LADEN",
+      "eventLocation": {
+        "location": {
+          "UNLocationCode": "NLRTM",
+          "facilityCode": "APMR2",
+          "facilityCodeListProvider": "SMDG"
+        }
+      }
+    }
+  },
+  {
+    "metadata": {
+      "eventID": "ID2",
+      "eventType": "EQUIPMENT"
+    },
+    "payload": {
+      "eventClassifierCode": "ACT",
+      "eventDateTime": "2025-06-07T06:00:00+0200",
+      "equipmentEventTypeCode": "GTIN",
+      "equipmentReference": "MRKU0674130",
+      "emptyIndicatorCode": "LADEN",
+      "eventLocation": {
+        "location": {
+          "UNLocationCode": "NLOSS",
+          "facilityCode": "OSS",
+          "facilityCodeListProvider": "SMDG"
+        }
+      }
+    }
+  },
+  {
+    "metadata": {
+      "eventID": "ID3",
+      "eventType": "EQUIPMENT"
+    },
+    "payload": {
+      "eventClassifierCode": "ACT",
+      "eventDateTime": "2025-06-10T07:44:00+0200",
+      "equipmentEventTypeCode": "GTOUT",
+      "equipmentReference": "MRKU0674130",
+      "emptyIndicatorCode": "LADEN",
+      "eventLocation": {
+        "location": {
+          "UNLocationCode": "NLOSS",
+          "facilityCode": "OSS",
+          "facilityCodeListProvider": "SMDG"
+        }
+      }
+    }
+  },
+  {
+    "metadata": {
+      "eventID": "ID4",
+      "eventType": "EQUIPMENT"
+    },
+    "payload": {
+      "eventClassifierCode": "ACT",
+      "eventDateTime": "2025-06-10T11:57:00+0200",
+      "equipmentEventTypeCode": "GTIN",
+      "equipmentReference": "MRKU0674130",
+      "emptyIndicatorCode": "EMPTY",
+      "eventLocation": {
+        "location": {
+          "UNLocationCode": "NLVEG",
+          "facilityCode": "VEG",
+          "facilityCodeListProvider": "SMDG"
+        }
+      }
+    }
+  },
+  {
+    "metadata": {
+      "eventID": "ID5",
+      "eventType": "EQUIPMENT"
+    },
+    "payload": {
+      "eventClassifierCode": "ACT",
+      "eventDateTime": "2025-06-11T09:15:00+0200",
+      "equipmentEventTypeCode": "GTOUT",
+      "equipmentReference": "MRKU0674130",
+      "emptyIndicatorCode": "EMPTY",
+      "eventLocation": {
+        "location": {
+          "UNLocationCode": "NLVEG",
+          "facilityCode": "VEG",
+          "facilityCodeListProvider": "SMDG"
+        }
+      }
+    }
+  },
+  {
+    "metadata": {
+      "eventID": "ID6",
+      "eventType": "EQUIPMENT"
+    },
+    "payload": {
+      "eventClassifierCode": "ACT",
+      "eventDateTime": "2025-06-12T00:47:00+0200",
+      "equipmentEventTypeCode": "GTIN",
+      "equipmentReference": "MRKU0674130",
+      "emptyIndicatorCode": "EMPTY",
+      "eventLocation": {
+        "location": {
+          "UNLocationCode": "NLRTM",
+          "facilityCode": "RCT",
+          "facilityCodeListProvider": "SMDG"
+        }
+      }
+    }
+  }
+]
