@@ -58,3 +58,15 @@
 
     :else
     (throw (ex-info "unexpected expression" {:expr expr}))))
+
+(defn substitute-symbols
+  "Place symbols in `v` by values in `vars`.
+  If symbol is not in `vars` it is replaced by `:UNDEFINED`."
+  [vars v]
+  (cond
+    (symbol? v) (get vars v :UNDEFINED)
+
+    (coll? v) (into (if (map-entry? v) [] (empty v))
+                    (mapv (partial substitute-symbols vars) v))
+
+    :else v))

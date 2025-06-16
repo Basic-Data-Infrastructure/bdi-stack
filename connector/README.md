@@ -83,8 +83,17 @@ This gateway comes with the following base interceptors:
 
    Example:
 
-   - `GET http://localhost:8081/ HTTP/1.1 [d2dcc39c-b19f-4386-8023-0c90bbce1c10]`
-   - `Status: 200 (duration 370ms) [d2dcc39c-b19f-4386-8023-0c90bbce1c10]`
+   - `[f0cacc1a-d0d0-c0de-cafe-c0ffeeacac1a] GET http://localhost:8081/ HTTP/1.1`
+   - `[f0cacc1a-d0d0-c0de-cafe-c0ffeeacac1a] Status: 200 (duration 370ms)`
+
+  Passing an extra data structure will add an extra log line containing that structure with the symbols replaced by the captured variables.
+
+  Example:
+
+  - match: `:match {:query-params {"pageNr" page-nr}}`
+  - interceptor: `[logger {:page-nr page-nr}]`
+  - request: `http://localhost:8081/test?page-nr=31415`
+  - log line: `[f0cacc1a-d0d0-c0de-cafe-c0ffeeacac1a] {:page-nr 31415}`
 
 - `response` produces a literal response in the "entering" phase.
 

@@ -6,7 +6,7 @@
   (:require [clojure.string :as string]
             [clojure.tools.logging :as log]
             [manifold.deferred :as d]
-            [org.bdinetwork.gateway.eval :refer [evaluate]]
+            [org.bdinetwork.gateway.eval :as eval]
             [org.bdinetwork.gateway.response :as response]
             [org.bdinetwork.gateway.reverse-proxy :as reverse-proxy])
   (:import (java.net URL)
@@ -27,29 +27,34 @@
   [{:keys [response trace-id ::logger-enter-ctm] :as ctx}]
   (assoc ctx :response
          (d/let-flow [{:keys [status]} response]
-           (log/infof "Status: %d (duration %dms) [%s]"
+           (log/infof "[%s] Status: %d (duration %dms)"
+                      trace-id
                       status
-                      (- (System/currentTimeMillis) logger-enter-ctm)
-                      trace-id)
+                      (- (System/currentTimeMillis) logger-enter-ctm))
            response)))
 
 (defmethod ->interceptor 'logger
-  [[id] & _]
+  [[id more] & _]
 
   (interceptor
    :name (str id)
-   :doc "Log incoming requests at `info` level and duration at `debug` level."
+   :doc "Log incoming requests and response status and duration at `info` level."
    :enter
-   (fn [{{:keys [request-method scheme server-name server-port uri protocol]} :request :as ctx}]
+   (fn [{{:keys [request-method scheme server-name server-port uri protocol]} :request
+         :keys [vars]
+         :as ctx}]
      (let [trace-id (UUID/randomUUID)]
-       (log/infof "%s %s://%s:%d%s %s [%s]"
+       (log/infof "[%s] %s %s://%s:%d%s %s"
+                  trace-id
                   (string/upper-case (name request-method))
                   (name scheme)
                   server-name
                   server-port
                   uri
-                  protocol
-                  trace-id)
+                  protocol)
+       (when more
+         (log/info (str "[" trace-id "]")
+                   (eval/substitute-symbols vars more)))
        (assoc ctx
               :trace-id trace-id
               ::logger-enter-ctm (System/currentTimeMillis))))
@@ -106,9 +111,9 @@
    (fn  [{:keys [request vars] :as ctx}]
      (let [form (list* (first form) 'request (drop 1 form))]
        (assoc ctx :request
-              (evaluate form (-> eval-env
-                                 (merge vars)
-                                 (assoc 'request request))))))))
+              (eval/evaluate form (-> eval-env
+                                      (merge vars)
+                                      (assoc 'request request))))))))
 
 (defmethod ->interceptor 'response/update
   [[id & form] & _]
@@ -121,10 +126,10 @@
      (let [form (list* (first form) 'response (drop 1 form))]
        (assoc ctx :response
               (d/let-flow [response response]
-                (evaluate form (-> eval-env
-                                   (merge vars)
-                                   (assoc 'request request
-                                          'response response)))))))))
+                (eval/evaluate form (-> eval-env
+                                        (merge vars)
+                                        (assoc 'request request
+                                               'response response)))))))))
 
 (defmethod ->interceptor 'reverse-proxy/forwarded-headers
   [[id] & _]
