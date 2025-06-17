@@ -10,5 +10,6 @@
 **/.nrepl-port
 **/tmp
 /.envrc
+/log/
 /policies.db/
 /rules.edn

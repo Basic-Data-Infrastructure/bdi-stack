@@ -9,6 +9,7 @@
             [org.bdinetwork.authentication.client-assertion :as client-assertion]
             [org.bdinetwork.authentication.in-memory-association :refer [in-memory-association read-source]]
             [org.bdinetwork.authentication.remote-association :refer [remote-association]]
+            [org.bdinetwork.connector.interceptors.audit-log :refer [audit-log-response]]
             [org.bdinetwork.gateway.interceptors :refer [->interceptor interceptor]]
             [ring.middleware.json :as ring-json]
             [ring.middleware.params :as ring-params]))
@@ -82,3 +83,14 @@
                                :association (->association config))]
      (fn [{:keys [request] :as ctx}]
        (assoc ctx :response (client-assertion-response config request))))))
+
+(defmethod ->interceptor 'demo/audit-log
+  [[id {:keys [json-file] :as opts}] _]
+  {:pre [json-file]}
+  (interceptor
+   :name (str id " " (pr-str opts))
+   :doc "Provide access to the last `:n-of-lines` (defaults to 100)
+   lines of `:json-file` (required) and render them in a HTML table."
+   :enter
+   (fn [ctx]
+     (assoc ctx :response (audit-log-response opts)))))
