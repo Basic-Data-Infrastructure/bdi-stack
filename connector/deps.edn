@@ -10,7 +10,7 @@
         aleph/aleph                    {:mvn/version "0.8.3"}
         nl.jomco/clj-http-status-codes {:mvn/version "0.1"}
 
-        ring/ring-core {:mvn/version "1.14.1"}
+        ring/ring-core {:mvn/version "1.14.2"}
         ring/ring-json {:mvn/version "0.5.1"}
 
         nl.jomco/with-resources {:mvn/version "0.1.2"}
@@ -21,7 +21,7 @@
  :aliases
  {:test {:extra-paths ["test"]
          :extra-deps  {lambdaisland/kaocha {:mvn/version "RELEASE"}
-                       ring/ring           {:mvn/version "1.14.1"}}
+                       ring/ring           {:mvn/version "1.14.2"}}
          :main-opts   ["-m" "kaocha.runner"]}
 
   :package {:extra-paths ["classes"]}
