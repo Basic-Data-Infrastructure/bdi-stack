@@ -2,14 +2,33 @@
 ;;; SPDX-FileCopyrightText: 2025 Topsector Logistiek
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-{:rules [{:match {:uri "/connect/token"}
-          :interceptors [[logger]
-                         [bdi/connect-token]
-                         [response/update update :headers assoc "x-bdi-connector" "passed"]]}
-         {:match {:headers {"user-agent" user-agent}}
-          :interceptors [[bdi/authenticate]
-                         [logger x-bdi-client-id user-agent]
-                         [reverse-proxy/forwarded-headers]
-                         [request/rewrite "http://localhost:9991"]
-                         [response/update update :headers assoc "x-bdi-connector" "passed"]
-                         [reverse-proxy/proxy-request]]}]}
+{:rules
+ [
+  ;; example access to audit log protected by basic
+  ;; authentication (for demo purposes only!)
+  {:match        {:headers {"authorization" #join ["Basic " #b64 "demo:test123"]}
+                  :uri     "/audit-log"}
+   :interceptors [[demo/audit-log {:json-file "log/audit.json"}]]} ;; as configured in logback.xml
+  {:match        {:uri "/audit-log"}
+   :interceptors [[respond {:status  401
+                            :headers {"content-type"     "text/html"
+                                      "www-authenticate" "Basic realm=\"audit\""}
+                            :body    "<html><body><em>not allowed</em><body></html>"}]]}
+  {:match        {:uri "/favicon.ico"} ;; prevent chrome for asking for basic auth again
+   :interceptors [[respond {:status 204}]]}
+
+  ;; add endpoint to get access token and pass the rest to
+  ;; backend (when authenticated)
+  {:match        {:uri "/connect/token"}
+   :interceptors [[logger]
+                  [bdi/connect-token]
+                  [response/update update :headers assoc "x-bdi-connector" "passed"]]}
+  {:match        {:request-method request-method
+                  :uri            uri}
+   :interceptors [[bdi/authenticate]
+                  ;; logged properties end up in audit log
+                  [logger x-bdi-client-id uri request-method]
+                  [reverse-proxy/forwarded-headers]
+                  [request/rewrite "http://localhost:9991"]
+                  [response/update update :headers assoc "x-bdi-connector" "passed"]
+                  [reverse-proxy/proxy-request]]}]}

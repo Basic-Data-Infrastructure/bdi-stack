@@ -20,5 +20,15 @@
   <root level="${ROOT_LOG_LEVEL:-info}">
     <appender-ref ref="STDOUT" />
   </root>
+
   <logger name="org.bdinetwork.connector" level="${LOG_LEVEL:-${ROOT_LOG_LEVEL}}"/>
+
+  <appender name="audit" class="ch.qos.logback.core.FileAppender">
+    <file>${AUDIT_JSON_FILE:-audit.json}</file>
+    <encoder class="ch.qos.logback.classic.encoder.JsonEncoder"/>
+  </appender>
+
+  <logger name="org.bdinetwork.gateway.interceptors" level="info">
+    <appender-ref ref="audit" />
+  </logger>
 </configuration>
