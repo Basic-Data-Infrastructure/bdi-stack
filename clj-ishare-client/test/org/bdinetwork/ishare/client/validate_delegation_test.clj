@@ -162,50 +162,34 @@
   []
   (str (Files/createTempDirectory "authregisterdb" (make-array FileAttribute 0))))
 
+
+(def ar-request
+  (assoc client-config
+         :ishare/base-url "http://localhost:9992"
+         :ishare/server-id (:server-id auth-register-config)))
+
 (deftest system-test
   (let [dir (temp-dir)]
-    #_{:clj-kondo/ignore [:unused-binding]}
-    (with-resources [association-system (association/run-system association-config)
-                     authorization-system (system/run-system (assoc auth-register-config
-                                                                    :policies-db dir))]
-      (let [resp (client/exec (request/access-token-request (assoc client-config
-                                                                   :ishare/base-url "http://localhost:9991"
-                                                                   :ishare/server-id (:server-id association-config))))]
+    (with-resources [_association-system (association/run-system association-config)
+                     _authorization-system (system/run-system (assoc auth-register-config
+                                                                     :policies-db dir))]
+
+      (let [resp (client/exec (policy-request ar-request
+                                              {"delegationEvidence" delegation-evidence}))]
+        (is (= http-status/ok (:status resp))
+            "Policy accepted"))
+
+      (let [resp (client/exec (request/delegation-evidence-request ar-request delegation-mask))]
         (is (= http-status/ok (:status resp)))
-        (is (string? (get-in resp [:body "access_token"]))))
+        (is (= "Permit" (get-in resp [:ishare/result :delegationEvidence :policySets 0 :policies 0 :rules 0 :effect]))
+            "Permit when matching policy found"))
 
-      (let [resp  (client/exec (request/access-token-request (assoc client-config
-                                                                    :ishare/base-url "http://localhost:9992"
-                                                                    :ishare/server-id (:server-id auth-register-config))))
-            token (get-in resp [:body "access_token"])]
-        (is (= http-status/ok (:status resp)))
-        (is (string? token))
+      (is (nil? (validate-delegation/fetch-and-validate-delegation client-config
+                                                                   policy-selector
+                                                                   ["EU.EORI.CLIENT"
+                                                                    "EU.EORI.NLPRECIOUSG"])))
 
-        (let [resp (client/exec (policy-request (assoc client-config
-                                                       :ishare/bearer-token token
-                                                       :ishare/base-url "http://localhost:9992"
-                                                       :ishare/server-id (:server-id auth-register-config))
-
-                                                {"delegationEvidence" delegation-evidence}))]
-          (is (= http-status/ok (:status resp))
-              "Policy accepted"))
-
-        (let [resp (client/exec (request/delegation-evidence-request
-                                 (assoc client-config
-                                        :ishare/bearer-token token
-                                        :ishare/base-url "http://localhost:9992"
-                                        :ishare/server-id (:server-id auth-register-config))
-                                 delegation-mask))]
-          (is (= http-status/ok (:status resp)))
-          (is (= "Permit" (get-in resp [:ishare/result :delegationEvidence :policySets 0 :policies 0 :rules 0 :effect]))
-              "Permit when matching policy found"))
-
-        (is (nil? (validate-delegation/fetch-and-validate-delegation client-config
-                                                                     policy-selector
-                                                                     ["EU.EORI.CLIENT"
-                                                                      "EU.EORI.NLPRECIOUSG"])))
-
-        (is (validate-delegation/fetch-and-validate-delegation client-config
-                                                               (assoc policy-selector :resource/type "something else")
-                                                               ["EU.EORI.CLIENT"
-                                                                "EU.EORI.NLPRECIOUSG"]))))))
+      (is (validate-delegation/fetch-and-validate-delegation client-config
+                                                             (assoc policy-selector :resource/type "something else")
+                                                             ["EU.EORI.CLIENT"
+                                                              "EU.EORI.NLPRECIOUSG"])))))
