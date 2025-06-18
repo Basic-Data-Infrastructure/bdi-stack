@@ -372,6 +372,11 @@ When bearer token is not needed, provide a `nil` token"
   for dataspace."
   [{:ishare/keys [policy-issuer dataspace-id server-id base-url]
     :as          request}]
+
+  (when (and policy-issuer
+             (not server-id))
+    (assert dataspace-id))
+  
   (if (or (not (and policy-issuer dataspace-id))
           (and server-id base-url))
     request
