@@ -1,5 +1,5 @@
-;;; SPDX-FileCopyrightText: 2024 Jomco B.V.
-;;; SPDX-FileCopyrightText: 2024 Topsector Logistiek
+;;; SPDX-FileCopyrightText: 2024, 2025 Jomco B.V.
+;;; SPDX-FileCopyrightText: 2024, 2025 Topsector Logistiek
 ;;; SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
 ;;; SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
 ;;;
@@ -7,6 +7,7 @@
 
 (ns org.bdinetwork.association-register.web-test
   (:require [buddy.core.keys :as keys]
+            [clojure.java.io :as io]
             [clojure.string :as string]
             [clojure.test :refer [deftest is]]
             [nl.jomco.http-status-codes :as http-status]
@@ -15,10 +16,10 @@
             [org.bdinetwork.authentication.in-memory-association :refer [in-memory-association read-source]]))
 
 (def system-config
-  {:private-key              (keys/private-key "test-config/association_register.key.pem")
-   :public-key               (keys/public-key "test-config/association_register.cert.pem")
-   :x5c                      (system/x5c "test-config/association_register.x5c.pem")
-   :association              (in-memory-association (read-source "test-config/association-register-config.yml"))
+  {:private-key              (keys/private-key (io/resource "test-config/association_register.key.pem"))
+   :public-key               (keys/public-key (io/resource "test-config/association_register.cert.pem"))
+   :x5c                      (system/x5c (io/resource "test-config/association_register.x5c.pem"))
+   :association              (in-memory-association (read-source (io/resource "test-config/association-register-config.yml")))
    :server-id                "EU.EORI.SERVER"
    :hostname                 "localhost"
    :port                     11000

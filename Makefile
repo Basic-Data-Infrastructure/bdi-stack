@@ -1,5 +1,5 @@
-# SPDX-FileCopyrightText: 2024 Jomco B.V.
-# SPDX-FileCopyrightText: 2024 Topsector Logistiek
+# SPDX-FileCopyrightText: 2024, 2025 Jomco B.V.
+# SPDX-FileCopyrightText: 2024, 2025 Topsector Logistiek
 # SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
 # SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
 #
@@ -18,7 +18,14 @@ lint: prep-lint
 	reuse lint
 
 test: test-config
-	clojure -M:test
+	make -C association-register test
+	make -C authentication-service test
+	make -C authorization-register test
+	make -C clj-authentication test
+	make -C clj-ishare-client test
+	make -C clj-ishare-jwt test
+	make -C clj-ring-middleware test
+	make -C connector test
 
 clean:
 	rm -rf ./*/classes ./*/target test-config/*pem ./*/*.jar ./*.zip

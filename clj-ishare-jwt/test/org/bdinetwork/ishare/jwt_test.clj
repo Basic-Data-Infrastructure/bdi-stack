@@ -1,5 +1,5 @@
-;;; SPDX-FileCopyrightText: 2024 Jomco B.V.
-;;; SPDX-FileCopyrightText: 2024 Topsector Logistiek
+;;; SPDX-FileCopyrightText: 2024, 2025 Jomco B.V.
+;;; SPDX-FileCopyrightText: 2024, 2025 Topsector Logistiek
 ;;; SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
 ;;; SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
 ;;;
@@ -7,6 +7,7 @@
 
 (ns org.bdinetwork.ishare.jwt-test
   (:require [buddy.core.keys :as keys]
+            [clojure.java.io :as io]
             [clojure.string :as string]
             [clojure.test :refer [deftest is]]
             [org.bdinetwork.ishare.jwt :as jwt]))
@@ -19,6 +20,7 @@
   "Read chain file into vector of certificates."
   [cert-file]
   (->> (-> cert-file
+           io/resource
            slurp
            (string/replace-first #"(?s)\A.*?-+BEGIN CERTIFICATE-+\s+" "")
            (string/replace #"(?s)\s*-+END CERTIFICATE-+\s*\Z" "")
@@ -29,11 +31,11 @@
   (is (jwt/unsign-token
        (jwt/make-client-assertion #:ishare {:client-id client-id
                                             :server-id server-id
-                                            :private-key (keys/private-key "test-config/client.key.pem")
+                                            :private-key (keys/private-key (io/resource "test-config/client.key.pem"))
                                             :x5c (x5c "test-config/client.x5c.pem")})))
 
   (is (jwt/unsign-client-assertion
        (jwt/make-client-assertion #:ishare {:client-id client-id
                                             :server-id server-id
-                                            :private-key (keys/private-key "test-config/client.key.pem")
+                                            :private-key (keys/private-key (io/resource "test-config/client.key.pem"))
                                             :x5c (x5c "test-config/client.x5c.pem")}))))

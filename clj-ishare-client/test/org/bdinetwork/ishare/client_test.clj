@@ -1,5 +1,5 @@
-;;; SPDX-FileCopyrightText: 2024 Jomco B.V.
-;;; SPDX-FileCopyrightText: 2024 Topsector Logistiek
+;;; SPDX-FileCopyrightText: 2024, 2025 Jomco B.V.
+;;; SPDX-FileCopyrightText: 2024, 2025 Topsector Logistiek
 ;;; SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
 ;;; SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
 ;;;
@@ -19,10 +19,10 @@
 (defn- ->x5c [v]
   (->> [v "ca"]
        (map #(str "test-config/" % ".cert.pem"))
-       (mapcat (comp client/x5c io/file))))
+       (mapcat (comp client/x5c io/file io/resource))))
 
 (defn- ->key [v]
-  (-> (str "test-config/" v ".key.pem") io/file client/private-key))
+  (-> (str "test-config/" v ".key.pem") io/resource io/file client/private-key))
 
 (def client-eori "EU.EORI.CLIENT")
 (def client-x5c (->x5c "client"))

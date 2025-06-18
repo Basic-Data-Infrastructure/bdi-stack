@@ -8,6 +8,7 @@
 (ns org.bdinetwork.authentication.in-memory-association
   (:require [buddy.core.certificates :as certificates]
             [buddy.core.codecs :as codecs]
+            [clojure.java.io :as io]
             [org.bdinetwork.authentication.association :refer [Association]]
             [org.bdinetwork.authentication.ishare-validator :refer [parse-yaml validate]]
             [org.bdinetwork.authentication.x5c :refer [fingerprint subject-name]]))
@@ -42,7 +43,7 @@
 
 (defn- read-certificate-info
   [path]
-  (let [c (certificates/certificate path)]
+  (let [c (certificates/certificate (io/resource path))]
     {"x5t#s256"         (fingerprint c)
      "x5c"              (codecs/bytes->b64-str (.getEncoded c))
      "subject_name"     (subject-name c)
@@ -65,7 +66,7 @@
   "Parse CA info; reads from file is ca-info is a string."
   [ca-info]
   (if (string? ca-info)
-    (let [c (certificates/certificate ca-info)]
+    (let [c (certificates/certificate (io/resource ca-info))]
       {"subject"                 (subject-name c)
        "certificate_fingerprint" (fingerprint c)
        "validity"                "Valid"
