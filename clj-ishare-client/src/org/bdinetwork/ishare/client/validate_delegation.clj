@@ -152,13 +152,22 @@
   Returns `nil` if delegation-evidence has a 'Deny' effect or delegation-evidence is nil."
   [{[{[{:keys [rules]} :as policies] :policies} :as policySets] :policySets :as delegation-evidence}]
   (when (some? delegation-evidence)
-    
+
+    ;; The iSHARE specs allow for complex delegation evidence, with
+    ;; multiple policysets, policies and rules, but we cannot convert
+    ;; those correctly into a single policy, and using incorrectly
+    ;; converted policies may cause security issues.
+    ;;
+    ;; We use `throw`s instead of `assert`s, to ensure the checks
+    ;; cannot be disabled.
+
     (when (not= 1 (count policySets))
       (throw (ex-info "Not exactly one policySet" {:policySets policySets})))
     (when (not= 1 (count policies))
       (throw (ex-info "Not exactly one policy" {:policies policies})))
     (when (not= 1 (count rules))
       (throw (ex-info "Not exactly one rule" {:rules rules})))
+
     (when (= [{:effect "Permit"}] rules)
       (reduce-kv
        (fn [policy k path]
