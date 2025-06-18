@@ -11,75 +11,76 @@
   (:import java.time.Instant))
 
 
+(defn- exact-mismatch?
+  [policy-selector policy attribute]
+  (and (contains? policy-selector attribute)
+       (contains? policy attribute)
+       (not= (get policy-selector attribute)
+             (get policy attribute))))
+
+(defn- every-mismatch?
+  [policy-selector policy attribute]
+  (and (contains? policy-selector attribute)
+       (contains? policy attribute)
+       (not (every? #(contains? (set (get policy-selector attribute)) %)
+                    (get policy attribute)))))
+
+(defn- some-mismatch?
+  [policy-selector policy attribute]
+  (and (contains? policy-selector attribute)
+       (contains? policy attribute)
+       (not (some #(contains? (set (get policy-selector attribute)) %)
+                  (get policy attribute)))))
+
+;; TODO: max delegation-depth
 (defn policy-mismatch
   [now policy-selector policy]
   {:pre [(map? policy-selector) (or (nil? policy) (map? policy))]}
-  (when-let [issues (cond-> nil
-                      (nil? policy)
-                      (conj "not a permit policy")
+  (when-let [issues (if (nil? policy)
+                      ["no policy"]
+                      (cond-> nil
+                        (and (contains? policy :policy/max-delegation-depth)
+                             (< 1 (:policy/max-delegation-depth policy)))
+                        (conj "max delegation depth exceeded")
 
-                      (and (contains? policy :policy/max-delegation-depth)
-                           (< 1 (:policy/max-delegation-depth policy)))
-                      (conj "max delegation depth exceeded")
+                        (not= (:policy/issuer policy-selector) (:policy/issuer policy))
+                        (conj "incorrect policy issuer")
 
-                      (not= (:policy/issuer policy-selector) (:policy/issuer policy))
-                      (conj "incorrect policy issuer")
+                        (and (contains? policy :policy/not-before)
+                             (< now (:policy/not-before policy)))
+                        (conj "policy not yet valid")
 
-                      (and (contains? policy :policy/not-before)
-                           (< now (:policy/not-before policy)))
-                      (conj "policy not yet valid")
+                        (and (contains? policy :policy/not-on-or-after)
+                             (< (:policy/not-on-or-after policy) now))
+                        (conj "policy expired")
 
-                      (and (contains? policy :policy/not-on-or-after)
-                           (< (:policy/not-on-or-after policy) now))
-                      (conj "policy expired")
+                        (some-mismatch? policy-selector policy :policy/licenses)
+                        (conj "no matching license")
 
-                      (and (contains? policy-selector :policy/licenses)
-                           (contains? policy :policy/licenses)
-                           (not (some #(contains? (set (:policy/licenses policy)) %)
-                                      (:policy/licenses policy-selector))))
-                      (conj "no matching license")
+                        (exact-mismatch? policy-selector policy :target/access-subject)
+                        (conj "invalid access subject")
 
-                      (and (:target/access-subject policy-selector)
-                           (not (= (:target/access-subject policy-selector)
-                                   (:target/access-subject policy))))
-                      (conj "invalid access subject")
+                        (every-mismatch? policy-selector policy :target/actions)
+                        (conj "invalid action")
 
-                      (and (contains? policy-selector :target/actions)
-                           (contains? policy :target/actions)
-                           (not (some #(contains? (set (:target/actions policy-selector)) %)
-                                      (:target/actions policy))))
-                      (conj "invalid action")
+                        (exact-mismatch? policy-selector policy :resource/type)
+                        (conj "invalid resource type")
 
-                      (and (contains? policy-selector :resource/type)
-                           (contains? policy :resource/type)
-                           (not= (:resource/type policy-selector)
-                                 (:resource/type policy)))
-                      (conj "invalid resource type")
+                        (every-mismatch? policy-selector policy :resource/identifiers)
+                        (conj "invalid resource identifier")
 
-                      (and (contains? policy-selector :resource/identifiers)
-                           (contains? policy :resource/identifiers)
-                           (not (every? #(contains? (set (:resource/identifiers policy-selector)) %)
-                                        (:resource/identifiers policy))))
-                      (conj "invalid resource identifier")
+                        (every-mismatch? policy-selector policy :resource/attributes)
+                        (conj "invalid resource attribute")
 
-                      (and (contains? policy-selector :resource/attributes)
-                           (contains? policy :resource/attributes)
-                           (not (every? #(contains? (set (:resource/attributes policy-selector)) %)
-                                        (:resource/attributes policy))))
-                      (conj "invalid resource attribute")
-
-                      (and (contains? policy-selector :environment/service-providers)
-                           (contains? policy :environment/service-providers)
-                           (not (some #(contains? (set (:environment/service-providers policy-selector)) %)
-                                      (:environment/service-providers policy))))
-                      (conj "invalid service provider"))]
+                        (every-mismatch? policy-selector policy :environment/service-providers)
+                        (conj "invalid service provider")))]
     {:issues          issues
      :policy          policy
      :policy-selector policy-selector}))
 
 
 (defn policy-chain-mismatch
-  "Returns the first issue found when validating policy-chain against a policy-selector.
+  "Returns the issues found when validating policy-chain against a policy-selector.
 
   policy-selector describes the required policies for allowing an action
   on a resource. policy-chain is sequence of actual policies, in order
