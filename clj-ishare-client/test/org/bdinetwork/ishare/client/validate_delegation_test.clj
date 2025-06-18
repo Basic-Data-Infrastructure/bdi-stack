@@ -102,11 +102,47 @@
   (is (= delegation-mask
          {:delegationRequest (validate-delegation/policy-selector->delegation-mask policy-selector)})))
 
+(def now
+   (.getEpochSecond (Instant/now)))
+
 (def not-before
   (- (.getEpochSecond (Instant/now)) 1000))
 
 (def not-after
   (+ (.getEpochSecond (Instant/now)) 1000))
+
+(deftest max-delegation-depth
+  (is (nil? (validate-delegation/policy-chain-mismatch
+             now
+             {:policy/max-delegation-depth 2}
+             [{:policy/max-delegation-depth 2}
+              {:policy/max-delegation-depth 1}])))
+  (is (validate-delegation/policy-chain-mismatch
+       now
+       {:policy/max-delegation-depth 1}
+       [{:policy/max-delegation-depth 2}
+        {:policy/max-delegation-depth 1}]))
+  (is (nil? (validate-delegation/policy-chain-mismatch
+             now
+             {}
+             [{:policy/max-delegation-depth 2}
+              {:policy/max-delegation-depth 1}])))
+  (is (validate-delegation/policy-chain-mismatch
+       now
+       {}
+       [{:policy/max-delegation-depth 1}
+        {:policy/max-delegation-depth 1}]))
+  (is (validate-delegation/policy-chain-mismatch
+       now
+       {:policy/max-delegation-depth 10}
+       [{:policy/max-delegation-depth 1}
+        {:policy/max-delegation-depth 2}]))
+  (is (validate-delegation/policy-chain-mismatch
+       now
+       {:policy/max-delegation-depth 10}
+       [{:policy/max-delegation-depth 2}
+        {:policy/max-delegation-depth 2}
+        {:policy/max-delegation-depth 1}])))
 
 (def delegation-evidence
   {:policyIssuer (:ishare/client-id client-config)

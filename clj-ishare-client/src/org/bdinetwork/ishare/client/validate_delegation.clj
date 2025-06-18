@@ -39,8 +39,8 @@
   (when-let [issues (if (nil? policy)
                       ["no policy"]
                       (cond-> nil
-                        (and (contains? policy :policy/max-delegation-depth)
-                             (< 1 (:policy/max-delegation-depth policy)))
+                        (and (contains? policy-selector :policy/max-delegation-depth)
+                             (< (:policy/max-delegation-depth policy-selector) 1))
                         (conj "max delegation depth exceeded")
 
                         (not= (:policy/issuer policy-selector) (:policy/issuer policy))
@@ -79,6 +79,13 @@
      :policy-selector policy-selector}))
 
 
+(defn- dec-max-delegation-depth
+  [selector-max policy-max]
+  (when-let [newmax (if (and selector-max policy-max)
+                      (min selector-max policy-max)
+                      (or selector-max policy-max))]
+    (dec newmax)))
+
 (defn policy-chain-mismatch
   "Returns the issues found when validating policy-chain against a policy-selector.
 
@@ -100,12 +107,14 @@
            (> (count policy-chain) (:policy/max-delegation-depth policy-selector)))
     "max delegation depth exceeded"
     (loop [policy-selector          policy-selector
-           [policy & rest-policies] policy-chain]
+           [{max-dd :policy/max-delegation-depth  :as policy} & rest-policies] policy-chain]
       (or (policy-mismatch now (cond-> policy-selector
                                  (seq rest-policies)
                                  (dissoc :target/access-subject)) policy)
           (if (seq rest-policies)
-            (recur (assoc policy-selector :policy/issuer (:target/access-subject policy))
+            (recur (-> policy-selector
+                       (assoc :policy/issuer (:target/access-subject policy))
+                       (update :policy/max-delegation-depth dec-max-delegation-depth max-dd))
                    rest-policies)
             nil)))))
 
