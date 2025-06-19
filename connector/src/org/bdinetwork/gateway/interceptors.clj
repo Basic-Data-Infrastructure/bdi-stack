@@ -3,14 +3,16 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.gateway.interceptors
-  (:require [clojure.string :as string]
+  (:require [clojure.data.json :as json]
+            [clojure.string :as string]
             [clojure.tools.logging :as log]
             [manifold.deferred :as d]
             [nl.jomco.http-status-codes :as http-status]
             [org.bdinetwork.gateway.eval :as eval]
             [org.bdinetwork.gateway.oauth2 :as oauth2]
             [org.bdinetwork.gateway.response :as response]
-            [org.bdinetwork.gateway.reverse-proxy :as reverse-proxy])
+            [org.bdinetwork.gateway.reverse-proxy :as reverse-proxy]
+            [org.bdinetwork.ishare.client.validate-delegation :as validate-delegation])
   (:import (java.net URL)
            (org.slf4j MDC)))
 
@@ -224,3 +226,24 @@
                                            ", error=\"invalid_token\""
                                            ", error_description=\"" msg "\""))
                             (assoc :body msg))))))))))))
+
+(defmethod  ->interceptor 'noodlebar/delegation
+  [[id base-request mask-exp] & _]
+  (interceptor :name (str id " delegation-chain")
+               :doc "Retrieves and evaluates delegation evidence for
+  request. Responds with 401 Unauthorized when the evidence is not
+  found or does not match the delegation mask."
+               :enter (fn delegation-chain-enter
+                        [{:keys [vars] :as ctx}]
+                        (let [mask (eval/evaluate mask-exp (mk-eval-env ctx))
+                              _ (prn [:mask mask])
+                              evidence (validate-delegation/noodlebar-fetch-delegation-evidence base-request mask)
+                              issues (validate-delegation/delegation-mask-evidence-mismatch mask evidence)
+                              ctx (assoc ctx
+                                        :delegation-evidence evidence
+                                        :delegation-mask mask
+                                        :delegation-issues issues)]
+                          (cond-> ctx
+                            issues
+                            (assoc :response (-> response/unauthorized
+                                                 (assoc :body (json/json-str {:delegation-issues issues})))))))))
