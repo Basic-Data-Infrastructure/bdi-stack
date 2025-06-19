@@ -6,8 +6,10 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.ishare.client.validate-delegation
-  (:require [org.bdinetwork.ishare.client :as client]
-            [org.bdinetwork.ishare.client.request :as client.request])
+  (:require [clojure.walk :as walk]
+            [org.bdinetwork.ishare.client :as client]
+            [org.bdinetwork.ishare.client.request :as ishare.request]
+            [org.bdinetwork.noodlebar.request :as noodlebar.request])
   (:import java.time.Instant))
 
 
@@ -32,7 +34,6 @@
        (not (some #(contains? (set (get policy-selector attribute)) %)
                   (get policy attribute)))))
 
-;; TODO: max delegation-depth
 (defn policy-mismatch
   [now policy-selector policy]
   {:pre [(map? policy-selector) (or (nil? policy) (map? policy))]}
@@ -125,26 +126,26 @@
   {:policyIssuer (:policy/issuer policy)
    :target       {:accessSubject (:target/access-subject policy)}
    :policySets   [(cond-> {:policies [{:target (cond-> {:resource (cond-> {}
-                                                                        (some? type)
-                                                                        (assoc :type type)
+                                                                    (some? type)
+                                                                    (assoc :type type)
 
-                                                                        (some? identifiers)
-                                                                        (assoc :identifiers identifiers)
+                                                                    (some? identifiers)
+                                                                    (assoc :identifiers identifiers)
 
-                                                                        (some? attributes)
-                                                                        (assoc :attributes attributes))}
-                                                    (seq actions)
-                                                    (assoc :actions actions)
+                                                                    (some? attributes)
+                                                                    (assoc :attributes attributes))}
+                                                 (seq actions)
+                                                 (assoc :actions actions)
 
-                                                    (seq service-providers)
-                                                    (assoc-in [:environment :serviceProviders] service-providers))
-                                         :rules  [{:effect "Permit"}]}]}
+                                                 (seq service-providers)
+                                                 (assoc-in [:environment :serviceProviders] service-providers))
+                                       :rules  [{:effect "Permit"}]}]}
 
-                     (seq (:policy/licenses policy))
-                     (assoc-in [:target :environment :licenses] (:policy/licenses policy))
-                     
-                     (:policy/max-delegation-depth policy)
-                     (assoc :maxDelegationDepth (:policy/max-delegation-depth policy)))]})
+                    (seq (:policy/licenses policy))
+                    (assoc-in [:target :environment :licenses] (:policy/licenses policy))
+
+                    (:policy/max-delegation-depth policy)
+                    (assoc :maxDelegationDepth (:policy/max-delegation-depth policy)))]})
 
 (defn delegation-evidence->policy
   "Convert an iSHARE delegation-evidence into a policy.
@@ -206,7 +207,7 @@
   [base-request delegation-mask party-ids]
   (map (fn [mask]
          (-> base-request
-             (client.request/delegation-evidence-request {:delegationRequest mask})
+             (ishare.request/delegation-evidence-request {:delegationRequest mask})
              client/exec
              :ishare/result
              :delegationEvidence))
@@ -230,3 +231,17 @@
     (->> (fetch-delegation-chain base-request (policy-selector->delegation-mask policy-selector) party-ids)
          (map delegation-evidence->policy)
          (policy-chain-mismatch now policy-selector))))
+
+(defn noodlebar-fetch-delegation-evidence
+  [base-request delegation-mask]
+  (-> base-request
+      (noodlebar.request/unsigned-delegation-request delegation-mask)
+      client/exec
+      :body
+      (walk/keywordize-keys)))
+
+(defn delegation-mask-evidence-mismatch
+  [mask evidence]
+  (policy-mismatch (.getEpochSecond (Instant/now))
+                   (delegation-evidence->policy mask)
+                   (delegation-evidence->policy evidence)))

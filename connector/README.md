@@ -190,9 +190,9 @@ The arguments to interceptors will be evaluated before execution and can thus re
 - `get-in`
 - `merge`
 - `select-keys`
-- `str`
 - `update`
 - `update-in`
+- `str`
 - `str/replace`
 - `str/lower-case`
 - `str/upper-case`

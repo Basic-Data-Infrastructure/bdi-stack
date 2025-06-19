@@ -4,6 +4,7 @@
 
 (ns org.bdinetwork.gateway.reverse-proxy
   (:require [aleph.http :as http]
+            [clojure.tools.logging :as log]
             [manifold.deferred :as d]))
 
 (def connection-pool
@@ -23,6 +24,10 @@
       (assoc-in response [:headers "set-cookie"] (vec v))
       response)))
 
+(defn- log-request [request]
+  (log/debug "Proxy request" request)
+  request)
+
 (defn proxy-request
   [request]
   (-> request
@@ -41,6 +46,8 @@
 
                     :headers
                     :body])
+
+      (log-request)
 
       ;; no magic
       (assoc :throw-exceptions? false

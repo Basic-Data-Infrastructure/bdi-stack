@@ -41,7 +41,9 @@
    '=              =
    'not            not})
 
-(defn- mk-eval-env [{:keys [vars request response] :as ctx}]
+(defn mk-eval-env
+  "Make eval execution environment from `ctx`."
+  [{:keys [vars request response] :as ctx}]
   (cond-> (-> eval-env
               (merge vars)
               (assoc 'ctx ctx, 'request request))
@@ -182,7 +184,7 @@
 
   The allows the backend to create local redirects and set domain
   cookies."
-   :enter (fn forwarded-headers-enter
+   :enter (fn reverse-proxy-forwarded-headers-enter
             [{{{:strs [host
                        x-forwarded-proto
                        x-forwarded-host
@@ -208,7 +210,7 @@
    :name (str id)
    :doc  "Execute proxy request and populate response."
    :enter
-   (fn proxy-request-enter
+   (fn reverse-proxy-proxy-request-enter
      [{:keys [request proxy-request-overrides trace-id] :as ctx}]
      (assoc ctx :response
             (d/catch
