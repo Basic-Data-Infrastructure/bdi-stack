@@ -3,7 +3,49 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 {:rules
- [
+ [{:match        {:uri          #rx "/v3/events(/.+)?"
+                  :query-params {"eventTypes"                 "EQUIPMENT"
+                                 "transportDocumentReference" bol
+                                 "equipmentReference"         bic
+                                 "ownerId"                    owner}}
+   :interceptors [[logger {"uri"                 (get request :uri)
+                           "app"                 (get-in ctx [:oauth2/bearer-token-claims :sub])
+                           "bol"                 bol
+                           "bic"                 bic
+                           "owner"               owner
+                           "delegation-issues"   (get ctx :delegation-issues)
+                           "delegation-evidence" (get ctx :delegation-evidence)
+                           "delegation-mask"     (get ctx :delegation-mask)}]
+
+                  [oauth2/bearer-token
+                   {:aud "ITV"
+                    :iss "https://topsector-logistiek.eu.auth0.com/"}
+                   {:realm "ITV events"}]
+
+                  [noodlebar/delegation {:oauth2/token-url     #env NOODLEBAR_TOKEN_URL
+                                         :oauth2/client-id     #env NOODLEBAR_CLIENT_ID
+                                         :oauth2/client-secret #env NOODLEBAR_CLIENT_SECRET
+                                         :oauth2/audience      #env NOODLEBAR_AUDIENCE
+                                         :coremanager-url      #env NOODLEBAR_COREMANAGER_URL}
+                   {:policyIssuer (str/replace owner "kvk:" "NL.KVK.") ; translate itv to p8 notation
+                    :target       {:accessSubject (get-in ctx [:oauth2/bearer-token-claims :organizationId])}
+                    :policySets
+                    [{:policies
+                      [{:rules [{:effect "Permit"}]
+                        :target
+                        {:resource {:type        "Container-BOL-Events"
+                                    :identifiers [(str bic "," bol)]
+                                    :attributes  ["*"]}
+                         :actions  ["read"]
+                         :environment
+                         {:serviceProviders ["NL.KVK.17187159"]}}}]}]}]
+
+                  [reverse-proxy/forwarded-headers]
+                  [request/rewrite "https://fake-source-ll79.jomco.nl"]
+                  [request/update update :query-string str/replace "ownerId=NL.KVK." "ownerId=kvk%3a"] ; translate p8 to itv notation
+                  #_ [response/update update :headers assoc "x-api-key" #env ITV_API_KEY]
+                  [reverse-proxy/proxy-request]]}
+
   ;; example access to audit log protected by basic
   ;; authentication (for demo purposes only!)
   {:match        {:headers {"authorization" #join ["Basic " #b64 "demo:test123"]}
@@ -27,7 +69,9 @@
                   :uri            uri}
    :interceptors [[bdi/authenticate]
                   ;; logged properties end up in audit log
-                  [logger x-bdi-client-id uri request-method]
+                  [logger {"x-bdi-client-id" x-bdi-client-id
+                           "uri"             uri
+                           "request-method"  request-method}]
                   [reverse-proxy/forwarded-headers]
                   [request/rewrite "http://localhost:9991"]
                   [response/update update :headers assoc "x-bdi-connector" "passed"]

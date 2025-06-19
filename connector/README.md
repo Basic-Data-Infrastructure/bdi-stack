@@ -167,7 +167,6 @@ The evaluation support the following functions:
 - `get-in`
 - `merge`
 - `select-keys`
-- `str`
 - `update`
 - `update-in`
 - `str/replace`
