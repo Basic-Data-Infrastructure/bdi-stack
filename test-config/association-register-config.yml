@@ -15,7 +15,7 @@ parties:
     auth_registries:
     - name: BDI Authorization Register
       id: EU.EORI.AUTHORIZATION-REGISTER
-      url: http://bdi-authorization-register
+      url: http://localhost:9992/
       dataspace_id: ORG.BDI.VGU-DEMO
       dataspace_name: BDI VGU DataSpace
     certificates:

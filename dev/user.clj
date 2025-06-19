@@ -15,7 +15,8 @@
   ([v k] (prn k v) v))
 
 (ns user
-  (:require [nl.jomco.resources :refer [defresource close mk-system]]
+  (:require [clojure.tools.logging :as log]
+            [nl.jomco.resources :refer [defresource close mk-system]]
             [org.bdinetwork.association-register.main :as association-register.main]
             [org.bdinetwork.authentication-service.main :as authentication-service.main]
             [org.bdinetwork.authentication.access-token :as access-token]
@@ -24,7 +25,17 @@
             [org.bdinetwork.example.backend :as example-backend]
             [org.bdinetwork.ishare.client :as ishare-client]
             [org.bdinetwork.ishare.jwt :as ishare-jwt]
-            [org.bdinetwork.service-commons.config :as config]))
+            [org.bdinetwork.service-commons.config :as config])
+  (:import (ch.qos.logback.classic Level)
+           (org.slf4j LoggerFactory)))
+
+
+;; The provided logback.xml sets the root log level to INFO, and does
+;; not set log levels for any namespace.
+;;
+;; We change the log level for some application-specific namespaces to
+;; DEBUG when when dev/user.clj is loaded
+(.setLevel (LoggerFactory/getLogger "org.bdinetwork.ishare.client") Level/DEBUG)
 
 (def association-env
   {:private-key "test-config/association_register.key.pem"
