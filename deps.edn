@@ -12,8 +12,9 @@
          org.bdinetwork/clj-ring-middleware    {:local/root "./clj-ring-middleware"}
          org.bdinetwork/connector              {:local/root "./connector"}}
  :paths ["resources"]
+
  :aliases
- {:dev  {:extra-paths ["dev"]}
+ {:dev  {:extra-paths ["dev" "."]}
 
   :test {:extra-deps {lambdaisland/kaocha {:mvn/version "RELEASE"}
 
