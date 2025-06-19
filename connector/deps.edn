@@ -13,7 +13,7 @@
         org.clojure/data.json {:mvn/version "2.5.1"}
         ring/ring-core        {:mvn/version "1.14.2"}
         ring/ring-json        {:mvn/version "0.5.1"}
-        hiccup/hiccup         {:mvn/version "2.0.0-RC5"}
+        hiccup/hiccup         {:mvn/version "2.0.0"}
 
         nl.jomco/with-resources {:mvn/version "0.1.2"}
         nl.jomco/envopts        {:mvn/version "0.0.6"}
