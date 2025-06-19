@@ -1,5 +1,5 @@
-;;; SPDX-FileCopyrightText: 2024 Jomco B.V.
-;;; SPDX-FileCopyrightText: 2024 Topsector Logistiek
+;;; SPDX-FileCopyrightText: 2024, 2025 Jomco B.V.
+;;; SPDX-FileCopyrightText: 2024, 2025 Topsector Logistiek
 ;;; SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
 ;;; SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
 ;;;
@@ -7,6 +7,7 @@
 
 (ns org.bdinetwork.authorization-register.system-test
   (:require [buddy.core.keys :as keys]
+            [clojure.java.io :as io]
             [clojure.test :refer [deftest is testing]]
             [nl.jomco.http-status-codes :as http-status]
             [nl.jomco.resources :refer [with-resources]]
@@ -44,18 +45,18 @@
 
 (def association-config
   {:server-id                "EU.EORI.ASSOCIATION-REGISTER"
-   :private-key              (keys/private-key "test-config/association_register.key.pem")
-   :public-key               (keys/public-key "test-config/association_register.cert.pem")
-   :x5c                      (system/x5c "test-config/association_register.x5c.pem")
-   :data-source              (read-source "test-config/association-register-config.yml")
+   :private-key              (keys/private-key (io/resource "test-config/association_register.key.pem"))
+   :public-key               (keys/public-key (io/resource "test-config/association_register.cert.pem"))
+   :x5c                      (system/x5c (io/resource "test-config/association_register.x5c.pem"))
+   :data-source              (read-source (io/resource "test-config/association-register-config.yml"))
    :port                     9991
    :access-token-ttl-seconds 300})
 
 (def auth-register-config
   {:server-id                "EU.EORI.AUTHORIZATION-REGISTER"
-   :private-key              (keys/private-key "test-config/authorization_register.key.pem")
-   :public-key               (keys/public-key "test-config/authorization_register.cert.pem")
-   :x5c                      (system/x5c "test-config/authorization_register.x5c.pem")
+   :private-key              (keys/private-key (io/resource "test-config/authorization_register.key.pem"))
+   :public-key               (keys/public-key (io/resource "test-config/authorization_register.cert.pem"))
+   :x5c                      (system/x5c (io/resource "test-config/authorization_register.x5c.pem"))
    :port                     9992
    :association-server-id    (:server-id association-config)
    :association-server-url   (str "http://localhost:" (:port association-config))
@@ -63,8 +64,8 @@
 
 (def client-config
   {:ishare/client-id          "EU.EORI.CLIENT"
-   :ishare/private-key        (keys/private-key "test-config/client.key.pem")
-   :ishare/x5c                (system/x5c "test-config/client.x5c.pem")
+   :ishare/private-key        (keys/private-key (io/resource "test-config/client.key.pem"))
+   :ishare/x5c                (system/x5c (io/resource "test-config/client.x5c.pem"))
    :ishare/satellite-id       (:server-id association-config)
    :ishare/satellite-base-url (str "http://localhost:" (:port association-config))
    :throw                     false ;; we test on status codes, so don't throw in the tests

@@ -4,6 +4,7 @@
 
 (ns org.bdinetwork.connector.interceptors-test
   (:require [clojure.data.json :as json]
+            [clojure.java.io :as io]
             [clojure.string :as string]
             [clojure.test :refer [deftest is testing]]
             [nl.jomco.http-status-codes :as http-status]
@@ -22,14 +23,14 @@
 
 (def connector-env
   {:server-id   server-id
-   :private-key "test-config/connector.key.pem"
-   :public-key  "test-config/connector.cert.pem"
-   :x5c         "test-config/connector.x5c.pem"})
+   :private-key (io/resource "test-config/connector.key.pem")
+   :public-key  (io/resource "test-config/connector.cert.pem")
+   :x5c         (io/resource "test-config/connector.x5c.pem")})
 
 (def config
   (-> connector-env
       (config/config config/server-party-opt-specs)
-      (assoc :in-memory-association-data-source "test-config/association-register-config.yml")))
+      (assoc :in-memory-association-data-source (io/resource "test-config/association-register-config.yml"))))
 
 (defn mk-access-token [client-id]
   (access-token/mk-access-token (assoc config :client-id client-id)))
@@ -75,8 +76,8 @@
 (def client-id "EU.EORI.CLIENT")
 
 (def client-env
-  {:private-key "test-config/client.key.pem"
-   :x5c         "test-config/client.x5c.pem"})
+  {:private-key (io/resource "test-config/client.key.pem")
+   :x5c         (io/resource "test-config/client.x5c.pem")})
 
 (def client-party-opt-specs
   {:private-key ["Client private key pem file" :private-key]

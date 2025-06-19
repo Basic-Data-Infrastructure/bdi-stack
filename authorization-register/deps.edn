@@ -28,4 +28,7 @@
             :replace-paths []
             :main-opts     ["-m" "uberdeps.uberjar" "--aliases" "package"]}
 
-    :run {:main-opts ["-m" "org.bdinetwork.authorization-register.main"]}}}
+  :test {:extra-paths ["test-resources"]
+         :extra-deps {org.bdinetwork/association-register {:local/root "../association-register"}}}
+
+  :run {:main-opts ["-m" "org.bdinetwork.authorization-register.main"]}}}

@@ -1,5 +1,5 @@
-;;; SPDX-FileCopyrightText: 2024 Jomco B.V.
-;;; SPDX-FileCopyrightText: 2024 Topsector Logistiek
+;;; SPDX-FileCopyrightText: 2024, 2025 Jomco B.V.
+;;; SPDX-FileCopyrightText: 2024, 2025 Topsector Logistiek
 ;;; SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
 ;;; SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
 ;;;
@@ -7,6 +7,7 @@
 
 (ns org.bdinetwork.association-register.system-test
   (:require [buddy.core.keys :as keys]
+            [clojure.java.io :as io]
             [clojure.test :refer [deftest is]]
             [nl.jomco.http-status-codes :as http-status]
             [nl.jomco.resources :refer [with-resources]]
@@ -21,14 +22,14 @@
   {:ishare/satellite-base-url "http://localhost:11000"
    :ishare/satellite-id       "EU.EORI.SERVER"
    :ishare/client-id          "EU.EORI.CLIENT"
-   :ishare/private-key        (client/private-key "test-config/client.key.pem")
-   :ishare/x5c                (system/x5c "test-config/client.x5c.pem")})
+   :ishare/private-key        (client/private-key (io/resource "test-config/client.key.pem"))
+   :ishare/x5c                (system/x5c (io/resource "test-config/client.x5c.pem"))})
 
 (def system-config
-  {:private-key              (client/private-key "test-config/association_register.key.pem")
-   :public-key               (keys/public-key "test-config/association_register.cert.pem")
-   :x5c                      (system/x5c "test-config/association_register.x5c.pem")
-   :data-source              (read-source "test-config/association-register-config.yml")
+  {:private-key              (client/private-key (io/resource "test-config/association_register.key.pem"))
+   :public-key               (keys/public-key (io/resource "test-config/association_register.cert.pem"))
+   :x5c                      (system/x5c (io/resource "test-config/association_register.x5c.pem"))
+   :data-source              (read-source (io/resource "test-config/association-register-config.yml"))
    :server-id                "EU.EORI.SERVER"
    :hostname                 "localhost"
    :port                     11000

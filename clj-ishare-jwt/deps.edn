@@ -1,9 +1,12 @@
-;;; SPDX-FileCopyrightText: 2024 Jomco B.V.
-;;; SPDX-FileCopyrightText: 2024 Topsector Logistiek
+;;; SPDX-FileCopyrightText: 2024, 2025 Jomco B.V.
+;;; SPDX-FileCopyrightText: 2024, 2025 Topsector Logistiek
 ;;; SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
 ;;; SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
 ;;;
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 {:deps  {buddy/buddy-sign {:mvn/version "3.6.1-359"}}
- :paths ["src"]}
+ :paths ["src"]
+
+ :aliases
+ {:test {:extra-paths ["test-resources"]}}}

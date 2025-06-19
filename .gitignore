@@ -10,6 +10,7 @@
 **/.nrepl-port
 **/tmp
 /.envrc
+/connector/audit.json
 /log/
 /policies.db/
 /rules.edn

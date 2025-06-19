@@ -1,5 +1,5 @@
-;;; SPDX-FileCopyrightText: 2024 Jomco B.V.
-;;; SPDX-FileCopyrightText: 2024 Topsector Logistiek
+;;; SPDX-FileCopyrightText: 2024, 2025 Jomco B.V.
+;;; SPDX-FileCopyrightText: 2024, 2025 Topsector Logistiek
 ;;; SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
 ;;; SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
 ;;;
@@ -7,6 +7,7 @@
 
 (ns org.bdinetwork.ring.authentication-test
   (:require [buddy.core.keys :as keys]
+            [clojure.java.io :as io]
             [clojure.string :as string]
             [clojure.test :refer [deftest is]]
             [nl.jomco.http-status-codes :as status]
@@ -26,22 +27,25 @@
 (def client-id "EU.EORI.CLIENT")
 (def server-id "EU.EORI.SERVER")
 
-(def association
-  (in-memory-association (read-source "test-config/association-register-config.yml")))
+(def association (-> "test-config/association-register-config.yml"
+                     (io/resource)
+                     (read-source)
+                     (in-memory-association)))
 
 (def server-private-key
-  (keys/private-key "test-config/authorization_register.key.pem"))
+  (keys/private-key (io/resource "test-config/authorization_register.key.pem")))
 
 (def server-public-key
-  (keys/public-key "test-config/authorization_register.cert.pem"))
+  (keys/public-key (io/resource "test-config/authorization_register.cert.pem")))
 
 (def client-private-key
-  (keys/private-key "test-config/client.key.pem"))
+  (keys/private-key (io/resource "test-config/client.key.pem")))
 
 (defn pem->x5c
   "Read chain file into vector of certificates."
   [cert-file]
   (->> (-> cert-file
+           io/resource
            slurp
            (string/replace-first #"(?s)\A.*?-+BEGIN CERTIFICATE-+\s+" "")
            (string/replace #"(?s)\s*-+END CERTIFICATE-+\s*\Z" "")
