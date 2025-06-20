@@ -60,7 +60,7 @@
 
 (deftest decode-access-token
   (with-resources [_ (start-jwks jwks-keys)]
-    (let [opts   {:jwks-uri jwks-uri}
+    (let [opts   {:jwks-uri jwks-uri, :jwks-cache-atom (atom {})}
           claims {:iat   (.getEpochSecond (Instant/now))
                   :iss   "test-issuer"
                   :aud   "test-audience"

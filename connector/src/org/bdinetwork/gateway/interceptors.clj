@@ -190,24 +190,27 @@
    :doc "Require and validate OAUTH2 bearer token.  Responds with 401
    Unauthorized when the token is missing or invalid."
    :enter
-   (fn oauth2-bearer-token-enter [{:keys [request] :as ctx}]
-     (let [auth-header      (get-in request [:headers "authorization"])
-           [_ bearer-token] (and auth-header (re-matches #"Bearer (\S+)" auth-header))
-           auth-params      (->> auth-params
-                                 (map (fn [[k v]] (str (name k) "=\"" v "\"")))
-                                 (string/join ", " ))]
-       (if (nil? bearer-token)
-         (assoc ctx :response
-                (-> response/unauthorized
-                    (assoc-in [:headers "www-authenticate"]
-                              (str "Bearer " auth-params))))
-         (try
-           (let [claims (oauth2/decode-access-token bearer-token requirements)]
-             (assoc-in ctx [:vars 'oauth2/claims] claims))
-           (catch Exception e
-             (assoc ctx :response
-                    (-> response/unauthorized
-                        (assoc-in [:headers "www-authenticate"]
-                              (str "Bearer " auth-params
-                                   ", error=\"invalid_token\""
-                                   ", error_description=\"" (.getMessage e) "\"")))))))))))
+   (let [requirements (assoc requirements :jwks-cache-atom (atom {}))]
+     (fn oauth2-bearer-token-enter [{:keys [request] :as ctx}]
+       (let [auth-header      (get-in request [:headers "authorization"])
+             [_ bearer-token] (and auth-header (re-matches #"Bearer (\S+)" auth-header))
+             auth-params      (->> auth-params
+                                   (map (fn [[k v]] (str (name k) "=\"" v "\"")))
+                                   (string/join ", " ))]
+         (if (nil? bearer-token)
+           (assoc ctx :response
+                  (-> response/unauthorized
+                      (assoc-in [:headers "www-authenticate"]
+                                (str "Bearer " auth-params))))
+           (try
+             (let [claims (oauth2/decode-access-token bearer-token requirements)]
+               (assoc-in ctx [:vars 'oauth2/claims] claims))
+             (catch Exception e
+               (let [msg (.getMessage e)]
+                 (assoc ctx :response
+                        (-> response/unauthorized
+                            (assoc-in [:headers "www-authenticate"]
+                                      (str "Bearer " auth-params
+                                           ", error=\"invalid_token\""
+                                           ", error_description=\"" msg "\""))
+                            (assoc :body msg))))))))))))
