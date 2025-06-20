@@ -7,6 +7,7 @@
             [clojure.tools.logging :as log]
             [manifold.deferred :as d]
             [org.bdinetwork.gateway.eval :as eval]
+            [org.bdinetwork.gateway.oauth2 :as oauth2]
             [org.bdinetwork.gateway.response :as response]
             [org.bdinetwork.gateway.reverse-proxy :as reverse-proxy])
   (:import (java.net URL)
@@ -180,3 +181,33 @@
                                     (when trace-id (str " [" trace-id "]")))
                              request)
                   response/service-unavailable))))))
+
+(defmethod ->interceptor 'oauth2/bearer-token
+  [[id {:keys [iss jwks-uri] :as requirements} auth-params] & _]
+  {:pre [iss jwks-uri (seq auth-params)]}
+  (interceptor
+   :name (str id " " iss)
+   :doc "Require and validate OAUTH2 bearer token.  Responds with 401
+   Unauthorized when the token is missing or invalid."
+   :enter
+   (fn oauth2-bearer-token-enter [{:keys [request] :as ctx}]
+     (let [auth-header      (get-in request [:headers "authorization"])
+           [_ bearer-token] (and auth-header (re-matches #"Bearer (\S+)" auth-header))
+           auth-params      (->> auth-params
+                                 (map (fn [[k v]] (str (name k) "=\"" v "\"")))
+                                 (string/join ", " ))]
+       (if (nil? bearer-token)
+         (assoc ctx :response
+                (-> response/unauthorized
+                    (assoc-in [:headers "www-authenticate"]
+                              (str "Bearer " auth-params))))
+         (try
+           (let [claims (oauth2/decode-access-token bearer-token requirements)]
+             (assoc-in ctx [:vars 'oauth2/claims] claims))
+           (catch Exception e
+             (assoc ctx :response
+                    (-> response/unauthorized
+                        (assoc-in [:headers "www-authenticate"]
+                              (str "Bearer " auth-params
+                                   ", error=\"invalid_token\""
+                                   ", error_description=\"" (.getMessage e) "\"")))))))))))
