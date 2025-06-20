@@ -8,13 +8,15 @@
             [buddy.sign.jwt :as jwt]
             [clojure.data.json :as json]
             [clojure.set :as set]
+            [clojure.string :as string]
             [clojure.tools.logging :as log]
             [nl.jomco.http-status-codes :as http-status])
-  (:import java.time.Instant))
+  (:import java.time.Instant
+           java.util.Base64))
 
 (defn- guard-status-ok [{:keys [status] :as res}]
   (when-not (= http-status/ok status)
-    (throw (ex-info (str "Unexpected status on jwks-uri (" status ")") {:status status})))
+    (throw (ex-info (str "Unexpected status (" status ")") {:status status})))
   res)
 
 (def default-jwks-max-age 15)
@@ -27,22 +29,65 @@
        (Long/parseLong max-age)
        default-jwks-max-age)))
 
-(defn- fetch-signing-jwks
-  [{:keys [jwks-uri jwks-cache-atom]}]
-  (let [{:keys [exp jwks]} (-> jwks-cache-atom
-                               (deref)
-                               (get jwks-uri))]
+(defn- decode-payload
+  "Decode payload without validation."
+  [token]
+  (let [[_ payload _] (some-> token (string/split #"\." 3))
+        decoder (Base64/getUrlDecoder)]
+    (-> (.decode decoder (.getBytes payload "UTF-8"))
+        (String. "UTF-8")
+        (json/read-str :key-fn keyword))))
+
+(defn- with-cache-atom [cache-atom ks miss-fn]
+  (let [{:keys [exp payload]} (-> cache-atom (deref) (get-in ks))]
     (if (and exp (> exp (.getEpochSecond (Instant/now))))
       (do
-        (log/trace "cache hit" {:jwks-uri jwks-uri})
-        jwks)
+        (log/trace "cache hit" ks)
+        payload)
       (do
-        (log/trace "cache miss" {:jwks-uri jwks-uri})
-        (let [res (-> jwks-uri
-                      (http/get)
-                      (deref)
-                      (guard-status-ok))
-              exp (cache-control-extract-exp res)
+        (log/trace "cache miss" ks)
+        (let [{:keys [payload] :as slot} (miss-fn)]
+          (swap! cache-atom assoc-in ks slot)
+          payload)))))
+
+(defn- fetch-openid-configuration
+  "Fetch openid-configuration for `iss`."
+  [iss {:keys [jwks-cache-atom]}]
+  (with-cache-atom jwks-cache-atom [:openid-configution iss]
+    (fn []
+      (let [url (str iss (if (.endsWith iss "/") "" "/") ".well-known/openid-configuration")
+            _   (log/trace "Fetching openid configuration" {:url url})
+            res (-> url
+                    (http/get)
+                    (deref)
+                    (guard-status-ok))
+            exp (cache-control-extract-exp res)
+            uri (->> (-> res
+                         :body
+                         (slurp)
+                         (json/read-str :key-fn keyword)))]
+        {:exp exp, :payload uri}))))
+
+(defn- fetch-jwks-uri
+  "Fetch `jwks_uri` from openid-configuration using `iss` from `token`."
+  [token opts]
+  (-> token
+      (decode-payload)
+      :iss
+      (fetch-openid-configuration opts)
+      :jwks_uri))
+
+(defn- fetch-signing-jwks
+  "Fetch and parse signing jwks for `:jwks-uri` or derive from `:iss`."
+  [token {:keys [jwks-uri jwks-cache-atom] :as opts}]
+  (let [jwks-uri (or jwks-uri (fetch-jwks-uri token opts))]
+    (with-cache-atom jwks-cache-atom [:jwks jwks-uri]
+      (fn []
+        (let [res  (-> jwks-uri
+                       (http/get)
+                       (deref)
+                       (guard-status-ok))
+              exp  (cache-control-extract-exp res)
               jwks (->> (-> res
                             :body
                             (slurp)
@@ -54,8 +99,7 @@
                                [kid {:alg        alg
                                      :public-key (keys/jwk->public-key k)}]))
                         (into {}))]
-          (swap! jwks-cache-atom assoc jwks-uri {:exp exp, :jwks jwks})
-          jwks)))))
+          {:exp exp, :payload jwks})))))
 
 (def ^:private
   buddy-unsign-opt-keys #{:iss :aud :sub :exp :nbf :iat :max-age :now :leeway})
@@ -71,17 +115,17 @@
 
   Additionally `:algs` defines the allowed signing algorithms and
   defaults to `#{:rs256}`."
-  [token {:keys [algs jwks-uri jwks-cache-atom max-age]
+  [token {:keys [algs jwks-cache-atom max-age]
           :or   {algs    #{:rs256}
                  max-age one-day}
           :as   opts}]
-  {:pre [jwks-uri jwks-cache-atom]}
+  {:pre [jwks-cache-atom]}
   (let [{:keys [typ kid alg]} (jwt/decode-header token)]
     (when-not (contains? algs alg)
       (throw (ex-info (str "Unsupported signing algorithm (" (name alg) ")")
                       {:type :validation :cause :alg})))
 
-    (let [jwks (fetch-signing-jwks opts)
+    (let [jwks (fetch-signing-jwks token opts)
           jwk  (-> jwks (get kid))]
       (when-not (= "at+jwt" typ)
         (throw (ex-info (str "Not an access token (" typ ")")
@@ -123,7 +167,8 @@
                   (update :body json/read-str :key-fn keyword))]
       (-> res :body :access_token)))
 
+  (jwt/decode-header token)
+
   (let [c (atom {})]
-    (decode-access-token token {:jwks-uri        (System/getenv "OAUTH_JWKS_URI")
-                                :jwks-cache-atom c
+    (decode-access-token token {:jwks-cache-atom c
                                 :aud             (System/getenv "OAUTH_AUDIENCE")})))
