@@ -182,9 +182,10 @@
                              request)
                   response/service-unavailable))))))
 
+;; TODO logging / audit
 (defmethod ->interceptor 'oauth2/bearer-token
-  [[id {:keys [iss jwks-uri] :as requirements} auth-params] & _]
-  {:pre [iss jwks-uri (seq auth-params)]}
+  [[id {:keys [iss] :as requirements} auth-params] & _]
+  {:pre [iss (seq auth-params)]}
   (interceptor
    :name (str id " " iss)
    :doc "Require and validate OAUTH2 bearer token.  Responds with 401

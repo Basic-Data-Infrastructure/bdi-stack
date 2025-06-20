@@ -7,7 +7,7 @@
             [buddy.sign.jwt :as jwt]
             [clojure.data.json :as json]
             [clojure.java.io :as io]
-            [clojure.test :refer [deftest is]]
+            [clojure.test :refer [deftest is testing]]
             [nl.jomco.http-status-codes :as http-status]
             [nl.jomco.resources :refer [Resource with-resources]]
             [org.bdinetwork.gateway.oauth2 :as sut]
@@ -36,22 +36,30 @@
             {:header {:typ typ, :kid kid}
              :alg    alg}))
 
-(def jwks-scheme :http)
-(def jwks-host "127.0.0.1")
-(def jwks-port 11001)
-(def jwks-uri (str (name jwks-scheme) "://" jwks-host ":" jwks-port))
+(def openid-scheme :http)
+(def openid-host "127.0.0.1")
+(def openid-port 11001)
+(def openid-uri (str (name openid-scheme) "://" openid-host ":" openid-port))
+(def jwks-uri (str openid-uri "/.well-known/jwks.json"))
 
 (extend-protocol Resource
   org.eclipse.jetty.server.Server
   (close [server] (.stop server)))
 
-(defn start-jwks [keys]
-  (run-jetty (constantly
-              {:status  http-status/ok
-               :headers {"content-type" "application/json"}
-               :body    (json/write-str {:keys keys})})
-             {:host  jwks-host
-              :port  jwks-port
+(defn start-openid [keys]
+  (run-jetty (fn [{:keys [uri]}]
+               (case uri
+                 "/.well-known/openid-configuration"
+                 {:status  http-status/ok
+                  :headers {"content-type" "application/json"}
+                  :body    (json/write-str {:jwks_uri jwks-uri})}
+
+                 "/.well-known/jwks.json"
+                 {:status  http-status/ok
+                  :headers {"content-type" "application/json"}
+                  :body    (json/write-str {:keys keys})}))
+             {:host  openid-host
+              :port  openid-port
               :join? false}))
 
 (def jwks-keys [(-> oauth-public-key
@@ -59,10 +67,10 @@
                     (assoc :kid kid))])
 
 (deftest decode-access-token
-  (with-resources [_ (start-jwks jwks-keys)]
-    (let [opts   {:jwks-uri jwks-uri, :jwks-cache-atom (atom {})}
+  (with-resources [_ (start-openid jwks-keys)]
+    (let [opts   {:jwks-cache-atom (atom {})}
           claims {:iat   (.getEpochSecond (Instant/now))
-                  :iss   "test-issuer"
+                  :iss   openid-uri
                   :aud   "test-audience"
                   :sub   "test-subject"
                   :other "other"}
@@ -112,4 +120,13 @@
            Exception
            #"Can not determine maximum token age \(10\)"
            (-> (mk-token (dissoc claims :iat))
-               (sut/decode-access-token (assoc opts :max-age 10))))))))
+               (sut/decode-access-token (assoc opts :max-age 10)))))
+
+      (testing "with custom jwks-uri"
+        (is (= "other"
+             (-> (mk-token (assoc claims :iss "dummy"))
+                 (sut/decode-access-token (assoc opts :jwks-uri jwks-uri))
+                 :other))
+          "correctly decoded")
+
+        ()))))
