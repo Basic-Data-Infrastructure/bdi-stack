@@ -97,21 +97,63 @@ This gateway comes with the following base interceptors:
 
 - `response` produces a literal response in the "entering" phase.
 
-- `request/rewrite` rewrites the server part of the request to the given URL.
+  Example:
+
+  ```
+  [response {:status 200, :body "hello world"}]
+  ```
 
 - `request/update` evaluates an update on the request in the "entering" phase, includes `request` in the evaluation environment.
 
+  Example:
+
+  ```
+  [request/update assoc-in [:headers "x-request"] "updated"]
+  ```
+
 - `response/update` evaluates an update on the response in the "leaving" phase, includes `request` and `response` in the evaluation environment.
+
+  Example:
+
+  ```
+  [response/update assoc-in [:headers "x-response"] "updated"]
+  ```
+
+- `request/rewrite` rewrites the server part of the request to the given URL in preparation of the `reverse-proxy/proxy-request` interceptor.
+
+  Example:
+
+  ```
+  [request/rewrite "http://example.com"]
+  ```
 
 - `reverse-proxy/forwarded-headers` record information for "x-forwarded" headers on the request in the "entering" phase on the `:proxy-request-overrides`.  Note: put this interceptor near the top to prevent overwriting request properties by other interceptors like `request/update`.
 
 - `reverse-proxy/proxy-request` produce a response by executing the (modified!) request (including the recorded "x-forwarded" headers information in `:proxy-request-overrides`) in the "entering" phase.
+
+- `oauth2/bearer-token` require an OAuth 2.0 Bearer token with the given requirements and auth-params for a 401 Unauthorized response.  The absence of a token or it not complying to the requirements causes a 401 Unauthorized response.  At least the issuer `:iss` should be supplied to validate the token.  The JWKs are derived from the issuer openid-configuration (issuer is expected to be a URL and the well-known suffix is appended), if not available `jwks-uri` should be supplied.  The claims in the token will be available through var `oauth2/claims`.
+
+  The following example expects a token from example.com and responds with "Hello subject" where "subject" is the "sub" of the token.
+
+  ```
+  [oauth2/bearer-token {:iss      "http://example.com"}
+                       {:realm "example"}]
+  [response/update assoc :body (str "Hello " (get oauth2/claims :sub))]
+  [respond {:status 200}]
+  ```
 
 - `bdi/authenticate` validate bearer token on incoming request, when none given responds with "401 Unauthorized", otherwise adds "X-Bdi-Client-Id" request header and vars for consumption downstream.  Note: put this interceptor *before* `logger` when logging the client-id.
 
 - `bdi/deauthenticate` ensure the "X-Bdi-Client-Id" request header is **not** already set on a request for public endpoints which do not need authentication.  This prevents clients from fooling the backend into being authenticated.  **Always use this on public routes when authentication is optional downstream.**
 
 - `bdi/connect-token` provide a access token (M2M) endpoint to provide access tokens.  Note: this interceptor does no matching, so it needs to be added to a separate rule with a match like: `{:uri "/connect/token", :request-method :post}`.
+
+  Example:
+
+  ```
+  {:match        {:uri "/connect/token"}
+   :interceptors [[bdi/connect-token]]}
+  ```
 
 The "eval" interceptors support the following functions:
 
