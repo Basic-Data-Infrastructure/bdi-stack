@@ -136,7 +136,8 @@ This gateway comes with the following base interceptors:
   The following example expects a token from example.com and responds with "Hello subject" where "subject" is the "sub" of the token.
 
   ```
-  [oauth2/bearer-token {:iss      "http://example.com"}
+  [oauth2/bearer-token {:iss "http://example.com"
+                        :aud "example"}
                        {:realm "example"}]
   [response/update assoc :body (str "Hello " (get oauth2/claims :sub))]
   [respond {:status 200}]
