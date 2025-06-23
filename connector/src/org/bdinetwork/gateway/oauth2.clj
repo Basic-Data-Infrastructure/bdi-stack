@@ -69,13 +69,19 @@
         {:exp exp, :payload uri}))))
 
 (defn- fetch-jwks-uri
-  "Fetch `jwks_uri` from openid-configuration using `iss` from `token`."
-  [token opts]
-  (-> token
-      (decode-payload)
-      :iss
-      (fetch-openid-configuration opts)
-      :jwks_uri))
+  "Fetch `jwks_uri` from openid-configuration using `iss` from `token`.
+  Throws an exception when token issuer does not match issuer given in
+  `opts`."
+  [token {:keys [iss] :as opts}]
+  (let [token-iss (-> token
+                      (decode-payload)
+                      :iss)]
+    (when (and iss (not= iss token-iss))
+      (throw (ex-info (str "Issuer does not match (" token-iss ")")
+                      {:expected iss, :got token-iss})))
+    (-> token-iss
+        (fetch-openid-configuration opts)
+        :jwks_uri)))
 
 (defn- fetch-signing-jwks
   "Fetch and parse signing jwks for `:jwks-uri` or derive from `:iss`."

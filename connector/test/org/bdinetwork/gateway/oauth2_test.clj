@@ -95,6 +95,10 @@
            #"Audience does not match BAD"
            (sut/unsign-access-token token (assoc opts :aud "BAD")))
           "bad audience handled by buddy.sign.jwt/unsign")
+      (is (thrown-with-msg?
+           Exception
+           #"Issuer does not match \(.*\)"
+           (sut/unsign-access-token token (assoc opts :iss "BAD"))))
 
       (is (thrown-with-msg?
            Exception
@@ -124,9 +128,7 @@
 
       (testing "with custom jwks-uri"
         (is (= "other"
-             (-> (mk-token (assoc claims :iss "dummy"))
-                 (sut/unsign-access-token (assoc opts :jwks-uri jwks-uri))
-                 :other))
-          "correctly decoded")
-
-        ()))))
+               (-> (mk-token (assoc claims :iss "dummy"))
+                   (sut/unsign-access-token (assoc opts :jwks-uri jwks-uri))
+                   :other))
+            "correctly decoded")))))
