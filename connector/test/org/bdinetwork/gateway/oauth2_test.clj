@@ -66,7 +66,7 @@
                     (keys/public-key->jwk)
                     (assoc :kid kid))])
 
-(deftest decode-access-token
+(deftest unsign-access-token
   (with-resources [_ (start-openid jwks-keys)]
     (let [opts   {:jwks-cache-atom (atom {})}
           claims {:iat   (.getEpochSecond (Instant/now))
@@ -76,12 +76,12 @@
                   :other "other"}
           token  (mk-token claims)]
       (is (= "other"
-             (-> (sut/decode-access-token token opts)
+             (-> (sut/unsign-access-token token opts)
                  :other))
           "correctly decoded")
 
       (is (= "other"
-             (-> (sut/decode-access-token token (merge opts claims))
+             (-> (sut/unsign-access-token token (merge opts claims))
                  :other))
           "correctly decoded and claims verified")
 
@@ -89,43 +89,43 @@
            Exception
            #"Not an access token \(JWT\)"
            (-> (mk-token claims {:typ "JWT"})
-               (sut/decode-access-token opts))))
+               (sut/unsign-access-token opts))))
       (is (thrown-with-msg?
            Exception
            #"Audience does not match BAD"
-           (sut/decode-access-token token (assoc opts :aud "BAD")))
+           (sut/unsign-access-token token (assoc opts :aud "BAD")))
           "bad audience handled by buddy.sign.jwt/unsign")
 
       (is (thrown-with-msg?
            Exception
            #"Claim other does not match \(other\)"
-           (sut/decode-access-token token (assoc opts :other "BAD")))
+           (sut/unsign-access-token token (assoc opts :other "BAD")))
           "non standard claims handled")
 
       (is (thrown-with-msg?
            Exception
            #"Unsupported signing algorithm \(rs512\)"
            (-> (mk-token claims {:alg :rs512})
-               (sut/decode-access-token opts)))
+               (sut/unsign-access-token opts)))
           "not supported by default")
 
       (is (thrown-with-msg?
            Exception
            #"Unsupported signing algorithm \(rs256\)"
            (-> (mk-token claims {:alg :rs256})
-               (sut/decode-access-token (assoc opts :algs #{:rs512}))))
+               (sut/unsign-access-token (assoc opts :algs #{:rs512}))))
           "not supported by claims")
 
       (is (thrown-with-msg?
            Exception
            #"Can not determine maximum token age \(10\)"
            (-> (mk-token (dissoc claims :iat))
-               (sut/decode-access-token (assoc opts :max-age 10)))))
+               (sut/unsign-access-token (assoc opts :max-age 10)))))
 
       (testing "with custom jwks-uri"
         (is (= "other"
              (-> (mk-token (assoc claims :iss "dummy"))
-                 (sut/decode-access-token (assoc opts :jwks-uri jwks-uri))
+                 (sut/unsign-access-token (assoc opts :jwks-uri jwks-uri))
                  :other))
           "correctly decoded")
 

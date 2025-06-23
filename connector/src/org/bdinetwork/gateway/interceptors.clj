@@ -204,7 +204,7 @@
                       (assoc-in [:headers "www-authenticate"]
                                 (str "Bearer " auth-params))))
            (try
-             (let [claims (oauth2/decode-access-token bearer-token requirements)]
+             (let [claims (oauth2/unsign-access-token bearer-token requirements)]
                (assoc-in ctx [:vars 'oauth2/claims] claims))
              (catch Exception e
                (let [msg (.getMessage e)]

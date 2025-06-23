@@ -106,7 +106,7 @@
 
 (def ^:private one-day (* 60 60 24))
 
-(defn decode-access-token
+(defn unsign-access-token
   "Decode `token` using JWK from `:jwks-uri`.
 
   Throw an exception like `buddy.sign.jwt/unsign` when validation
@@ -170,5 +170,5 @@
   (jwt/decode-header token)
 
   (let [c (atom {})]
-    (decode-access-token token {:jwks-cache-atom c
+    (unsign-access-token token {:jwks-cache-atom c
                                 :aud             (System/getenv "OAUTH_AUDIENCE")})))
