@@ -6,12 +6,12 @@
   (:require [clojure.string :as string]
             [clojure.tools.logging :as log]
             [manifold.deferred :as d]
+            [nl.jomco.http-status-codes :as http-status]
             [org.bdinetwork.gateway.eval :as eval]
             [org.bdinetwork.gateway.oauth2 :as oauth2]
             [org.bdinetwork.gateway.response :as response]
             [org.bdinetwork.gateway.reverse-proxy :as reverse-proxy])
   (:import (java.net URL)
-           (java.util UUID)
            (org.slf4j MDC)))
 
 (defn interceptor [& {:keys [name enter leave error]}]
@@ -25,48 +25,69 @@
 
 
 
-(defn- log-response
-  [{:keys [response trace-id ::logger-enter-ctm] :as ctx}]
-  (assoc ctx :response
-         (d/let-flow [{:keys [status]} response]
-           (log/infof "[%s] Status: %d (duration %dms)"
-                      trace-id
-                      status
-                      (- (System/currentTimeMillis) logger-enter-ctm))
-           response)))
+(def eval-env
+  {'assoc       assoc
+   'assoc-in    assoc-in
+   'get         get
+   'get-in      get-in
+   'merge       merge
+   'select-keys select-keys
+   'str         str
+   'update      update})
 
-(defn with-diagnostics [[k & keys] vars f]
+(defn- mk-eval-env [{:keys [vars request response] :as ctx}]
+  (cond-> (-> eval-env
+              (merge vars)
+              (assoc 'ctx ctx, 'request request))
+    response
+    (assoc 'response response)))
+
+(defn with-diagnostics [[[k v] & props] f]
   (if k
-    (with-open [_ (MDC/putCloseable (str k) (str (get vars k)))]
-      (with-diagnostics keys vars f))
+    (with-open [_ (MDC/putCloseable (str k) (pr-str v))]
+      (with-diagnostics props f))
     (f)))
 
+(defn- mk-response-logger
+  [props-form]
+  (fn [{:keys [response ::logger-enter-ctm]
+        {:keys [request-method scheme server-name server-port uri protocol]} :request
+        :as ctx}]
+    (assoc ctx :response
+           (d/let-flow [{:keys [status]} response]
+             (let [duration (- (System/currentTimeMillis) logger-enter-ctm)
+                   env      (assoc (mk-eval-env ctx)
+                                   'response (assoc response
+                                                    :duration duration))
+                   props    (some-> props-form (eval/evaluate env))]
+               (with-diagnostics (into [] props)
+                 #(log/infof "%s %s://%s:%d%s %s / %d %s / %dms"
+                             (string/upper-case (name request-method))
+                             (name scheme)
+                             server-name
+                             server-port
+                             uri
+                             protocol
+                             status
+                             (http-status/->description status)
+                             duration)))
+             response))))
+
 (defmethod ->interceptor 'logger
-  [[id & more] & _]
+  [[id props-form] & _]
+  {:pre [(or (nil? props-form)
+             (and (map? props-form)
+                  (not (some (complement string?) (keys props-form)))))]}
 
   (interceptor
    :name (str id)
    :doc "Log incoming requests and response status and duration at `info` level."
    :enter
-   (fn [{{:keys [request-method scheme server-name server-port uri protocol]} :request
-         :keys [vars]
-         :as ctx}]
-     (let [trace-id (UUID/randomUUID)]
-       (with-diagnostics more vars
-         #(log/infof "[%s] %s %s://%s:%d%s %s"
-                     trace-id
-                     (string/upper-case (name request-method))
-                     (name scheme)
-                     server-name
-                     server-port
-                     uri
-                     protocol))
-       (assoc ctx
-              :trace-id trace-id
-              ::logger-enter-ctm (System/currentTimeMillis))))
+   (fn [ctx]
+     (assoc ctx ::logger-enter-ctm (System/currentTimeMillis)))
 
-   :leave log-response
-   :error log-response))
+   :leave (mk-response-logger props-form)
+   :error (mk-response-logger props-form)))
 
 (defmethod ->interceptor 'respond
   [[id response] & _]
@@ -75,7 +96,6 @@
    :doc  "Respond with given value."
    :enter
    (fn [ctx] (assoc ctx :response response))))
-
 
 (defmethod ->interceptor 'request/rewrite
   [[id url] & _]
@@ -99,27 +119,16 @@
            (assoc-in [:request :server-port] port)
            (assoc-in [:request :headers "host"] (str host ":" port)))))))
 
-(def eval-env
-  {'assoc       assoc
-   'assoc-in    assoc-in
-   'get         get
-   'merge       merge
-   'select-keys select-keys
-   'str         str
-   'update      update})
-
 (defmethod ->interceptor 'request/update
   [[id & form] & _]
   (interceptor
    :name (str id " " (pr-str form))
    :doc  "Update the incoming request using eval on the request object."
    :enter
-   (fn  [{:keys [request vars] :as ctx}]
+   (fn  [ctx]
      (let [form (list* (first form) 'request (drop 1 form))]
        (assoc ctx :request
-              (eval/evaluate form (-> eval-env
-                                      (merge vars)
-                                      (assoc 'request request))))))))
+              (eval/evaluate form (mk-eval-env ctx)))))))
 
 (defmethod ->interceptor 'response/update
   [[id & form] & _]
@@ -128,14 +137,12 @@
    :doc  "Update the outgoing request using eval on the response object."
    :args form
    :leave
-   (fn response-eval-leave [{:keys [request response vars] :as ctx}]
+   (fn response-eval-leave [{:keys [response] :as ctx}]
      (let [form (list* (first form) 'response (drop 1 form))]
        (assoc ctx :response
               (d/let-flow [response response]
-                (eval/evaluate form (-> eval-env
-                                        (merge vars)
-                                        (assoc 'request request
-                                               'response response)))))))))
+                (eval/evaluate form (assoc (mk-eval-env ctx)
+                                           'response response))))))))
 
 (defmethod ->interceptor 'reverse-proxy/forwarded-headers
   [[id] & _]
@@ -182,7 +189,6 @@
                              request)
                   response/service-unavailable))))))
 
-;; TODO logging / audit
 (defmethod ->interceptor 'oauth2/bearer-token
   [[id {:keys [aud iss] :as requirements} auth-params] & _]
   {:pre [aud iss (seq auth-params)]}
@@ -205,7 +211,7 @@
                                 (str "Bearer " auth-params))))
            (try
              (let [claims (oauth2/unsign-access-token bearer-token requirements)]
-               (assoc-in ctx [:vars 'oauth2/claims] claims))
+               (assoc ctx :oauth2/bearer-token-claims claims))
              (catch Exception e
                (let [msg (.getMessage e)]
                  (assoc ctx :response

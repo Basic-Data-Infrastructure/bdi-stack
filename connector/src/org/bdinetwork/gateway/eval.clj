@@ -25,7 +25,7 @@
     (symbol? expr)
     (let [v (get env expr ::lookup-failed)]
       (when (= ::lookup-failed v)
-        (throw (ex-info "lookup failed" {:expr expr})))
+        (throw (ex-info (str "lookup failed (" expr ")") {:expr expr})))
       v)
 
     (vector? expr)
@@ -53,8 +53,13 @@
         (boolean (some #(evaluate % env) args))
 
         ;; else
-        (apply (evaluate oper env)
-               (map #(evaluate % env) args))))
+        (try
+          (apply (evaluate oper env)
+                 (map #(evaluate % env) args))
+          (catch Exception e
+            (throw (ex-info (str "failed to execute expression (" expr ")")
+                            {:oper oper, :args args, :expr expr}
+                            e))))))
 
     :else
-    (throw (ex-info "unexpected expression" {:expr expr}))))
+    (throw (ex-info (str "unexpected expression (" expr ")") {:expr expr}))))

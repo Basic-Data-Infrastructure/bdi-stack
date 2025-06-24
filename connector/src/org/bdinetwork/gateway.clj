@@ -7,7 +7,8 @@
             [org.bdinetwork.gateway.matcher :as matcher]
             [org.bdinetwork.gateway.response :as response]
             [ring.middleware.params :as ring-params])
-  (:import (java.nio.charset Charset)))
+  (:import (java.nio.charset Charset)
+           (java.util UUID)))
 
 (defn match-rule [rules req]
   (some (fn [{:keys [match] :as rule}]
@@ -31,8 +32,9 @@
     (let [req (ring-params/assoc-query-params req utf-8)]
       (try
         (if-let [{:keys [interceptors] :as rule} (match-rule rules req)]
-          (loop [{:keys [response error] :as ctx} {:request req
-                                                   :vars    (merge vars (:vars rule))}
+          (loop [{:keys [response error] :as ctx} {:trace-id (UUID/randomUUID)
+                                                   :request  req
+                                                   :vars (merge vars (:vars rule))}
                  enter-stack                      interceptors
                  leave-stack                      []]
             (let [interceptor (if (or response error)

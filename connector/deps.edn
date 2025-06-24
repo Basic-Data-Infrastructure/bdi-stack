@@ -8,7 +8,7 @@
         ch.qos.logback/logback-classic {:mvn/version "1.5.18"}
 
         aleph/aleph                    {:mvn/version "0.8.3"}
-        nl.jomco/clj-http-status-codes {:mvn/version "0.1"}
+        nl.jomco/clj-http-status-codes {:mvn/version "0.2"}
 
         org.clojure/data.json {:mvn/version "2.5.1"}
         ring/ring-core        {:mvn/version "1.14.2"}
@@ -26,7 +26,7 @@
             :replace-paths []
             :main-opts     ["-m" "uberdeps.uberjar" "--aliases" "package"]}
 
-  :test {:extra-paths ["test-resources"]
+  :test {:extra-paths ["test" "test-resources"]
          :extra-deps  {ring/ring {:mvn/version "1.14.2"}}}
 
   :run {:main-opts ["-m" "org.bdinetwork.connector.main"]}}}

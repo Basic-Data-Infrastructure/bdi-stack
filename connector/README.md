@@ -86,14 +86,16 @@ This gateway comes with the following base interceptors:
    - `[f0cacc1a-d0d0-c0de-cafe-c0ffeeacac1a] GET http://localhost:8081/ HTTP/1.1`
    - `[f0cacc1a-d0d0-c0de-cafe-c0ffeeacac1a] Status: 200 (duration 370ms)`
 
-  Passing an extra data structure will add MDC (Mapped Diagnostic Context) to the request log line with captured variables.
+  Passing an extra data structure will add MDC (Mapped Diagnostic Context) to the request log line with evaluated data.  Duration is available in the response object.
 
   Example:
 
   - match: `:match {:query-params {"pageNr" page-nr}}`
-  - interceptor: `[logger page-nr]`
+  - interceptor: `[logger {"page-nr" (get-in request [:query-params "pageNr"])}]`
   - request: `http://localhost:8081/test?pageNr=31415`
-  - log line: `[f0cacc1a-d0d0-c0de-cafe-c0ffeeacac1a] GET http://localhost:8081/ HTTP/1.1 page-nr=31415`
+  - log lines:
+    - `[f0cacc1a-d0d0-c0de-cafe-c0ffeeacac1a] GET http://localhost:8081/ HTTP/1.1`
+    - `[f0cacc1a-d0d0-c0de-cafe-c0ffeeacac1a] Status: 200 (duration 370ms) page-nr=31415`
 
 - `response` produces a literal response in the "entering" phase.
 
@@ -143,6 +145,8 @@ This gateway comes with the following base interceptors:
   [respond {:status 200}]
   ```
 
+  The claims for a valid access token will be place in `ctx` property `:oauth2/bearer-token-claims`.
+
 - `bdi/authenticate` validate bearer token on incoming request, when none given responds with "401 Unauthorized", otherwise adds "X-Bdi-Client-Id" request header and vars for consumption downstream.  Note: put this interceptor *before* `logger` when logging the client-id.
 
 - `bdi/deauthenticate` ensure the "X-Bdi-Client-Id" request header is **not** already set on a request for public endpoints which do not need authentication.  This prevents clients from fooling the backend into being authenticated.  **Always use this on public routes when authentication is optional downstream.**
@@ -161,10 +165,19 @@ The "eval" interceptors support the following functions:
 - `assoc`
 - `assoc-in`
 - `get`
+- `get-in`
 - `merge`
 - `select-keys`
 - `str`
 - `update`
+
+and have access to the following vars:
+
+- `ctx`
+- `request`
+- `response` (when already available)
+- and all `vars` defined globally, on a rule
+- and captured by `match`.
 
 Here are example rules for a minimal reverse proxy to [httpbin](https://httpbin.org):
 
