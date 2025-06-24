@@ -15,7 +15,7 @@
  :aliases
  {:test {:extra-paths ["test-resources"]
          :extra-deps  {org.clojure/core.async                {:mvn/version "1.8.741"}
-                       nl.jomco/clj-http-status-codes        {:mvn/version "0.1"}
+                       nl.jomco/clj-http-status-codes        {:mvn/version "0.2"}
                        nl.jomco/with-resources               {:mvn/version "0.1.2"}
                        org.bdinetwork/association-register   {:local/root "../association-register"}
                        org.bdinetwork/authorization-register {:local/root "../authorization-register"}}}}}

@@ -6,6 +6,7 @@
   (:require [clojure.string :as string]
             [clojure.tools.logging :as log]
             [manifold.deferred :as d]
+            [nl.jomco.http-status-codes :as http-status]
             [org.bdinetwork.gateway.eval :as eval]
             [org.bdinetwork.gateway.oauth2 :as oauth2]
             [org.bdinetwork.gateway.response :as response]
@@ -49,7 +50,9 @@
 
 (defn- mk-response-logger
   [props-form]
-  (fn [{:keys [response trace-id ::logger-enter-ctm] :as ctx}]
+  (fn [{:keys [response ::logger-enter-ctm]
+        {:keys [request-method scheme server-name server-port uri protocol]} :request
+        :as ctx}]
     (assoc ctx :response
            (d/let-flow [{:keys [status]} response]
              (let [duration (- (System/currentTimeMillis) logger-enter-ctm)
@@ -58,9 +61,15 @@
                                                     :duration duration))
                    props    (some-> props-form (eval/evaluate env))]
                (with-diagnostics (into [] props)
-                 #(log/infof "[%s] Status: %d (duration %dms)"
-                             trace-id
+                 #(log/infof "%s %s://%s:%d%s %s / %d %s / %dms"
+                             (string/upper-case (name request-method))
+                             (name scheme)
+                             server-name
+                             server-port
+                             uri
+                             protocol
                              status
+                             (http-status/->description status)
                              duration)))
              response))))
 
@@ -74,20 +83,8 @@
    :name (str id)
    :doc "Log incoming requests and response status and duration at `info` level."
    :enter
-   (fn [{:keys [trace-id]
-         {:keys [request-method scheme server-name server-port uri protocol]} :request
-         :as ctx}]
-     (log/infof "[%s] %s %s://%s:%d%s %s"
-                trace-id
-                (string/upper-case (name request-method))
-                (name scheme)
-                server-name
-                server-port
-                uri
-                protocol)
-     (assoc ctx
-            :trace-id trace-id
-            ::logger-enter-ctm (System/currentTimeMillis)))
+   (fn [ctx]
+     (assoc ctx ::logger-enter-ctm (System/currentTimeMillis)))
 
    :leave (mk-response-logger props-form)
    :error (mk-response-logger props-form)))
