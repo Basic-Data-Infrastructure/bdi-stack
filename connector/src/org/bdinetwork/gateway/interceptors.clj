@@ -26,14 +26,18 @@
 
 
 (def eval-env
-  {'assoc       assoc
-   'assoc-in    assoc-in
-   'get         get
-   'get-in      get-in
-   'merge       merge
-   'select-keys select-keys
-   'str         str
-   'update      update})
+  {'assoc          assoc
+   'assoc-in       assoc-in
+   'get            get
+   'get-in         get-in
+   'merge          merge
+   'select-keys    select-keys
+   'update         update
+   'update-in      update-in
+   'str            str
+   'str/replace    string/replace
+   'str/lower-case string/lower-case
+   'str/upper-case string/upper-case})
 
 (defn mk-eval-env
   "Make eval execution environment from `ctx`."

@@ -35,7 +35,7 @@
 ;;
 ;; We change the log level for some application-specific namespaces to
 ;; DEBUG when when dev/user.clj is loaded
-(.setLevel (LoggerFactory/getLogger "org.bdinetwork.ishare.client") Level/DEBUG)
+(.setLevel (LoggerFactory/getLogger "org.bdinetwork.gateway") Level/DEBUG)
 
 (def association-env
   {:private-key "test-config/association_register.key.pem"

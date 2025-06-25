@@ -168,8 +168,12 @@ The "eval" interceptors support the following functions:
 - `get-in`
 - `merge`
 - `select-keys`
-- `str`
 - `update`
+- `update-in`
+- `str`
+- `str/replace`
+- `str/lower-case`
+- `str/upper-case`
 
 and have access to the following vars:
 
