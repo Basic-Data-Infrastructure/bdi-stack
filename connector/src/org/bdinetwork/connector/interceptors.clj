@@ -123,4 +123,5 @@
        (cond-> ctx
          issues
          (assoc :response (-> response/unauthorized
+                              (assoc-in [:headers "content-type"] "application/json")
                               (assoc :body (json/json-str {:delegation-issues issues})))))))))
