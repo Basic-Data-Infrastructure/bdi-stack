@@ -1,48 +1,69 @@
-{:rules [{:match        {:uri #rx "/v3/events(/.+)?"}
-          :interceptors [[logger {"uri"                 (get request :uri)
-                                  "app"                 (get-in ctx [:oauth2/bearer-token-claims :sub])
-                                  "bol"                 (get-in request [:query-params "transportDocumentReference"])
-                                  "bic"                 (get-in request [:query-params "equipmentReference"])
-                                  "owner"               (get-in request [:query-params "ownerId"])
-                                  "delegation"          (get-in request [:headers "bdi-delegation-chain"])
-                                  "delegation-issues"   (get ctx :delegation-issues)
-                                  "delegation-evidence" (get ctx :delegation-evidence)
-                                  "delegation-mask"     (get ctx :delegation-mask)}]
-                         [oauth2/bearer-token
-                          {:aud "ITV"
-                           :iss "https://topsector-logistiek.eu.auth0.com/"}
-                          {:realm "ITV events"}]
+;;; SPDX-FileCopyrightText: 2025 Jomco B.V.
+;;; SPDX-FileCopyrightText: 2025 Topsector Logistiek
+;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-                         [noodlebar/delegation {:oauth2/token-url
-                                                "https://topsector-logistiek.eu.auth0.com/oauth/token",
-                                                :oauth2/client-secret #env NOODLEBAR_CLIENT_SECRET
-                                                :oauth2/client-id #env NOODLEBAR_CLIENT_ID
-                                                :oauth2/audience  "TSL-Dataspace-CoreManager",
-                                                :coremanager-url
-                                                "https://tsl-dataspace-coremanager.azurewebsites.net/api"}
-                          {:policyIssuer (get-in request [:query-params "ownerId"])
-                           :target       {:accessSubject (get-in ctx [:oauth2/bearer-token-claims :organizationId])}
-                           :policySets   [{:policies [{:rules  [{:effect "Permit"}]
-                                                       :target {:resource {:type       "Container-BOL-Events"
-                                                                           :identifiers  [(str (get-in request [:query-params "equipmentReference"]) "," (get-in request [:query-params "transportDocumentReference"]))]
-                                                                           :attributes ["*"]}
-                                                                :actions  ["read"]
-                                                                :environment
-                                                                {:serviceProviders ["NL.KVK.17187159"]}}}]}]}]
-                         [reverse-proxy/forwarded-headers]
-                         [request/rewrite "https://fake-source-ll79.jomco.nl"]
-                         [response/update update :headers assoc "x-bdi-connector" "passed"]
-                         [reverse-proxy/proxy-request]]}
+{:rules
+ [{:match        {:uri #rx "/v3/events(/.+)?"}
+   :interceptors [[logger {"uri"                 (get request :uri)
+                           "app"                 (get-in ctx [:oauth2/bearer-token-claims :sub])
+                           "bol"                 (get-in request [:query-params "transportDocumentReference"])
+                           "bic"                 (get-in request [:query-params "equipmentReference"])
+                           "owner"               (get-in request [:query-params "ownerId"])
+                           "delegation"          (get-in request [:headers "bdi-delegation-chain"])
+                           "delegation-issues"   (get ctx :delegation-issues)
+                           "delegation-evidence" (get ctx :delegation-evidence)
+                           "delegation-mask"     (get ctx :delegation-mask)}]
+                  [oauth2/bearer-token
+                   {:aud "ITV"
+                    :iss "https://topsector-logistiek.eu.auth0.com/"}
+                   {:realm "ITV events"}]
 
-         ;; audit-log for demo
-         {:match        {:headers {"authorization"
-                                   #join ["Basic " #b64 #join
-                                          [#env AUDIT_LOG_USER ":" #env AUDIT_LOG_PASSWD]]}
-                         :uri     "/audit-log"}
-          :interceptors [[demo/audit-log {:json-file "audit.json"}]]}
-         {:match        {:uri "/audit-log"}
-          :interceptors [[respond {:status  401
-                                   :headers {"content-type"     "text/html"
-                                             "www-authenticate" "Basic realm=\"audit\""}
-                                   :body    "<html><body><em>not allowed</em><body></html>"}]]}
-         {:match {:uri "/favicon.ico"} :interceptors [[respond {:status 204}]]}]}
+                  [noodlebar/delegation {:oauth2/token-url
+                                         "https://topsector-logistiek.eu.auth0.com/oauth/token",
+                                         :oauth2/client-secret #env NOODLEBAR_CLIENT_SECRET
+                                         :oauth2/client-id     #env NOODLEBAR_CLIENT_ID
+                                         :oauth2/audience      "TSL-Dataspace-CoreManager",
+                                         :coremanager-url
+                                         "https://tsl-dataspace-coremanager.azurewebsites.net/api"}
+                   {:policyIssuer (get-in request [:query-params "ownerId"])
+                    :target       {:accessSubject (get-in ctx [:oauth2/bearer-token-claims :organizationId])}
+                    :policySets   [{:policies [{:rules  [{:effect "Permit"}]
+                                                :target {:resource {:type        "Container-BOL-Events"
+                                                                    :identifiers [(str (get-in request [:query-params "equipmentReference"]) "," (get-in request [:query-params "transportDocumentReference"]))]
+                                                                    :attributes  ["*"]}
+                                                         :actions  ["read"]
+                                                         :environment
+                                                         {:serviceProviders ["NL.KVK.17187159"]}}}]}]}]
+                  [reverse-proxy/forwarded-headers]
+                  [request/rewrite "https://fake-source-ll79.jomco.nl"]
+                  [response/update update :headers assoc "x-bdi-connector" "passed"]
+                  [reverse-proxy/proxy-request]]}
+
+  ;; example access to audit log protected by basic
+  ;; authentication (for demo purposes only!)
+  {:match        {:headers {"authorization" #join ["Basic " #b64 "demo:test123"]}
+                  :uri     "/audit-log"}
+   :interceptors [[demo/audit-log {:json-file "log/audit.json"}]]} ;; as configured in logback.xml
+  {:match        {:uri "/audit-log"}
+   :interceptors [[respond {:status  401
+                            :headers {"content-type"     "text/html"
+                                      "www-authenticate" "Basic realm=\"audit\""}
+                            :body    "<html><body><em>not allowed</em><body></html>"}]]}
+  {:match        {:uri "/favicon.ico"} ;; prevent chrome for asking for basic auth again
+   :interceptors [[respond {:status 204}]]}
+
+  ;; add endpoint to get access token and pass the rest to
+  ;; backend (when authenticated)
+  {:match        {:uri "/connect/token"}
+   :interceptors [[logger]
+                  [bdi/connect-token]
+                  [response/update update :headers assoc "x-bdi-connector" "passed"]]}
+  {:match        {:request-method request-method
+                  :uri            uri}
+   :interceptors [[bdi/authenticate]
+                  ;; logged properties end up in audit log
+                  [logger x-bdi-client-id uri request-method]
+                  [reverse-proxy/forwarded-headers]
+                  [request/rewrite "http://localhost:9991"]
+                  [response/update update :headers assoc "x-bdi-connector" "passed"]
+                  [reverse-proxy/proxy-request]]}]}

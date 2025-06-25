@@ -143,7 +143,7 @@
 
                     (seq (:policy/licenses policy))
                     (assoc-in [:target :environment :licenses] (:policy/licenses policy))
-                     
+
                     (:policy/max-delegation-depth policy)
                     (assoc :maxDelegationDepth (:policy/max-delegation-depth policy)))]})
 

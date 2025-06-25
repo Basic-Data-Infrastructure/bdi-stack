@@ -3,16 +3,14 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.gateway.interceptors
-  (:require [clojure.data.json :as json]
-            [clojure.string :as string]
+  (:require [clojure.string :as string]
             [clojure.tools.logging :as log]
             [manifold.deferred :as d]
             [nl.jomco.http-status-codes :as http-status]
             [org.bdinetwork.gateway.eval :as eval]
             [org.bdinetwork.gateway.oauth2 :as oauth2]
             [org.bdinetwork.gateway.response :as response]
-            [org.bdinetwork.gateway.reverse-proxy :as reverse-proxy]
-            [org.bdinetwork.ishare.client.validate-delegation :as validate-delegation])
+            [org.bdinetwork.gateway.reverse-proxy :as reverse-proxy])
   (:import (java.net URL)
            (org.slf4j MDC)))
 
@@ -37,7 +35,9 @@
    'str         str
    'update      update})
 
-(defn- mk-eval-env [{:keys [vars request response] :as ctx}]
+(defn mk-eval-env
+  "Make eval execution environment from `ctx`."
+  [{:keys [vars request response] :as ctx}]
   (cond-> (-> eval-env
               (merge vars)
               (assoc 'ctx ctx, 'request request))
@@ -100,7 +100,7 @@
    :name (str id " " (pr-str response))
    :doc  "Respond with given value."
    :enter
-   (fn [ctx] (assoc ctx :response response))))
+   (fn respone-enter [ctx] (assoc ctx :response response))))
 
 (defmethod ->interceptor 'request/rewrite
   [[id url] & _]
@@ -117,7 +117,7 @@
      :name (str id " " url)
      :doc  "Rewrite server part of request."
      :enter
-     (fn [ctx]
+     (fn request-rewrite-enter [ctx]
        (-> ctx
            (assoc-in [:request :scheme] scheme)
            (assoc-in [:request :server-name] host)
@@ -130,7 +130,7 @@
    :name (str id " " (pr-str form))
    :doc  "Update the incoming request using eval on the request object."
    :enter
-   (fn  [ctx]
+   (fn request-update-enter [ctx]
      (let [form (list* (first form) 'request (drop 1 form))]
        (assoc ctx :request
               (eval/evaluate form (mk-eval-env ctx)))))))
@@ -142,7 +142,7 @@
    :doc  "Update the outgoing request using eval on the response object."
    :args form
    :leave
-   (fn response-eval-leave [{:keys [response] :as ctx}]
+   (fn response-update-leave [{:keys [response] :as ctx}]
      (let [form (list* (first form) 'response (drop 1 form))]
        (assoc ctx :response
               (d/let-flow [response response]
@@ -157,7 +157,7 @@
 
   The allows the backend to create local redirects and set domain
   cookies."
-   :enter (fn forwarded-headers-enter
+   :enter (fn reverse-proxy-forwarded-headers-enter
             [{{{:strs [host
                        x-forwarded-proto
                        x-forwarded-host
@@ -183,7 +183,7 @@
    :name (str id)
    :doc  "Execute proxy request and populate response."
    :enter
-   (fn proxy-request-enter
+   (fn reverse-proxy-proxy-request-enter
      [{:keys [request proxy-request-overrides trace-id] :as ctx}]
      (assoc ctx :response
             (d/catch
@@ -226,24 +226,3 @@
                                            ", error=\"invalid_token\""
                                            ", error_description=\"" msg "\""))
                             (assoc :body msg))))))))))))
-
-(defmethod  ->interceptor 'noodlebar/delegation
-  [[id base-request mask-exp] & _]
-  (interceptor :name (str id " delegation-chain")
-               :doc "Retrieves and evaluates delegation evidence for
-  request. Responds with 401 Unauthorized when the evidence is not
-  found or does not match the delegation mask."
-               :enter (fn delegation-chain-enter
-                        [{:keys [vars] :as ctx}]
-                        (let [mask (eval/evaluate mask-exp (mk-eval-env ctx))
-                              _ (prn [:mask mask])
-                              evidence (validate-delegation/noodlebar-fetch-delegation-evidence base-request mask)
-                              issues (validate-delegation/delegation-mask-evidence-mismatch mask evidence)
-                              ctx (assoc ctx
-                                        :delegation-evidence evidence
-                                        :delegation-mask mask
-                                        :delegation-issues issues)]
-                          (cond-> ctx
-                            issues
-                            (assoc :response (-> response/unauthorized
-                                                 (assoc :body (json/json-str {:delegation-issues issues})))))))))

@@ -1,3 +1,7 @@
+;;; SPDX-FileCopyrightText: 2025 Jomco B.V.
+;;; SPDX-FileCopyrightText: 2025 Topsector Logistiek
+;;; SPDX-License-Identifier: AGPL-3.0-or-later
+
 (ns org.bdinetwork.noodlebar.request
   (:require [org.bdinetwork.ishare.client :as client]))
 
