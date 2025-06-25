@@ -50,8 +50,8 @@
 
 (defn- mk-response-logger
   [props-form]
-  (fn [{:keys [response ::logger-enter-ctm]
-        {:keys [request-method scheme server-name server-port uri protocol]} :request
+  (fn logger-leave [{:keys [response ::logger-enter-ctm]
+        {:keys [request-method scheme server-name server-port uri query-string protocol]} ::logger-original-request
         :as ctx}]
     (assoc ctx :response
            (d/let-flow [{:keys [status]} response]
@@ -61,12 +61,13 @@
                                                     :duration duration))
                    props    (some-> props-form (eval/evaluate env))]
                (with-diagnostics (into [] props)
-                 #(log/infof "%s %s://%s:%d%s %s / %d %s / %dms"
+                 #(log/infof "%s %s://%s:%d%s%s %s / %d %s / %dms"
                              (string/upper-case (name request-method))
                              (name scheme)
                              server-name
                              server-port
                              uri
+                             (if query-string (str "?" query-string) "")
                              protocol
                              status
                              (http-status/->description status)
@@ -83,8 +84,10 @@
    :name (str id)
    :doc "Log incoming requests and response status and duration at `info` level."
    :enter
-   (fn [ctx]
-     (assoc ctx ::logger-enter-ctm (System/currentTimeMillis)))
+   (fn logger-enter [{:keys [request] :as ctx}]
+     (assoc ctx
+            ::logger-original-request request
+            ::logger-enter-ctm (System/currentTimeMillis)))
 
    :leave (mk-response-logger props-form)
    :error (mk-response-logger props-form)))
