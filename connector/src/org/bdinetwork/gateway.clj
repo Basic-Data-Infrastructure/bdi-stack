@@ -4,6 +4,7 @@
 
 (ns org.bdinetwork.gateway
   (:require [clojure.tools.logging :as log]
+            [manifold.deferred :as d]
             [org.bdinetwork.gateway.matcher :as matcher]
             [org.bdinetwork.gateway.response :as response]
             [ring.middleware.params :as ring-params])
@@ -60,9 +61,11 @@
                          nil
                          (next leave-stack)))
 
-                (or response
-                    (log/error "Interceptors depleted without a response")
-                    response/bad-gateway))))
+                (d/let-flow [response response]
+                  (or response
+                      (do
+                        (log/error "Interceptors depleted without a response")
+                        response/bad-gateway))))))
           response/not-found)
         (catch Exception e
           (log/error e "Failed to process request" req)

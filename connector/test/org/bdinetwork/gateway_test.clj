@@ -6,6 +6,7 @@
   (:require [aleph.http :as http]
             [clojure.edn :as edn]
             [clojure.test :refer [deftest is testing use-fixtures]]
+            [manifold.deferred :as d]
             [nl.jomco.http-status-codes :as http-status]
             [nl.jomco.resources :refer [with-resources]]
             [org.bdinetwork.gateway :as sut]
@@ -21,19 +22,17 @@
                                                       :name  "test"
                                                       :doc   "test"
                                                       :enter (fn [_] {:response 'response}))]}]})]
-      (is (= 'response (gateway {:method :test})))))
+      (is (= 'response (d/unwrap (gateway {:method :test}))))))
 
   (testing "no response"
-    (let [gateway
-          (sut/make-gateway {:rules [{:match        {}
-                                      :interceptors []}]})]
-      (is (= r/bad-gateway (gateway {})))))
+    (let [gateway (sut/make-gateway {:rules [{:match        {}
+                                               :interceptors []}]})]
+      (is (= r/bad-gateway (d/unwrap (gateway {}))))))
 
   (testing "no match"
-    (let [gateway
-          (sut/make-gateway {:rules [{:match        {:method :test}
-                                      :interceptors []}]})]
-      (is (= r/not-found (gateway {:method :dummy})))))
+    (let [gateway (sut/make-gateway {:rules [{:match        {:method :test}
+                                              :interceptors []}]})]
+      (is (= r/not-found (d/unwrap (gateway {:method :dummy}))))))
 
   (testing "entering and leaving"
     (let [gateway
@@ -60,7 +59,7 @@
       (is (= {:primi-interceptor-leave   'a-pinch
               :secondi-interceptor-enter 'a-scoop
               :secondi-interceptor-leave 'a-scoop}
-             (gateway {:primi 'a-pinch, :secondi 'a-scoop})))))
+             (d/unwrap (gateway {:primi 'a-pinch, :secondi 'a-scoop}))))))
 
   (testing "error"
     (testing "catch all interceptor"
@@ -75,7 +74,7 @@
                                        :name  "throw"
                                        :enter (fn [_] (throw (Exception. "boom"))))]}]})]
         (is (= {:body "boom"}
-               (gateway {})))))
+               (d/unwrap (gateway {}))))))
 
     (testing "self catching"
       (let [gateway
@@ -87,7 +86,7 @@
                                        :error (fn [{{:keys [exception]} :error :as ctx}]
                                                 (assoc ctx :response {:body (.getMessage exception)})))]}]})]
         (is (= {:body "boom"}
-               (gateway {}))))))
+               (d/unwrap (gateway {})))))))
 
   (testing "vars"
     (let [var-keys ['global 'rule1 'rule2 'last-rule]
@@ -111,14 +110,17 @@
       (is (= {'global "vars"
               'rule1  "1st"}
              (-> (gateway {:example "1st"})
+                 (d/unwrap)
                  (select-keys var-keys))))
       (is (= {'global "vars"
               'rule2  "2nd"}
              (-> (gateway {:example "2nd"})
+                 (d/unwrap)
                  (select-keys var-keys))))
       (is (= {'global    "vars"
               'last-rule "other"}
              (-> (gateway {:example "other"})
+                 (d/unwrap)
                  (select-keys var-keys)))))))
 
 
