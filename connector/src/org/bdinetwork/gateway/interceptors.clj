@@ -26,14 +26,20 @@
 
 
 (def eval-env
-  {'assoc       assoc
-   'assoc-in    assoc-in
-   'get         get
-   'get-in      get-in
-   'merge       merge
-   'select-keys select-keys
-   'str         str
-   'update      update})
+  {'assoc          assoc
+   'assoc-in       assoc-in
+   'get            get
+   'get-in         get-in
+   'merge          merge
+   'select-keys    select-keys
+   'update         update
+   'update-in      update-in
+   'str            str
+   'str/replace    string/replace
+   'str/lower-case string/lower-case
+   'str/upper-case string/upper-case
+   '=              =
+   'not            not})
 
 (defn- mk-eval-env [{:keys [vars request response] :as ctx}]
   (cond-> (-> eval-env
@@ -42,6 +48,11 @@
     response
     (assoc 'response response)))
 
+(defn evaluate [expr ctx]
+  (eval/evaluate expr (mk-eval-env ctx)))
+
+
+
 (defn with-diagnostics [[[k v] & props] f]
   (if k
     (with-open [_ (MDC/putCloseable (str k) (pr-str v))]
@@ -49,17 +60,25 @@
     (f)))
 
 (defn- mk-response-logger
-  [props-form]
-  (fn logger-leave [{:keys [response ::logger-enter-ctm]
-        {:keys [request-method scheme server-name server-port uri query-string protocol]} ::logger-original-request
-        :as ctx}]
+  [props-expr]
+  (fn logger-leave
+    [{:keys              [response ::logger-enter-ctm]
+      :as                ctx
+      {:keys [request-method
+              scheme
+              server-name
+              server-port
+              uri
+              query-string
+              protocol]} ::logger-original-request}]
     (assoc ctx :response
-           (d/let-flow [{:keys [status]} response]
+           (d/let-flow [{:keys [status] :as response} response]
              (let [duration (- (System/currentTimeMillis) logger-enter-ctm)
-                   env      (assoc (mk-eval-env ctx)
-                                   'response (assoc response
-                                                    :duration duration))
-                   props    (some-> props-form (eval/evaluate env))]
+                   ctx      (-> ctx
+                                (assoc :response response)
+                                (assoc-in [:response :duration] duration))
+                   props    (some-> props-expr
+                                    (evaluate ctx))]
                (with-diagnostics (into [] props)
                  #(log/infof "%s %s://%s:%d%s%s %s / %d %s / %dms"
                              (string/upper-case (name request-method))
@@ -75,10 +94,10 @@
              response))))
 
 (defmethod ->interceptor 'logger
-  [[id props-form] & _]
-  {:pre [(or (nil? props-form)
-             (and (map? props-form)
-                  (not (some (complement string?) (keys props-form)))))]}
+  [[id props-expr] & _]
+  {:pre [(or (nil? props-expr)
+             (and (map? props-expr)
+                  (not (some (complement string?) (keys props-expr)))))]}
 
   (interceptor
    :name (str id)
@@ -89,16 +108,17 @@
             ::logger-original-request request
             ::logger-enter-ctm (System/currentTimeMillis)))
 
-   :leave (mk-response-logger props-form)
-   :error (mk-response-logger props-form)))
+   :leave (mk-response-logger props-expr)
+   :error (mk-response-logger props-expr)))
 
 (defmethod ->interceptor 'respond
-  [[id response] & _]
+  [[id response-expr] & _]
   (interceptor
-   :name (str id " " (pr-str response))
-   :doc  "Respond with given value."
+   :name (str id " " (pr-str response-expr))
+   :doc  "Respond with given value from evaluated expression."
    :enter
-   (fn [ctx] (assoc ctx :response response))))
+   (fn respond-enter [ctx]
+     (assoc ctx :response (evaluate response-expr ctx)))))
 
 (defmethod ->interceptor 'request/rewrite
   [[id url] & _]
@@ -123,29 +143,27 @@
            (assoc-in [:request :headers "host"] (str host ":" port)))))))
 
 (defmethod ->interceptor 'request/update
-  [[id & form] & _]
+  [[id & expr] & _]
   (interceptor
-   :name (str id " " (pr-str form))
+   :name (str id " " (pr-str expr))
    :doc  "Update the incoming request using eval on the request object."
    :enter
-   (fn  [ctx]
-     (let [form (list* (first form) 'request (drop 1 form))]
-       (assoc ctx :request
-              (eval/evaluate form (mk-eval-env ctx)))))))
+   (fn request-update-enter [ctx]
+     (let [expr (list* (first expr) 'request (drop 1 expr))]
+       (assoc ctx :request (evaluate expr ctx))))))
 
 (defmethod ->interceptor 'response/update
-  [[id & form] & _]
+  [[id & expr] & _]
   (interceptor
-   :name (str id " " (pr-str form))
+   :name (str id " " (pr-str expr))
    :doc  "Update the outgoing request using eval on the response object."
-   :args form
+   :args expr
    :leave
-   (fn response-eval-leave [{:keys [response] :as ctx}]
-     (let [form (list* (first form) 'response (drop 1 form))]
+   (fn response-update-leave [{:keys [response] :as ctx}]
+     (let [expr (list* (first expr) 'response (drop 1 expr))]
        (assoc ctx :response
               (d/let-flow [response response]
-                (eval/evaluate form (assoc (mk-eval-env ctx)
-                                           'response response))))))))
+                (evaluate expr (assoc ctx :response response))))))))
 
 (defmethod ->interceptor 'reverse-proxy/forwarded-headers
   [[id] & _]
@@ -193,18 +211,20 @@
                   response/service-unavailable))))))
 
 (defmethod ->interceptor 'oauth2/bearer-token
-  [[id {:keys [aud iss] :as requirements} auth-params] & _]
-  {:pre [aud iss (seq auth-params)]}
+  [[id requirements-expr auth-params-expr] & _]
   (interceptor
-   :name (str id " " iss)
+   :name (str id " " auth-params-expr)
    :doc "Require and validate OAUTH2 bearer token.  Responds with 401
    Unauthorized when the token is missing or invalid."
    :enter
-   (let [requirements (assoc requirements :jwks-cache-atom (atom {}))]
+   (let [jwks-cache-atom (atom {})]
      (fn oauth2-bearer-token-enter [{:keys [request] :as ctx}]
-       (let [auth-header      (get-in request [:headers "authorization"])
+       (let [requirements     (-> requirements-expr
+                                  (evaluate ctx)
+                                  (assoc :jwks-cache-atom jwks-cache-atom))
+             auth-header      (get-in request [:headers "authorization"])
              [_ bearer-token] (and auth-header (re-matches #"Bearer (\S+)" auth-header))
-             auth-params      (->> auth-params
+             auth-params      (->> (evaluate auth-params-expr ctx)
                                    (map (fn [[k v]] (str (name k) "=\"" v "\"")))
                                    (string/join ", " ))]
          (if (nil? bearer-token)

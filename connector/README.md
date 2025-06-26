@@ -75,29 +75,26 @@ All requests to some path starting with `/foo/bar` and capture the referer URL i
 
 #### Interceptors
 
-An interceptor operates on either the "entering" or "leaving" phase of an interaction, or both.  In the "entering" phase no response has been formulated yet.  When an interceptor does produce a response in the "entering" phase the already visited interceptors are executed in the reverse order; this is the "leaving" phase.
+An interceptor operates on either the "entering" or "leaving" / "error" phase of an interaction, or both.  In the "entering" phase no response has been formulated yet.  When an interceptor does produce a response or an exception is raise in the "entering" phase the already visited interceptors are executed in the reverse order; this is the "leaving" or in case of an exception "error" phase.
 
 This gateway comes with the following base interceptors:
 
-- `logger` logs incoming requests (method, url and protocol) and response (status and duration) at `info` level with a `trace-id` which is available for other interceptor in `ctx`.  Note: put this interception in the first position to get proper duration information.
+- `logger` logs incoming requests (method, url and protocol) and response (status and duration) at `info` level in the "leaving" / "error" phase.  Note: put this interception in the first position to get proper duration information.
 
    Example:
 
-   - `[f0cacc1a-d0d0-c0de-cafe-c0ffeeacac1a] GET http://localhost:8081/ HTTP/1.1`
-   - `[f0cacc1a-d0d0-c0de-cafe-c0ffeeacac1a] Status: 200 (duration 370ms)`
+   - `GET http://localhost:8081/ HTTP/1.1 / 200 OK / 370ms`
 
-  Passing an extra data structure will add MDC (Mapped Diagnostic Context) to the request log line with evaluated data.  Duration is available in the response object.
+  Passing an extra expression will add MDC (Mapped Diagnostic Context) to the request log line with evaluated data.  Duration is available in the response object.
 
   Example:
 
   - match: `:match {:query-params {"pageNr" page-nr}}`
   - interceptor: `[logger {"page-nr" (get-in request [:query-params "pageNr"])}]`
   - request: `http://localhost:8081/test?pageNr=31415`
-  - log lines:
-    - `[f0cacc1a-d0d0-c0de-cafe-c0ffeeacac1a] GET http://localhost:8081/ HTTP/1.1`
-    - `[f0cacc1a-d0d0-c0de-cafe-c0ffeeacac1a] Status: 200 (duration 370ms) page-nr=31415`
+  - log line: `GET http://localhost:8081/ HTTP/1.1 / 200 OK / 370ms page-nr=31415`
 
-- `response` produces a literal response in the "entering" phase.
+- `response` produces a literal response in the "entering" phase by evaluation the given expression.
 
   Example:
 
@@ -105,7 +102,7 @@ This gateway comes with the following base interceptors:
   [response {:status 200, :body "hello world"}]
   ```
 
-- `request/update` evaluates an update on the request in the "entering" phase, includes `request` in the evaluation environment.
+- `request/update` evaluates an update on the request in the "entering" phase, includes `request` and `ctx` in the evaluation environment.
 
   Example:
 
@@ -113,7 +110,7 @@ This gateway comes with the following base interceptors:
   [request/update assoc-in [:headers "x-request"] "updated"]
   ```
 
-- `response/update` evaluates an update on the response in the "leaving" phase, includes `request` and `response` in the evaluation environment.
+- `response/update` evaluates an update on the response in the "leaving" phase, includes `request`,  `response` and `ctx` in the evaluation environment.
 
   Example:
 
@@ -131,7 +128,7 @@ This gateway comes with the following base interceptors:
 
 - `reverse-proxy/forwarded-headers` record information for "x-forwarded" headers on the request in the "entering" phase on the `:proxy-request-overrides`.  Note: put this interceptor near the top to prevent overwriting request properties by other interceptors like `request/update`.
 
-- `reverse-proxy/proxy-request` produce a response by executing the (modified!) request (including the recorded "x-forwarded" headers information in `:proxy-request-overrides`) in the "entering" phase.
+- `reverse-proxy/proxy-request` produce a response by executing the (rewritten) request (including the recorded "x-forwarded" headers information in `:proxy-request-overrides`) in the "entering" phase.
 
 - `oauth2/bearer-token` require an OAuth 2.0 Bearer token with the given requirements and auth-params for a 401 Unauthorized response.  The absence of a token or it not complying to the requirements causes a 401 Unauthorized response.  At least the audience `:aud` and issuer `:iss` should be supplied to validate the token.  The JWKs are derived from the issuer openid-configuration (issuer is expected to be a URL and the well-known suffix is appended), if not available `jwks-uri` should be supplied.  The claims in the token will be available through var `oauth2/claims`.
 
@@ -146,6 +143,8 @@ This gateway comes with the following base interceptors:
   ```
 
   The claims for a valid access token will be place in `ctx` property `:oauth2/bearer-token-claims`.
+  
+  Both arguments to this intercepted are evaluated as an expression and includes `request` and `ctx` in the evaluation environment.
 
 - `bdi/authenticate` validate bearer token on incoming request, when none given responds with "401 Unauthorized", otherwise adds "X-Bdi-Client-Id" request header and vars for consumption downstream.  Note: put this interceptor *before* `logger` when logging the client-id.
 
@@ -160,7 +159,7 @@ This gateway comes with the following base interceptors:
    :interceptors [[bdi/connect-token]]}
   ```
 
-The "eval" interceptors support the following functions:
+The evaluation support the following functions:
 
 - `assoc`
 - `assoc-in`
@@ -170,6 +169,18 @@ The "eval" interceptors support the following functions:
 - `select-keys`
 - `str`
 - `update`
+- `update-in`
+- `str/replace`
+- `str/lower-case`
+- `str/upper-case`
+- `=`
+- `not`
+
+and special forms:
+
+- `if`
+- `or`
+- `and`
 
 and have access to the following vars:
 
