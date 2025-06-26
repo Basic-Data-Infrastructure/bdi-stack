@@ -11,8 +11,7 @@
             [org.bdinetwork.authentication.in-memory-association :refer [in-memory-association read-source]]
             [org.bdinetwork.authentication.remote-association :refer [remote-association]]
             [org.bdinetwork.connector.interceptors.audit-log :refer [audit-log-response]]
-            [org.bdinetwork.gateway.eval :as eval]
-            [org.bdinetwork.gateway.interceptors :refer [->interceptor interceptor mk-eval-env]]
+            [org.bdinetwork.gateway.interceptors :refer [->interceptor interceptor evaluate]]
             [org.bdinetwork.gateway.response :as response]
             [org.bdinetwork.ishare.client.validate-delegation :as validate-delegation]
             [ring.middleware.json :as ring-json]
@@ -104,7 +103,7 @@
 
 
 (defmethod  ->interceptor 'noodlebar/delegation
-  [[id base-request mask-exp] & _]
+  [[id base-request mask-expr] & _]
   (interceptor
    :name (str id " delegation-chain")
    :doc "Retrieves and evaluates delegation evidence for
@@ -113,7 +112,7 @@
    :enter
    (fn delegation-chain-enter
      [ctx]
-     (let [mask     (eval/evaluate mask-exp (mk-eval-env ctx))
+     (let [mask     (evaluate mask-expr ctx)
            evidence (validate-delegation/noodlebar-fetch-delegation-evidence base-request mask)
            issues   (validate-delegation/delegation-mask-evidence-mismatch mask evidence)
            ctx      (assoc ctx
