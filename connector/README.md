@@ -3,9 +3,35 @@ SPDX-FileCopyrightText: 2025 Jomco B.V.
 SPDX-FileCopyrightText: 2025 Topsector Logistiek
 SPDX-License-Identifier: AGPL-3.0-or-later
 -->
-# Connector
+# BDI Connector
 
-## Gateway
+The BDI Connector gateway is a standalone service to authenticate and
+authorize incoming HTTP requests. It can be configured to support
+multiple authentication and authorization schemes compatible with the
+[Basic Data Ifrastructure Trust Kit
+architecture](https://bdi.gitbook.io/public/readme/trust-kit/authentication/authentication).
+
+## Obtaining the BDI Connector
+
+The BDI Connector is distributed as a standalone Java jar file and as
+a docker image.
+
+The jar file can be downloaded from [the BDI Stack releases page on
+GitHub](https://github.com/Basic-Data-Infrastructure/bdi-stack/releases)
+and can be run on a Java 21 runtime:
+
+```
+java -jar bdi-connector-VERSION.jar
+```
+
+The docker image can be downloaded and run using docker or podman as
+`bdinetwork.azurecr.io/connector`:
+
+```
+docker run bdinetwork.azurecr.io/connector:VERSION
+```
+
+## Configuring the Gateway
 
 The gateway requires the following environment variables:
 
@@ -20,19 +46,6 @@ The gateway requires the following environment variables:
 - `PORT`
 
   The port number to listen on; defaults to `8081`.
-
-To start it, run:
-
-```sh
-make bdi-connector.jar
-java -jar bdi-connector.jar
-```
-
-or:
-
-```sh
-clojure -M:run
-```
 
 ### Rules
 
@@ -228,6 +241,16 @@ The following example is protected by a basic authentication username / password
 ### WebSockets?
 
 Not supported (yet).
+
+## Building the connector from source
+
+The connector can be build from source as part of the BDI-Stack, by running
+
+```sh
+make bdi-connector.jar
+```
+
+in the root of this repository. See also [the "Developing" section in the top-level README file](../README.md#developing).
 
 ## Running the test suite
 
