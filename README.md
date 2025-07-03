@@ -23,6 +23,8 @@ The BDI Stack contains standalone services and libraries.
   compatible Association Register
 - [authorization-register](./authorization-register) - An iSHARE / BDI
   compatible Authorization Register
+- [connector](./connector) - a standalone service for authenticating
+  and authorizing incoming HTTP requests.
 
 ## Libraries
 
