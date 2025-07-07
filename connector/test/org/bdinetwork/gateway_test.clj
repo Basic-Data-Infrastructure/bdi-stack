@@ -126,11 +126,14 @@
 
 
 (def rules
-  {:rules [{:match {:uri "/test"}
+  {:vars  {'backend-url backend-url
+           'passed      "passed"}
+   :rules [{:match        {:uri "/test"}
             :interceptors (mapv #(interceptors/->interceptor % {})
                                 [['reverse-proxy/forwarded-headers]
-                                 ['request/rewrite backend-url]
-                                 ['response/update 'update :headers 'assoc "x-gateway" "passed"]
+                                 ['request/rewrite 'backend-url]
+                                 ['request/update 'update :headers 'assoc "x-gateway-req" 'passed]
+                                 ['response/update 'update :headers 'assoc "x-gateway-res" 'passed]
                                  ['reverse-proxy/proxy-request]])}]})
 
 (def proxy-handler (sut/make-gateway rules))
@@ -158,6 +161,7 @@
         "request ok")
     (is (= "application/edn" (get headers "content-type"))
         "got edn")
+    (is (= "passed" (get headers "x-gateway-res")))
 
     (testing "what did the backend see"
       (let [{:keys [request-method uri headers]} (-> body (slurp) (edn/read-string))]
@@ -167,5 +171,6 @@
                 "content-length" "0"
                 "x-forwarded-proto" "http"
                 "x-forwarded-host"  (str proxy-host ":" proxy-port)
-                "x-forwarded-port"  (str proxy-port)}
+                "x-forwarded-port"  (str proxy-port)
+                "x-gateway-req"     "passed"}
                headers))))))

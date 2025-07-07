@@ -57,7 +57,7 @@ The rules file is parsed using [aero](https://github.com/juxt/aero) and is exten
 Top-level configuration:
 
 - `:vars` used to globally extend the evaluation context for the "eval" interceptors
-- `:rules` a list of rules to be evaluated top to bottom when handling a request
+- `:rules` a list of rules to be matched and evaluated top to bottom when handling a request
 
 A rule contains:
 
@@ -82,7 +82,7 @@ The following will match all `GET` requests:
 All requests to some path starting with `/foo/bar` and capture the referer URL in the `?referer` var.  Note that header names are case-insensitive, so a lowercase name is used to match.
 
 ```edn
-{:uri #rx "/foo/bar.*"
+{:uri     #rx "/foo/bar.*"
  :headers {"referer" ?referer}}
 ```
 
@@ -98,14 +98,14 @@ This gateway comes with the following base interceptors:
 
    - `GET http://localhost:8081/ HTTP/1.1 / 200 OK / 370ms`
 
-  Passing an extra expression will add MDC (Mapped Diagnostic Context) to the request log line with evaluated data.  Duration is available in the response object.
+  Passing an extra expression will add MDC (Mapped Diagnostic Context) to the request log line with evaluated data.
 
   Example:
 
   - match: `:match {:query-params {"pageNr" page-nr}}`
-  - interceptor: `[logger {"page-nr" (get-in request [:query-params "pageNr"])}]`
+  - interceptor: `[logger {"page-nr" page-nr, "uri" (:uri request)}]`
   - request: `http://localhost:8081/test?pageNr=31415`
-  - log line: `GET http://localhost:8081/ HTTP/1.1 / 200 OK / 370ms page-nr=31415`
+  - log line: `GET http://localhost:8081/ HTTP/1.1 / 200 OK / 370ms page-nr=31415, uri="/test"`
 
 - `response` produces a literal response in the "entering" phase by evaluation the given expression.
 
@@ -141,7 +141,15 @@ This gateway comes with the following base interceptors:
 
 - `reverse-proxy/forwarded-headers` record information for "x-forwarded" headers on the request in the "entering" phase on the `:proxy-request-overrides`.  Note: put this interceptor near the top to prevent overwriting request properties by other interceptors like `request/update`.
 
-- `reverse-proxy/proxy-request` produce a response by executing the (rewritten) request (including the recorded "x-forwarded" headers information in `:proxy-request-overrides`) in the "entering" phase.
+- `reverse-proxy/proxy-request` produce a response by executing the (rewritten) request (including the recorded "x-forwarded" headers information in `:proxy-request-overrides`) in the "entering" phase.  When the request fails to connect to the down stream server it responds with "503 Service Unavailable".
+
+  Here are example rules for a minimal reverse proxy to [httpbin](https://httpbin.org):
+
+  ```edn
+  [[reverse-proxy/forwarded-headers]
+   [request/rewrite "https://httpbin.org"]
+   [reverse-proxy/proxy-request]]
+  ```
 
 - `oauth2/bearer-token` require an OAuth 2.0 Bearer token with the given requirements and auth-params for a 401 Unauthorized response.  The absence of a token or it not complying to the requirements causes a 401 Unauthorized response.  At least the audience `:aud` and issuer `:iss` should be supplied to validate the token.  The JWKs are derived from the issuer openid-configuration (issuer is expected to be a URL and the well-known suffix is appended), if not available `jwks-uri` should be supplied.  The claims in the token will be available through var `oauth2/claims`.
 
@@ -163,7 +171,7 @@ This gateway comes with the following base interceptors:
 
 - `bdi/deauthenticate` ensure the "X-Bdi-Client-Id" request header is **not** already set on a request for public endpoints which do not need authentication.  This prevents clients from fooling the backend into being authenticated.  **Always use this on public routes when authentication is optional downstream.**
 
-- `bdi/connect-token` provide a access token (M2M) endpoint to provide access tokens.  Note: this interceptor does no matching, so it needs to be added to a separate rule with a match like: `{:uri "/connect/token", :request-method :post}`.
+- `bdi/connect-token` provide a access token endpoint to provide access tokens for machine-to-machine (M2M) operations.  Note: this interceptor does no matching, so it needs to be added to a separate rule with a match like: `{:uri "/connect/token", :request-method :post}`.
 
   Example:
 
@@ -172,7 +180,9 @@ This gateway comes with the following base interceptors:
    :interceptors [[bdi/connect-token]]}
   ```
 
-The evaluation support the following functions:
+## Evaluation
+
+The arguments to interceptors will be evaluated before execution and can thus rely on vars or values put on `ctx` by earlier steps.  The evaluation support the following functions:
 
 - `assoc`
 - `assoc-in`
@@ -203,13 +213,11 @@ and have access to the following vars:
 - and all `vars` defined globally, on a rule
 - and captured by `match`.
 
-Here are example rules for a minimal reverse proxy to [httpbin](https://httpbin.org):
+The `response` is only available when it's not an *async* object like the result of the `reverse-proxy/proxy-request` interceptor.
 
-```edn
-[[reverse-proxy/forwarded-headers]
- [request/rewrite "https://httpbin.org"]
- [reverse-proxy/proxy-request]]
-```
+### Error handling
+
+The gateway will respond with "502 Bad Gateway" when an interceptor throws an exception.  When this happens the interceptor "error" phase handlers will be executed allowing for customized responses.
 
 #### Example
 
@@ -257,7 +265,7 @@ in the root of this repository. See also [the "Developing" section in the top-le
 To run the test suite, run:
 
 ```sh
-clojure -M:test
+make test
 ```
 
 On systems derived from BSD (like MacOS), the tests may timeout waiting to bind to `127.0.0.2`.  If that's the case, set up a loopback device on that address using something like (tested on OpenBSD and MacOS):
