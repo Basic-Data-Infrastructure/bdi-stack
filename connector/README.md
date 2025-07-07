@@ -57,7 +57,7 @@ The rules file is parsed using [aero](https://github.com/juxt/aero) and is exten
 Top-level configuration:
 
 - `:vars` used to globally extend the evaluation context for the "eval" interceptors
-- `:rules` a list of rules to be evaluated top to bottom when handling a request
+- `:rules` a list of rules to be matched and evaluated top to bottom when handling a request
 
 A rule contains:
 
@@ -82,7 +82,7 @@ The following will match all `GET` requests:
 All requests to some path starting with `/foo/bar` and capture the referer URL in the `?referer` var.  Note that header names are case-insensitive, so a lowercase name is used to match.
 
 ```edn
-{:uri #rx "/foo/bar.*"
+{:uri     #rx "/foo/bar.*"
  :headers {"referer" ?referer}}
 ```
 
@@ -98,14 +98,14 @@ This gateway comes with the following base interceptors:
 
    - `GET http://localhost:8081/ HTTP/1.1 / 200 OK / 370ms`
 
-  Passing an extra expression will add MDC (Mapped Diagnostic Context) to the request log line with evaluated data.  Duration is available in the response object.
+  Passing an extra expression will add MDC (Mapped Diagnostic Context) to the request log line with evaluated data.
 
   Example:
 
   - match: `:match {:query-params {"pageNr" page-nr}}`
-  - interceptor: `[logger {"page-nr" (get-in request [:query-params "pageNr"])}]`
+  - interceptor: `[logger {"page-nr" page-nr, "uri" (:uri request)}]`
   - request: `http://localhost:8081/test?pageNr=31415`
-  - log line: `GET http://localhost:8081/ HTTP/1.1 / 200 OK / 370ms page-nr=31415`
+  - log line: `GET http://localhost:8081/ HTTP/1.1 / 200 OK / 370ms page-nr=31415, uri="/test"`
 
 - `response` produces a literal response in the "entering" phase by evaluation the given expression.
 
@@ -143,6 +143,14 @@ This gateway comes with the following base interceptors:
 
 - `reverse-proxy/proxy-request` produce a response by executing the (rewritten) request (including the recorded "x-forwarded" headers information in `:proxy-request-overrides`) in the "entering" phase.
 
+  Here are example rules for a minimal reverse proxy to [httpbin](https://httpbin.org):
+
+  ```edn
+  [[reverse-proxy/forwarded-headers]
+   [request/rewrite "https://httpbin.org"]
+   [reverse-proxy/proxy-request]]
+  ```
+
 - `oauth2/bearer-token` require an OAuth 2.0 Bearer token with the given requirements and auth-params for a 401 Unauthorized response.  The absence of a token or it not complying to the requirements causes a 401 Unauthorized response.  At least the audience `:aud` and issuer `:iss` should be supplied to validate the token.  The JWKs are derived from the issuer openid-configuration (issuer is expected to be a URL and the well-known suffix is appended), if not available `jwks-uri` should be supplied.  The claims in the token will be available through var `oauth2/claims`.
 
   The following example expects a token from example.com and responds with "Hello subject" where "subject" is the "sub" of the token.
@@ -172,7 +180,9 @@ This gateway comes with the following base interceptors:
    :interceptors [[bdi/connect-token]]}
   ```
 
-The evaluation support the following functions:
+## Evaluation
+
+The arguments to interceptors will be evaluated before execution and can thus rely on vars or values put on `ctx` by earlier steps.  The evaluation support the following functions:
 
 - `assoc`
 - `assoc-in`
@@ -203,13 +213,7 @@ and have access to the following vars:
 - and all `vars` defined globally, on a rule
 - and captured by `match`.
 
-Here are example rules for a minimal reverse proxy to [httpbin](https://httpbin.org):
-
-```edn
-[[reverse-proxy/forwarded-headers]
- [request/rewrite "https://httpbin.org"]
- [reverse-proxy/proxy-request]]
-```
+The `response` is only available when it's not an *async* object like the result of the `reverse-proxy/proxy-request` interceptor.
 
 #### Example
 

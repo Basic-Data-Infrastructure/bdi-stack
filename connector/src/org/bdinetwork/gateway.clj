@@ -5,6 +5,7 @@
 (ns org.bdinetwork.gateway
   (:require [clojure.tools.logging :as log]
             [manifold.deferred :as d]
+            [org.bdinetwork.gateway.interceptors :as interceptors]
             [org.bdinetwork.gateway.matcher :as matcher]
             [org.bdinetwork.gateway.response :as response]
             [ring.middleware.params :as ring-params])
@@ -21,10 +22,15 @@
   (let [info {:phase phase, :interceptor (:name interceptor)}]
     (try
       (log/debug "Executing" info)
-      ((get interceptor phase) ctx)
+      (interceptors/exec phase interceptor ctx)
       (catch Exception e
         (log/error e "Exception during execution of interceptor" info)
-        (assoc ctx :error (assoc info :exception e))))))
+        (assoc ctx
+               :error (assoc info :exception e)
+
+               ;; It's up some error handling interceptor to create a
+               ;; new response.
+               :response response/bad-gateway)))))
 
 (def ^:private ^Charset utf-8 (Charset/forName "UTF-8"))
 
@@ -35,7 +41,7 @@
         (if-let [{:keys [interceptors] :as rule} (match-rule rules req)]
           (loop [{:keys [response error] :as ctx} {:trace-id (UUID/randomUUID)
                                                    :request  req
-                                                   :vars (merge vars (:vars rule))}
+                                                   :vars     (merge vars (:vars rule))}
                  enter-stack                      interceptors
                  leave-stack                      []]
             (let [interceptor (if (or response error)
