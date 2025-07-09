@@ -108,8 +108,8 @@
    :name (str id " delegation-chain")
    :args [base-request-expr mask-expr]
    :doc "Retrieves and evaluates delegation evidence for
-   request. Responds with 401 Unauthorized when the evidence is not
-   found or does not match the delegation mask."
+   request. Responds with 403 Forbidden when the evidence is not found
+   or does not match the delegation mask."
    :enter
    (fn delegation-chain-enter
      [ctx base-request mask]
@@ -121,6 +121,6 @@
                            :delegation-issues issues)]
        (cond-> ctx
          issues
-         (assoc :response (-> response/unauthorized
+         (assoc :response (-> response/forbidden
                               (assoc-in [:headers "content-type"] "application/json")
                               (assoc :body (json/json-str {:delegation-issues issues})))))))))
