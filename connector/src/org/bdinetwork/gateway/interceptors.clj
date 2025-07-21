@@ -45,6 +45,7 @@
   (cond-> (-> eval-env
               (merge vars)
               (assoc 'ctx ctx, 'request request))
+    ;; TODO: Response should never be deferrable in this context!
     (and response (not (d/deferrable? response)))
     (assoc 'response response)))
 
@@ -81,22 +82,21 @@
             query-string
             protocol]} ::logger-original-request}
    props]
-  (assoc ctx :response
-         (d/let-flow [{:keys [status] :as response} response]
-           (let [duration (- (System/currentTimeMillis) logger-enter-ctm)]
-             (with-diagnostics (into [] props)
-               #(log/infof "%s %s://%s:%d%s%s %s / %d %s / %dms"
-                           (string/upper-case (name request-method))
-                           (name scheme)
-                           server-name
-                           server-port
-                           uri
-                           (if query-string (str "?" query-string) "")
-                           protocol
-                           status
-                           (http-status/->description status)
-                           duration)))
-           response)))
+  (let [status (:status response)
+        duration (- (System/currentTimeMillis) logger-enter-ctm)]
+    (with-diagnostics (into [] props)
+      #(log/infof "%s %s://%s:%d%s%s %s / %d %s / %dms"
+                  (string/upper-case (name request-method))
+                  (name scheme)
+                  server-name
+                  server-port
+                  uri
+                  (if query-string (str "?" query-string) "")
+                  protocol
+                  status
+                  (http-status/->description status)
+                  duration)))
+  ctx)
 
 (def ^:private logger-error logger-leave)
 
@@ -169,10 +169,8 @@
    :doc  "Update the outgoing request using eval on the response object."
    :args expr
    :leave
-   (fn response-update-leave [{:keys [response] :as ctx} & expr]
-     (assoc ctx :response
-            (d/let-flow [response response]
-              (apply (first expr) response (drop 1 expr)))))))
+   (fn response-update-leave [ctx & expr]
+     (apply update ctx :response expr))))
 
 (defmethod ->interceptor 'reverse-proxy/forwarded-headers
   [[id] & _]
@@ -210,14 +208,17 @@
    :enter
    (fn proxy-request-enter
      [{:keys [request proxy-request-overrides trace-id] :as ctx}]
-     (assoc ctx :response
-            (d/catch
-                (reverse-proxy/proxy-request (merge-with merge request proxy-request-overrides))
-                (fn proxy-handler-catch [e]
-                  (log/error e (str "Failed to launch request"
-                                    (when trace-id (str " [" trace-id "]")))
-                             request)
-                  response/service-unavailable))))))
+     ;; reverse-proxy/proxy-request returns a derreable response
+     ;; but interceptors return a deferrable ctx instead
+     (d/catch
+         (d/chain (merge-with merge request proxy-request-overrides)
+                  reverse-proxy/proxy-request
+                  #(assoc ctx :response %))
+         (fn proxy-handler-catch [e]
+           (log/error e (str "Failed to launch request"
+                             (when trace-id (str " [" trace-id "]")))
+                      request)
+           (assoc ctx :response response/service-unavailable))))))
 
 (defmethod ->interceptor 'oauth2/bearer-token
   [[id requirements-expr auth-params-expr] & _]

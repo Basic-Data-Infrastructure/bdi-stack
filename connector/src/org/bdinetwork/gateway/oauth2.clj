@@ -38,6 +38,9 @@
         (String. "UTF-8")
         (json/read-str :key-fn keyword))))
 
+;; TODO: this can bite with deferred
+;; TODO: if multiple requests for the same `ks` are executed, should
+;; we drop them and wait on the first request?
 (defn- with-cache-atom [cache-atom ks miss-fn]
   (let [{:keys [exp payload]} (-> cache-atom (deref) (get-in ks))]
     (if (and exp (> exp (.getEpochSecond (Instant/now))))
@@ -59,6 +62,7 @@
             _   (log/trace "Fetching openid configuration" {:url url})
             res (-> url
                     (http/get)
+                    ;; TODO: Replace with d/chain / let-flow
                     (deref)
                     (guard-status-ok))
             exp (cache-control-extract-exp res)
