@@ -76,12 +76,12 @@
                   :other "other"}
           token  (mk-token claims)]
       (is (= "other"
-             (-> (sut/unsign-access-token token opts)
+             (-> @(sut/unsign-access-token token opts)
                  :other))
           "correctly decoded")
 
       (is (= "other"
-             (-> (sut/unsign-access-token token (merge opts claims))
+             (-> @(sut/unsign-access-token token (merge opts claims))
                  :other))
           "correctly decoded and claims verified")
 
@@ -89,21 +89,22 @@
            Exception
            #"Not an access token \(JWT\)"
            (-> (mk-token claims {:typ "JWT"})
-               (sut/unsign-access-token opts))))
+               (sut/unsign-access-token opts)
+               deref)))
       (is (thrown-with-msg?
            Exception
            #"Audience does not match BAD"
-           (sut/unsign-access-token token (assoc opts :aud "BAD")))
+           @(sut/unsign-access-token token (assoc opts :aud "BAD")))
           "bad audience handled by buddy.sign.jwt/unsign")
       (is (thrown-with-msg?
            Exception
            #"Issuer does not match \(.*\)"
-           (sut/unsign-access-token token (assoc opts :iss "BAD"))))
+           @(sut/unsign-access-token token (assoc opts :iss "BAD"))))
 
       (is (thrown-with-msg?
            Exception
            #"Claim other does not match \(other\)"
-           (sut/unsign-access-token token (assoc opts :other "BAD")))
+           @(sut/unsign-access-token token (assoc opts :other "BAD")))
           "non standard claims handled")
 
       (is (thrown-with-msg?
@@ -124,11 +125,13 @@
            Exception
            #"Can not determine maximum token age \(10\)"
            (-> (mk-token (dissoc claims :iat))
-               (sut/unsign-access-token (assoc opts :max-age 10)))))
+               (sut/unsign-access-token (assoc opts :max-age 10))
+               deref)))
 
       (testing "with custom jwks-uri"
         (is (= "other"
                (-> (mk-token (assoc claims :iss "dummy"))
                    (sut/unsign-access-token (assoc opts :jwks-uri jwks-uri))
+                   deref
                    :other))
             "correctly decoded")))))

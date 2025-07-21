@@ -10,6 +10,7 @@
             [clojure.set :as set]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
+            [manifold.deferred :as d]
             [nl.jomco.http-status-codes :as http-status])
   (:import java.time.Instant
            java.util.Base64))
@@ -38,38 +39,47 @@
         (String. "UTF-8")
         (json/read-str :key-fn keyword))))
 
-;; TODO: this can bite with deferred
-;; TODO: if multiple requests for the same `ks` are executed, should
-;; we drop them and wait on the first request?
-(defn- with-cache-atom [cache-atom ks miss-fn]
-  (let [{:keys [exp payload]} (-> cache-atom (deref) (get-in ks))]
-    (if (and exp (> exp (.getEpochSecond (Instant/now))))
-      (do
-        (log/trace "cache hit" ks)
-        payload)
-      (do
-        (log/trace "cache miss" ks)
-        (let [{:keys [payload] :as slot} (miss-fn)]
-          (swap! cache-atom assoc-in ks slot)
-          payload)))))
+
+(defn- now
+  []
+  (.getEpochSecond (Instant/now)))
+
+(defn- deferred-cached
+  "Cache deferred function.
+
+  `miss-fn` returns a potentially deferred slot containing :exp
+  and :payload, which is cached in `cache-atom`.
+
+  Returns a deferred payload"
+  [cache-atom ks miss-fn]
+  {:pre [cache-atom]}
+  (d/let-flow [{:keys [payload]} (-> (swap! cache-atom update-in ks
+                                            (fn [slot]
+                                              (if slot
+                                                (d/let-flow [{:keys [exp]} slot]
+                                                  (if (< (now) exp)
+                                                    slot
+                                                    (miss-fn)))
+                                                (miss-fn))))
+                                     (get-in (conj ks)))]
+    payload))
 
 (defn- fetch-openid-configuration
   "Fetch openid-configuration for `iss`."
-  [iss {:keys [jwks-cache-atom]}]
-  (with-cache-atom jwks-cache-atom [:openid-configution iss]
+  [iss {:keys [jwks-cache-atom] :as _opts}]
+  {:pre [jwks-cache-atom]}
+  (deferred-cached jwks-cache-atom [:openid-configuration iss]
     (fn []
-      (let [url (str iss (if (.endsWith iss "/") "" "/") ".well-known/openid-configuration")
-            _   (log/trace "Fetching openid configuration" {:url url})
-            res (-> url
-                    (http/get)
-                    ;; TODO: Replace with d/chain / let-flow
-                    (deref)
-                    (guard-status-ok))
-            exp (cache-control-extract-exp res)
-            uri (->> (-> res
-                         :body
-                         (slurp)
-                         (json/read-str :key-fn keyword)))]
+      (d/let-flow [url (str iss (if (.endsWith iss "/") "" "/") ".well-known/openid-configuration")
+                   _   (log/trace "Fetching openid configuration" {:url url})
+                   res (d/chain url
+                                http/get
+                                guard-status-ok)
+                   exp (cache-control-extract-exp res)
+                   uri (->> (-> res
+                                :body
+                                (slurp)
+                                (json/read-str :key-fn keyword)))]
         {:exp exp, :payload uri}))))
 
 (defn- fetch-jwks-uri
@@ -83,32 +93,32 @@
     (when (and iss (not= iss token-iss))
       (throw (ex-info (str "Issuer does not match (" token-iss ")")
                       {:expected iss, :got token-iss})))
-    (-> token-iss
-        (fetch-openid-configuration opts)
-        :jwks_uri)))
+    (d/chain token-iss
+             #(fetch-openid-configuration % opts)
+             :jwks_uri)))
 
 (defn- fetch-signing-jwks
   "Fetch and parse signing jwks for `:jwks-uri` or derive from `:iss`."
   [token {:keys [jwks-uri jwks-cache-atom] :as opts}]
-  (let [jwks-uri (or jwks-uri (fetch-jwks-uri token opts))]
-    (with-cache-atom jwks-cache-atom [:jwks jwks-uri]
+  {:pre [jwks-cache-atom]}
+  (d/let-flow [jwks-uri (or jwks-uri (fetch-jwks-uri token opts))]
+    (deferred-cached jwks-cache-atom [:jwks jwks-uri]
       (fn []
-        (let [res  (-> jwks-uri
-                       (http/get)
-                       (deref)
-                       (guard-status-ok))
-              exp  (cache-control-extract-exp res)
-              jwks (->> (-> res
-                            :body
-                            (slurp)
-                            (json/read-str :key-fn keyword)
-                            :keys)
-                        (filter (fn [{:keys [use]}]
-                                  (or (nil? use) (= "sig" use))))
-                        (map (fn [{:keys [kid alg] :as k}]
-                               [kid {:alg        alg
-                                     :public-key (keys/jwk->public-key k)}]))
-                        (into {}))]
+        (d/let-flow [res  (d/chain jwks-uri
+                                   http/get
+                                   guard-status-ok)
+                     exp  (cache-control-extract-exp res)
+                     jwks (->> (-> res
+                                   :body
+                                   (slurp)
+                                   (json/read-str :key-fn keyword)
+                                   :keys)
+                               (filter (fn [{:keys [use]}]
+                                         (or (nil? use) (= "sig" use))))
+                               (map (fn [{:keys [kid alg] :as k}]
+                                      [kid {:alg        alg
+                                            :public-key (keys/jwk->public-key k)}]))
+                               (into {}))]
           {:exp exp, :payload jwks})))))
 
 (def ^:private
@@ -135,8 +145,8 @@
       (throw (ex-info (str "Unsupported signing algorithm (" (name alg) ")")
                       {:type :validation :cause :alg})))
 
-    (let [jwks (fetch-signing-jwks token opts)
-          jwk  (-> jwks (get kid))]
+    (d/let-flow [jwks (fetch-signing-jwks token opts)
+                 jwk  (-> jwks (get kid))]
       (when-not (= "at+jwt" typ)
         (throw (ex-info (str "Not an access token (" typ ")")
                         {:type :validation :cause :typ})))
