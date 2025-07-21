@@ -23,7 +23,15 @@
 
                       ;; connector tests
                       ring/ring {:mvn/version "1.14.2"}}
-         :main-opts ["-m" "kaocha.runner"]}
+         :main-opts ["-m" "kaocha.runner"]
+         :extra-paths ["test-resources"
+                       "clj-ishare-jwt/test"
+                       "clj-ishare-client/test"
+                       "clj-ring-middleware/test"
+                       "authorization-register/test"
+                       "authentication-service/test"
+                       "association-register/test"
+                       "connector/test"]}
 
   :lint {:extra-deps {clj-kondo/clj-kondo {:mvn/version "RELEASE"}}
          :main-opts  ["-m" "clj-kondo.main"]}
