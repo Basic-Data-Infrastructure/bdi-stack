@@ -44,7 +44,10 @@
 
       ;; no magic
       (assoc :throw-exceptions? false
-             :follow-redirects? false)
+             :follow-redirects? false
+             ;; don't process the response body, just pass it along as
+             ;; quickly as possible
+             :raw-stream? true)
 
       ;; a specialized connection pool
       (assoc :pool connection-pool)
