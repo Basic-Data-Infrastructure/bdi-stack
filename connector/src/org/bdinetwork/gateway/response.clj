@@ -5,32 +5,36 @@
 (ns org.bdinetwork.gateway.response
   (:require [nl.jomco.http-status-codes :as http-status]))
 
-(def not-found
-  {:status  http-status/not-found
+(defn response
+  [status body]
+  {:status status
    :headers {"content-type" "text/plain"}
-   :body    "Not Found"})
+   :body body})
+
+(def not-found
+  (response http-status/not-found
+            "Not Found"))
 
 (def bad-gateway
-  {:status  http-status/bad-gateway
-   :headers {"content-type" "text/plain"}
-   :body    "Bad Gateway"})
+  (response http-status/bad-gateway
+            "Bad Gateway"))
 
 (def bad-request
-  {:status  http-status/bad-request
-   :headers {"content-type" "text/plain"}
-   :body    "Bad Request"})
+  (response http-status/bad-request
+            "Bad Request"))
 
 (def forbidden
-  {:status  http-status/forbidden
-   :headers {"content-type" "text/plain"}
-   :body    "Forbidden"})
+  (response http-status/forbidden
+            "Forbidden"))
 
 (def service-unavailable
-  {:status  http-status/service-unavailable
-   :headers {"content-type" "text/plain"}
-   :body    "Service Unavailable"})
+  (response http-status/service-unavailable
+            "Service Unavailable"))
 
 (def unauthorized
-  {:status  http-status/unauthorized
-   :headers {"content-type" "text/plain"}
-   :body    "Unauthorized"})
+  (response http-status/unauthorized
+            "Unauthorized"))
+
+(def ok
+  (response http-status/ok
+            "Ok"))

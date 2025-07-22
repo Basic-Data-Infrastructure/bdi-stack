@@ -23,6 +23,28 @@
    :interceptors [[logger]
                   [bdi/connect-token]
                   [response/update update :headers assoc "x-bdi-connector" "passed"]]}
+
+  ;; test endpoints
+  {:match {:uri "/test/echo"}
+   :interceptors [[logger]
+                  [test/echo]]}
+  
+  {:match {:uri "/test/drip"}
+   :interceptors [[logger]
+                  [test/drip]]}
+
+  ;; proxy the incoming request on /test/loopback back to the gateway
+  ;;
+  ;; i.e. curl -v -N 'http://localhost:8081/test/loopback?uri=/test/drip&interval=0.4'
+  {:match {:uri "/test/loopback"
+           :query-params {"uri" uri}}
+   :interceptors [[request/rewrite "http://localhost:8081"]
+                  [request/update assoc :uri uri]
+                  [request/update update :request-params dissoc "uri"]
+                  [request/update update :params dissoc "uri"]
+                  [reverse-proxy/proxy-request]]}
+
+  ;; anthing else that can be authenticated is proxied
   {:match        {:request-method request-method
                   :uri            uri}
    :interceptors [[bdi/authenticate]

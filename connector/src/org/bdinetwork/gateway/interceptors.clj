@@ -3,9 +3,11 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.gateway.interceptors
-  (:require [clojure.string :as string]
+  (:require [clojure.core.async :as async]
+            [clojure.string :as string]
             [clojure.tools.logging :as log]
             [manifold.deferred :as d]
+            [manifold.stream :as s]
             [nl.jomco.http-status-codes :as http-status]
             [org.bdinetwork.gateway.eval :as eval]
             [org.bdinetwork.gateway.oauth2 :as oauth2]
@@ -28,6 +30,7 @@
 (def eval-env
   {'assoc          assoc
    'assoc-in       assoc-in
+   'dissoc         dissoc
    'get            get
    'get-in         get-in
    'merge          merge
@@ -45,6 +48,7 @@
   (cond-> (-> eval-env
               (merge vars)
               (assoc 'ctx ctx, 'request request))
+    ;; TODO: Response should never be deferrable in this context!
     (and response (not (d/deferrable? response)))
     (assoc 'response response)))
 
@@ -81,22 +85,21 @@
             query-string
             protocol]} ::logger-original-request}
    props]
-  (assoc ctx :response
-         (d/let-flow [{:keys [status] :as response} response]
-           (let [duration (- (System/currentTimeMillis) logger-enter-ctm)]
-             (with-diagnostics (into [] props)
-               #(log/infof "%s %s://%s:%d%s%s %s / %d %s / %dms"
-                           (string/upper-case (name request-method))
-                           (name scheme)
-                           server-name
-                           server-port
-                           uri
-                           (if query-string (str "?" query-string) "")
-                           protocol
-                           status
-                           (http-status/->description status)
-                           duration)))
-           response)))
+  (let [status (:status response)
+        duration (- (System/currentTimeMillis) logger-enter-ctm)]
+    (with-diagnostics (into [] props)
+      #(log/infof "%s %s://%s:%d%s%s %s / %d %s / %dms"
+                  (string/upper-case (name request-method))
+                  (name scheme)
+                  server-name
+                  server-port
+                  uri
+                  (if query-string (str "?" query-string) "")
+                  protocol
+                  status
+                  (http-status/->description status)
+                  duration)))
+  ctx)
 
 (def ^:private logger-error logger-leave)
 
@@ -169,10 +172,8 @@
    :doc  "Update the outgoing request using eval on the response object."
    :args expr
    :leave
-   (fn response-update-leave [{:keys [response] :as ctx} & expr]
-     (assoc ctx :response
-            (d/let-flow [response response]
-              (apply (first expr) response (drop 1 expr)))))))
+   (fn response-update-leave [ctx & expr]
+     (apply update ctx :response expr))))
 
 (defmethod ->interceptor 'reverse-proxy/forwarded-headers
   [[id] & _]
@@ -210,14 +211,17 @@
    :enter
    (fn proxy-request-enter
      [{:keys [request proxy-request-overrides trace-id] :as ctx}]
-     (assoc ctx :response
-            (d/catch
-                (reverse-proxy/proxy-request (merge-with merge request proxy-request-overrides))
-                (fn proxy-handler-catch [e]
-                  (log/error e (str "Failed to launch request"
-                                    (when trace-id (str " [" trace-id "]")))
-                             request)
-                  response/service-unavailable))))))
+     ;; reverse-proxy/proxy-request returns a derreable response
+     ;; but interceptors return a deferrable ctx instead
+     (d/catch
+         (d/chain (merge-with merge request proxy-request-overrides)
+                  reverse-proxy/proxy-request
+                  #(assoc ctx :response %))
+         (fn proxy-handler-catch [e]
+           (log/error e (str "Failed to launch request"
+                             (when trace-id (str " [" trace-id "]")))
+                      request)
+           (assoc ctx :response response/service-unavailable))))))
 
 (defmethod ->interceptor 'oauth2/bearer-token
   [[id requirements-expr auth-params-expr] & _]
@@ -253,3 +257,64 @@
                                            ", error=\"invalid_token\""
                                            ", error_description=\"" msg "\""))
                             (assoc :body msg))))))))))))
+
+(defn echo
+  [{{{:strs [delay] :or {delay "0"}} :params :as request} :request :as ctx}]
+  (d/future
+    (Thread/sleep (* 1000 (parse-long delay)))
+    (assoc ctx :response (-> response/ok
+                             (assoc :body (prn-str request))))))
+
+(defmethod ->interceptor 'test/echo
+  [[id] & _]
+  (interceptor :name id
+               :args []
+               :doc "Return request as edn response"
+               :enter #'echo))
+
+(def ^:private single-byte-array
+  (byte-array [(int \.)]))
+
+(defn- single-byte-buffer
+  "Return a java nio ByteBuffer containing a single byte."
+  []
+  (java.nio.ByteBuffer/wrap single-byte-array))
+
+(defn drip-stream
+  "Create a manifold stream that slowly drips data.
+
+  `count` specifies the number of bytes to generare.
+  `interval` is the number of seconds between generated bytes."
+  [count interval]
+  (let [s (s/stream 1)]
+    (async/go
+      (loop [count count]
+        (async/<! (async/timeout (Math/round (* 1000.0 interval))))
+        (cond
+          (not (s/put! s (single-byte-buffer)))
+          ;; failed to put byte (buffer full), retry
+          (recur count)
+
+          (pos? count)
+          (recur (dec count))
+
+          :else
+          (s/close! s))))
+    s))
+
+(defn drip
+  [{{{:strs [delay count interval] :or {delay "0" interval "2" count "10"}} :params} :request :as ctx}]
+  (let [delay (parse-double delay)
+        count (parse-long count)
+        interval (parse-double interval)]
+    (d/future
+      (Thread/sleep (Math/round (* 1000 delay)))
+      (assoc ctx :response (-> response/ok
+                               (assoc :body (drip-stream count interval)))))))
+
+(defmethod ->interceptor 'test/drip
+  [[id] & _]
+  (interceptor :name id
+               :args []
+               :doc "Slowly stream a response"
+               :enter #'drip))

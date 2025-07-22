@@ -4,6 +4,9 @@
 {:deps {org.bdinetwork/authentication  {:local/root "../clj-authentication"}
         org.bdinetwork/service-commons {:local/root "../service-commons"}
 
+        ;; drip responses
+        org.clojure/core.async {:mvn/version "1.8.741"}
+
         org.clojure/tools.logging      {:mvn/version "1.3.0"}
         ch.qos.logback/logback-classic {:mvn/version "1.5.18"}
 

@@ -23,6 +23,7 @@
     (try
       (log/debug "Executing" info)
       (interceptors/exec phase interceptor ctx)
+      ;; TODO: interceptor can return deferred!
       (catch Exception e
         (log/error e "Exception during execution of interceptor" info)
         (assoc ctx
@@ -39,39 +40,39 @@
     (let [req (ring-params/assoc-query-params req utf-8)]
       (try
         (if-let [{:keys [interceptors] :as rule} (match-rule rules req)]
-          (loop [{:keys [response error] :as ctx} {:trace-id (UUID/randomUUID)
-                                                   :request  req
-                                                   :vars     (merge vars (:vars rule))}
-                 enter-stack                      interceptors
-                 leave-stack                      []]
-            (let [interceptor (if (or response error)
-                                (first leave-stack)
-                                (first enter-stack))]
-              (if interceptor
+          (d/loop [ctx {:trace-id (UUID/randomUUID)
+                        :request  req
+                        :vars     (merge vars (:vars rule))}
+                   enter-stack interceptors
+                   leave-stack []]
+            (d/let-flow [{:keys [response error] :as ctx} ctx]
+              (if-let [interceptor (if (or response error)
+                                     (first leave-stack)
+                                     (first enter-stack))]
                 (cond
                   ;; down the list `enter` handlers
                   (not (or response error))
-                  (recur (exec interceptor :enter ctx)
-                         (next enter-stack)
-                         (into [interceptor] leave-stack))
+                  (d/recur (exec interceptor :enter ctx)
+                           (next enter-stack)
+                           (into [interceptor] leave-stack))
 
                   ;; back up the list `leave` handlers
                   (not error)
-                  (recur (exec interceptor :leave ctx)
-                         nil
-                         (next leave-stack))
+                  (d/recur (exec interceptor :leave ctx)
+                           nil
+                           (next leave-stack))
 
+                  ;; TODO: Why is there no `error` stack?
                   ;; back up the list `error` handlers
                   error
-                  (recur (exec interceptor :error ctx)
-                         nil
-                         (next leave-stack)))
+                  (d/recur (exec interceptor :error ctx)
+                           nil
+                           (next leave-stack)))
 
-                (d/let-flow [response response]
-                  (or response
-                      (do
-                        (log/error "Interceptors depleted without a response")
-                        response/bad-gateway))))))
+                (or response
+                    (do
+                      (log/error "Interceptors depleted without a response")
+                      response/bad-gateway)))))
           response/not-found)
         (catch Exception e
           (log/error e "Failed to process request" req)
