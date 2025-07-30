@@ -1,0 +1,31 @@
+;;; SPDX-FileCopyrightText: 2024, 2025 Jomco B.V.
+;;; SPDX-FileCopyrightText: 2024, 2025 Topsector Logistiek
+;;; SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
+;;; SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
+;;;
+;;; SPDX-License-Identifier: AGPL-3.0-or-later
+
+{:deps  {nl.jomco/with-resources            {:mvn/version "0.1.2"}
+         ring/ring-core                     {:mvn/version "1.14.2"}
+         ring/ring-json                     {:mvn/version "0.5.1"}
+         ring/ring-jetty-adapter            {:mvn/version "1.14.2"}
+         compojure/compojure                {:mvn/version "1.7.1"}
+         ch.qos.logback/logback-classic     {:mvn/version "1.5.18"}
+         nl.jomco/clj-http-status-codes     {:mvn/version "0.2"}
+         org.clojure/core.cache             {:mvn/version "1.1.234"}
+         org.clojure/tools.logging          {:mvn/version "1.3.0"}
+         nl.jomco/envopts                   {:mvn/version "0.0.7"}
+         com.github.seancorfield/next.jdbc  {:mvn/version "1.3.1048"}
+         org.postgresql/postgresql          {:mvn/version "42.7.4"}
+         com.zaxxer/HikariCP                {:mvn/version "6.2.1"}
+         org.bdinetwork/clj-ring-middleware {:local/root "../clj-ring-middleware"}}
+ :paths ["src" "resources"]
+ :aliases
+ {:package {:extra-paths ["classes"]}
+  :uberjar {:replace-deps  {uberdeps/uberdeps {:mvn/version "RELEASE"}}
+            :replace-paths []
+            :main-opts     ["-m" "uberdeps.uberjar" "--aliases" "package"]}
+
+  :test {:extra-paths ["test-resources"]}
+
+  :run {:main-opts ["-m" "org.bdinetwork.involvement-register.main"]}}}

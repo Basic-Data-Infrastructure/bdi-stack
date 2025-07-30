@@ -1,0 +1,24 @@
+<!---
+    SPDX-FileCopyrightText: 2025 Jomco B.V
+    SPDX-FileCopyrightText: 2025 Topsector Logistiek
+    SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
+    SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
+
+    SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+<!---
+    Configure logging to console. We assume that the application runs
+    in some environment that takes care of managing the logs.
+-->
+<configuration>
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg %mdc%n</pattern>
+    </encoder>
+  </appender>
+
+  <root level="${ROOT_LOG_LEVEL:-info}">
+    <appender-ref ref="STDOUT" />
+  </root>
+  <logger name="org.bdinetwork.association-register" level="${LOG_LEVEL:-${ROOT_LOG_LEVEL}}"/>
+</configuration>

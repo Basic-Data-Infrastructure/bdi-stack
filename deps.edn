@@ -10,11 +10,12 @@
          org.bdinetwork/authentication-service {:local/root "./authentication-service"}
          org.bdinetwork/clj-authentication     {:local/root "./clj-authentication"}
          org.bdinetwork/clj-ring-middleware    {:local/root "./clj-ring-middleware"}
-         org.bdinetwork/connector              {:local/root "./connector"}}
+         org.bdinetwork/connector              {:local/root "./connector"}
+         org.bdinetwork/involvement-register   {:local/root "./involvement-register"}}
  :paths ["resources"]
 
  :aliases
- {:dev  {:extra-paths ["dev" "."]}
+ {:dev {:extra-paths ["dev" "."]}
 
   :test {:extra-deps {lambdaisland/kaocha {:mvn/version "RELEASE"}
 
@@ -23,7 +24,7 @@
 
                       ;; connector tests
                       ring/ring {:mvn/version "1.14.2"}}
-         :main-opts ["-m" "kaocha.runner"]
+         :main-opts   ["-m" "kaocha.runner"]
          :extra-paths ["test-resources"
                        "clj-ishare-jwt/test"
                        "clj-ishare-client/test"
@@ -31,7 +32,8 @@
                        "authorization-register/test"
                        "authentication-service/test"
                        "association-register/test"
-                       "connector/test"]}
+                       "connector/test"
+                       "involvement-register/test"]}
 
   :lint {:extra-deps {clj-kondo/clj-kondo {:mvn/version "RELEASE"}}
          :main-opts  ["-m" "clj-kondo.main"]}
