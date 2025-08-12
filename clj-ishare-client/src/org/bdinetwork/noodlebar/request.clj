@@ -3,7 +3,9 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.noodlebar.request
-  (:require [org.bdinetwork.ishare.client :as client]))
+  (:require [clojure.core.memoize :as memoize]
+            [org.bdinetwork.ishare.client :as client]
+            [org.bdinetwork.ishare.client.cache :as cache]))
 
 (defn access-token-request
   "Create machine-to-machine access token request."
@@ -23,13 +25,20 @@
 
          :ishare/lens [:body "access_token"]))
 
+(defn- get-bearer-token* [req]
+  (client/exec (access-token-request req)))
+
+(def get-bearer-token
+  (memoize/memoizer get-bearer-token*
+                    (cache/expires-cache-factory (comp cache/bearer-token-expires-at deref))))
+
 (defn coremanager-request
   [{:keys [coremanager-url] :as req}]
   {:pre [coremanager-url]}
   (assoc req
          :ishare/server-adherent? true
          :ishare/base-url coremanager-url
-         :ishare/bearer-token (:ishare/result (client/exec (access-token-request req)))
+         :ishare/bearer-token (:ishare/result (get-bearer-token req))
          :as :json))
 
 (defn organisation-request
@@ -49,5 +58,12 @@
              :json-params {:delegationRequest delegation-mask}
              :ishare/lens [:body])))
 
-
-;; (ishare-client/exec (org.bdinetwork.noodlebar.request/unsigned-delegation-request poort8-config {:policyIssuer "CGI (331360040018)" :target {:accessSubject "(Poort8)"} :policySets [{ :policies [{:rules [{:effect "Permit"}] :target {:resource {:type "" :identifiers ["policies"] :attributes [""]} :actions ["read"] :environment {:serviceProviders ["CGI (331360040018)"]}}}]}]}))
+(comment
+  (-> {:coremanager-url      (System/getenv "NOODLEBAR_COREMANAGER_URL")
+       :oauth2/token-url     (System/getenv "NOODLEBAR_TOKEN_URL")
+       :oauth2/audience      (System/getenv "NOODLEBAR_AUDIENCE")
+       :oauth2/client-id     (System/getenv "NOODLEBAR_CLIENT_ID")
+       :oauth2/client-secret (System/getenv "NOODLEBAR_CLIENT_SECRET")}
+      (unsigned-delegation-request {:policyIssuer "CGI (331360040018)" :target {:accessSubject "(Poort8)"} :policySets [{ :policies [{:rules [{:effect "Permit"}] :target {:resource {:type "" :identifiers ["policies"] :attributes [""]} :actions ["read"] :environment {:serviceProviders ["CGI (331360040018)"]}}}]}]})
+      (client/exec))
+  )
