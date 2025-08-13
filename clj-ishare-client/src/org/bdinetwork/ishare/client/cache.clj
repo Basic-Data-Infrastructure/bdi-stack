@@ -53,8 +53,10 @@
   [{:keys [status body]}]
   (if (and (= http-status/ok status)
            (map? body)
-           (int? (get body "expires_in")))
-    (.plusSeconds (Instant/now) (* (get body "expires_in") 0.8))
+           (number? (get body "expires_in")))
+    (.plusMillis (Instant/now)
+                 ;; wait only 90% of the expire time to be safe
+                 (long (* (get body "expires_in") 900)))
     (Instant/now)))
 
 (defn get-through-cache-atom

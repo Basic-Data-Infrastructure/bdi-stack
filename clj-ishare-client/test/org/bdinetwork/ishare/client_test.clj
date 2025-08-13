@@ -10,6 +10,7 @@
             [clojure.java.io :as io]
             [clojure.string :as s]
             [clojure.test :refer [deftest is testing]]
+            [nl.jomco.http-status-codes :as http-status]
             [org.bdinetwork.ishare.client :as client]
             [org.bdinetwork.ishare.client.interceptors :as interceptors]
             [org.bdinetwork.ishare.client.request :as request]
@@ -46,7 +47,29 @@
    :ishare/x5c                client-x5c
    :ishare/dataspace-id       dataspace-id
    :ishare/satellite-id       satellite-eori
-   :ishare/satellite-base-url satellite-url})
+   :ishare/satellite-base-url satellite-url
+
+   ;; no caching for reproducible test
+   :ishare/fetch-party-info-fn interceptors/fetch-party-info*
+   :ishare/fetch-access-token-fn interceptors/fetch-access-token*})
+
+(def parties-response
+  {:status  http-status/ok
+   :headers {"content-type" "application/json"}
+   :body    (json/json-str
+             {"parties_token"
+              (jwt/make-jwt {:iss          satellite-eori
+                             :sub          satellite-eori
+                             :aud          client-eori
+                             :parties_info {:total_count 1,
+                                            :pageCount   1,
+                                            :count       1,
+                                            :data        [{:party_id  "EU.EORI.CLIENT"
+                                                           :adherence {:status     "Active"
+                                                                       :start_date "2024-10-01T07:40:25.597636Z"
+                                                                       :end_date   "2124-10-01T07:40:25.597636Z"}}]}}
+                            satellite-private-key
+                            satellite-x5c)})})
 
 (defn test-get-token [c base-url token]
   (testing (str "Getting an access token for " base-url)
@@ -58,12 +81,11 @@
       (is (= (str base-url "/connect/token") (str uri))
           "Correct url for access token")
 
-      (put-response! c {:status  200
+      (put-response! c {:status  http-status/ok
                         :uri     uri
                         :headers {"content-type" "application/json"}
                         :body    (json/json-str {"access_token" token
-                                                 "token_type"   "Bearer",
-                                                 "expires_in"   3600})}))))
+                                                 "token_type"   "Bearer"})}))))
 
 (deftest parties
   (testing "expired parties token"
@@ -78,7 +100,7 @@
                  ))
           (is (= "Bearer satellite-token" (get-in req [:headers "Authorization"])))
 
-          (put-response! c {:status  200
+          (put-response! c {:status  http-status/ok
                             :uri     uri
                             :headers {"content-type" "application/json"}
                             :body    (json/json-str
@@ -110,7 +132,7 @@
           (is (= (str satellite-url "/parties?active_only=true") (str uri)))
           (is (= "Bearer satellite-token" (get-in req [:headers "Authorization"])))
 
-          (put-response! c {:status  200
+          (put-response! c {:status  http-status/ok
                             :uri     (:uri req)
                             :headers {"content-type" "application/json"}
                             :body    (json/json-str
@@ -147,23 +169,7 @@
           (is (= (str satellite-url "/parties?name=Party+Name") (str uri)))
           (is (= "Bearer satellite-token" (-> req :headers (get "Authorization"))))
 
-          (put-response! c {:status  200
-                            :uri     (:uri req)
-                            :headers {"content-type" "application/json"}
-                            :body    (json/json-str
-                                      {"parties_token"
-                                       (jwt/make-jwt {:iss          satellite-eori
-                                                      :sub          satellite-eori
-                                                      :aud          client-eori
-                                                      :parties_info {:total_count 1,
-                                                                     :pageCount   1,
-                                                                     :count       1,
-                                                                     :data        [{:party_id  "EU.EORI.CLIENT"
-                                                                                    :adherence {:status     "Active"
-                                                                                                :start_date "2024-10-01T07:40:25.597636Z"
-                                                                                                :end_date   "2124-10-01T07:40:25.597636Z"}}]}}
-                                                     satellite-private-key
-                                                     satellite-x5c)})})))
+          (put-response! c parties-response)))
 
       (is (= 1 (-> @r :ishare/result :parties_info :count))))))
 
@@ -171,10 +177,10 @@
   (testing "Delegation evidence request"
 
     (let [[c r] (run-exec (request/delegation-evidence-request (assoc client-data
-                                                                     ;; use fresh cached fetch-party-info-fn for repeatable tests
-                                                                     :ishare/fetch-party-info-fn (interceptors/mk-cached-fetch-party-info 60000))
-                                                              {:delegationRequest
-                                                               {:policyIssuer client-eori}}))]
+                                                                      ;; use fresh cached fetch-party-info-fn for repeatable tests
+                                                                      :ishare/fetch-party-info-fn (interceptors/mk-cached-fetch-party-info 60000))
+                                                               {:delegationRequest
+                                                                {:policyIssuer client-eori}}))]
       (test-get-token c satellite-url "satellite-token")
 
       (testing "Getting party info to retreive AR location"
@@ -182,7 +188,7 @@
           (is (= (str satellite-url "/parties/" client-eori) (str uri)))
           (is (= "Bearer satellite-token" (-> req :headers (get "Authorization"))))
 
-          (put-response! c {:status  200
+          (put-response! c {:status  http-status/ok
                             :uri     (:uri req)
                             :headers {"content-type" "application/json"}
                             :body    (json/json-str
@@ -209,7 +215,7 @@
           (is (= (str satellite-url "/parties/" ar-eori) (str uri)))
           (is (= "Bearer satellite-token" (-> req :headers (get "Authorization"))))
 
-          (put-response! c {:status  200
+          (put-response! c {:status  http-status/ok
                             :headers {"content-type" "application/json"}
                             :body    (json/json-str
                                       {"party_token"
@@ -230,7 +236,7 @@
           (is (= (str ar-url "/delegation") (str uri)))
           (is (= "Bearer ar-token" (get-in req [:headers "Authorization"])))
 
-          (put-response! c {:status  200
+          (put-response! c {:status  http-status/ok
                             :uri     uri
                             :headers {"content-type" "application/json"}
                             :body    (json/json-str
@@ -244,3 +250,59 @@
 
       (is (= "test" (-> @r :ishare/result :delegationEvidence))))))
 
+(deftest caching
+  (testing "bearer token caching"
+    (let [client-data (assoc client-data
+                             :ishare/fetch-access-token-fn
+                             (interceptors/mk-caching-fetch-access-token))]
+      (let [[c r] (-> client-data
+                      (request/parties-request nil)
+                      (run-exec))]
+        (let [{:keys [uri exception]} (take-request! c)]
+          (when exception (throw (ex-info "Unexpected exception during access-token call" {} exception)))
+          (is (= (str satellite-url "/connect/token") (str uri)) "Correct url for access token")
+
+          (put-response! c {:status  http-status/ok
+                            :uri     uri
+                            :headers {"content-type" "application/json"}
+                            :body    (json/json-str {"access_token" "token"
+                                                     "token_type"   "Bearer"
+                                                     "expires_in"   1})}))
+
+        (let [{:keys [exception]} (take-request! c)]
+          (when exception (throw (ex-info "Unexpected exception during parties call" {} exception)))
+          (put-response! c parties-response))
+
+        (is (= http-status/ok (-> r deref :status))))
+
+      ;; next call uses cached token
+      (let [[c r] (-> client-data (request/parties-request nil) (run-exec))]
+        (let [{:keys [uri exception]} (take-request! c)]
+          (when exception (throw (ex-info "Unexpected exception during parties call" {} exception)))
+          (is (= (str satellite-url "/parties") (str uri)) "Correct url for parties")
+          (put-response! c parties-response))
+
+        (is (= http-status/ok (-> r deref :status)))))
+
+    (let [[c r] (-> client-data
+                    ;; flush token cache
+                    (assoc :ishare/fetch-access-token-fn
+                           (interceptors/mk-caching-fetch-access-token))
+                    (request/parties-request nil)
+                    (run-exec))]
+      (let [{:keys [uri exception]} (take-request! c)]
+        (when exception (throw (ex-info "Unexpected exception during access-token call" {} exception)))
+        (is (= (str satellite-url "/connect/token") (str uri)) "Correct url for access token")
+
+        (put-response! c {:status  http-status/ok
+                          :uri     uri
+                          :headers {"content-type" "application/json"}
+                          :body    (json/json-str {"access_token" "token"
+                                                   "token_type"   "Bearer"})}))
+
+      (let [{:keys [uri exception]} (take-request! c)]
+        (when exception (throw (ex-info "Unexpected exception during parties call" {} exception)))
+        (is (= (str satellite-url "/parties") (str uri)) "Correct url for parties")
+        (put-response! c parties-response))
+
+      (is (= http-status/ok (-> r deref :status))))))
