@@ -123,7 +123,9 @@
 When bearer token is not needed, provide a `nil` token"
    :request (fn fetch-bearer-token-request
               [{:ishare/keys [fetch-access-token-fn] :as request
-                :or {fetch-access-token-fn fetch-access-token-default}}]
+                ;; FIXME: no caching of access tokens by default, will
+                ;; cause endless loop fetching trusted list
+                :or {fetch-access-token-fn fetch-access-token*}}]
               (if (contains? request :ishare/bearer-token)
                 request
                 (let [response (-> request
