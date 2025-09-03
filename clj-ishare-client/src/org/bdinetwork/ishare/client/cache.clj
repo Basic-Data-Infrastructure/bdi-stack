@@ -8,45 +8,55 @@
             [nl.jomco.http-status-codes :as http-status])
   (:import java.time.Instant))
 
-(defn- prune-cache [cache]
-  (let [now (Instant/now)]
-    (->> cache
-         (filter #(.isBefore now (-> % val :expires)))
-         (into {}))))
+(defn- expired?
+  [result]
+  (and (realized? result)
+       (let [expires-at (::expires-at @result)]
+         (assert expires-at "Realized item in ExpiresCache needs ::expires-at key")
+         (not (.isBefore (Instant/now) expires-at)))))
 
-(cache/defcache ExpiresCache [cache f]
+(defn- prune-cache [cache]
+  ;; using reduce/dissoc to ensure that cache is identical when no item is expired
+  (reduce-kv (fn [m item result]
+               (if (expired? result)
+                 (dissoc m item)
+                 m))
+             cache
+             cache))
+
+(cache/defcache ExpiresCache [cache]
   cache/CacheProtocol
   (lookup [_ item]
-    (get-in cache [item :result]))
+    (let [result (get cache item)]
+      (when-not (expired? result)
+        result)))
   (lookup [_ item not-found]
-    (get-in cache [item :result] not-found))
+    (let [result (get cache item not-found)]
+      (when-not (expired? result)
+        result)))
   (has? [_ item]
-    (-> cache
-        (prune-cache)
-        (contains? item)))
-  (hit [_ _item]
-    (ExpiresCache. (prune-cache cache) f))
+    (when-let [[_ result] (find cache item)]
+      (not (expired? result))))
+  (hit [this _item]
+    this)
   (miss [_ item result]
     (ExpiresCache. (-> cache
                        (prune-cache)
-                       (assoc item {:result  result
-                                    :expires (f result)}))
-                   f))
+                       (assoc item result))))
   (evict [_ item]
     (ExpiresCache. (-> cache
                        (prune-cache)
-                       (dissoc item))
-                   f))
+                       (dissoc item))))
   (seed [_ base]
-    (ExpiresCache. base f))
+    (ExpiresCache. base))
 
   Object
   (toString [_] (str cache)))
 
 (defn expires-cache-factory
-  "Create a cache object with `f` to determine when the cached result expires."
-  [f]
-  (ExpiresCache. {} f))
+  "Create a cache object that stores items, using ::expires-at key in the result to determine when the cached result expires."
+  []
+  (ExpiresCache. {}))
 
 (defn bearer-token-expires-at
   "Derive from response when bearer token expires."
@@ -58,10 +68,6 @@
                  ;; wait only 90% of the expire time to be safe
                  (long (* (get body "expires_in") 900)))
     (Instant/now)))
-
-(defn get-through-cache-atom
-  [cache-atom f args]
-  (get (swap! cache-atom cache/through-cache args f) args))
 
 
 

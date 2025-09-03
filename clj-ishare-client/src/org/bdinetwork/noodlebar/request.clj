@@ -26,11 +26,12 @@
          :ishare/lens [:body "access_token"]))
 
 (defn- get-bearer-token* [req]
-  (client/exec (access-token-request req)))
+  (let [resp (client/exec (access-token-request req))]
+    (assoc resp ::cache/expires-at (cache/bearer-token-expires-at resp))))
 
 (def get-bearer-token
   (memoize/memoizer get-bearer-token*
-                    (cache/expires-cache-factory (comp cache/bearer-token-expires-at deref))))
+                    (cache/expires-cache-factory)))
 
 (defn coremanager-request
   [{:keys [coremanager-url] :as req}]

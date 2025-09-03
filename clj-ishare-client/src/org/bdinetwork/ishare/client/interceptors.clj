@@ -19,7 +19,7 @@
             [org.bdinetwork.ishare.client.cache :as cache]
             [org.bdinetwork.ishare.client.request :as request]
             [org.bdinetwork.ishare.jwt :as jwt])
-  (:import (java.net URI)))
+  (:import java.net.URI))
 
 ;; TODO: party cache configuration via data instead of function
 
@@ -90,28 +90,24 @@
 (defn fetch-access-token*
   "Execute access token request."
   [request]
-  (-> request
-      (request/access-token-request)
-      (exec-in-interceptor)))
+  (let [response (-> request
+                     (request/access-token-request)
+                     (exec-in-interceptor))]
+    (assoc response ::cache/expires-at (cache/bearer-token-expires-at response))))
 
 (defn mk-caching-fetch-access-token
-  "Create caching version of `fetch-access-token*`."
   []
-  (let [access-token-cache-atom
-        (atom (cache/expires-cache-factory cache/bearer-token-expires-at))]
-    (fn fetch-access-token [req]
-      (cache/get-through-cache-atom
-       access-token-cache-atom
-       (fn [_] (fetch-access-token* req))
-       ;; Use only the parts used to create a
-       ;; token request as cache key.
-       (select-keys req [:ishare/x5c
-                         :ishare/private-key
-                         :ishare/client-id
-                         :ishare/server-id
-                         :ishare/base-url
-                         :ishare/satellite-id
-                         :ishare/satellite-base-url])))))
+  (memoize/memoizer (-> fetch-access-token*
+                        (with-meta {::memoize/args-fn
+                                    (fn [[req]]
+                                      (select-keys req [:ishare/x5c
+                                                        :ishare/private-key
+                                                        :ishare/client-id
+                                                        :ishare/server-id
+                                                        :ishare/base-url
+                                                        :ishare/satellite-id
+                                                        :ishare/satellite-base-url]))}))
+                    (cache/expires-cache-factory)))
 
 (def ^{:doc "Caching version of `fetch-access-token`."}
   fetch-access-token-default
@@ -125,7 +121,7 @@ When bearer token is not needed, provide a `nil` token"
               [{:ishare/keys [fetch-access-token-fn] :as request
                 ;; FIXME: no caching of access tokens by default, will
                 ;; cause endless loop fetching trusted list
-                :or {fetch-access-token-fn fetch-access-token*}}]
+                :or {fetch-access-token-fn fetch-access-token-default}}]
               (if (contains? request :ishare/bearer-token)
                 request
                 (let [response (-> request
