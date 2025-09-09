@@ -16,20 +16,20 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
       upload_url: ${{ steps.create_release.outputs.upload_url }}
-      
+
     permissions:
       # needed to create releases
       contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/cache@v4
         with:
           path: "~/.m2"
           key: "prep-deps-${{ hashFiles('deps.edn') }}"
           restore-keys: "prep-deps-"
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '21'
@@ -70,14 +70,14 @@ jobs:
       matrix:
         service: [association-register, authorization-register, authentication-service, connector]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/cache@v4
         with:
           path: "~/.m2"
           key: "prep-deps${{ hashFiles('deps.edn') }}"
           restore-keys: "prep-deps"
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '21'
@@ -129,15 +129,15 @@ jobs:
       max-parallel: 1 # order of release is important because of dependencies on published previous lib
       matrix:
         lib: [clj-ishare-jwt, clj-ishare-client, clj-authentication, clj-ring-middleware]
-    steps:      
-      - uses: actions/checkout@v4
+    steps:
+      - uses: actions/checkout@v5
       - uses: actions/cache@v4
         with:
           path: "~/.m2"
           key: "prep-deps${{ hashFiles('deps.edn') }}"
           restore-keys: "prep-deps"
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '21'
