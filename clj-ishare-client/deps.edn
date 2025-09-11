@@ -13,7 +13,8 @@
  :paths ["src"]
 
  :aliases
- {:test {:extra-paths ["test-resources"]
+ {:dev  {:extra-paths ["test" "test-resources"]}
+  :test {:extra-paths ["test" "test-resources"]
          :extra-deps  {org.clojure/core.async                {:mvn/version "1.8.741"}
                        nl.jomco/clj-http-status-codes        {:mvn/version "0.2"}
                        nl.jomco/with-resources               {:mvn/version "0.1.2"}

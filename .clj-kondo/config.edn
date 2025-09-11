@@ -10,4 +10,5 @@
   :used-underscored-binding {:level :warning}
   :refer-all {:exclude [clojure.test]}
   :condition-always-true {:level :warning}}
- :lint-as {manifold.deferred/let-flow clojure.core/let}}
+ :lint-as {manifold.deferred/let-flow clojure.core/let
+           clojure.core.cache/defcache clojure.core/deftype}}

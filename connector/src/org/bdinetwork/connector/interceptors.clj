@@ -3,7 +3,8 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.connector.interceptors
-  (:require [clojure.tools.logging :as log]
+  (:require [clojure.data.json :as json]
+            [clojure.tools.logging :as log]
             [nl.jomco.http-status-codes :as http-status]
             [org.bdinetwork.authentication.access-token :as access-token]
             [org.bdinetwork.authentication.client-assertion :as client-assertion]
@@ -11,6 +12,8 @@
             [org.bdinetwork.authentication.remote-association :refer [remote-association]]
             [org.bdinetwork.connector.interceptors.audit-log :refer [audit-log-response]]
             [org.bdinetwork.gateway.interceptors :refer [->interceptor interceptor]]
+            [org.bdinetwork.gateway.response :as response]
+            [org.bdinetwork.ishare.client.validate-delegation :as validate-delegation]
             [ring.middleware.json :as ring-json]
             [ring.middleware.params :as ring-params]))
 
@@ -31,7 +34,7 @@
    \"x-bdi-client-id\" request header.  Responds with 401 Unauthorized
    when request is not allowed."
    :enter
-   (fn [{:keys [request] :as ctx}]
+   (fn bdi-authenticate-enter [{:keys [request] :as ctx}]
      (if-let [client-id (extract-client-id request config)]
        (-> ctx
            (assoc-in [:request :headers "x-bdi-client-id"] client-id)
@@ -47,7 +50,7 @@
    :doc "Remove \"x-bdi-client-id\" request header for avoid clients
    from fooling backend into being authenticated."
    :enter
-   (fn [ctx]
+   (fn bdi-deauthenticate-enter [ctx]
      (update-in ctx [:request :headers] dissoc "x-bdi-client-id"))))
 
 (defn ->association
@@ -81,8 +84,10 @@
          config         (assoc config
                                :jti-cache-atom jti-cache-atom
                                :association (->association config))]
-     (fn [{:keys [request] :as ctx}]
+     (fn bdi-connect-token-enter [{:keys [request] :as ctx}]
        (assoc ctx :response (client-assertion-response config request))))))
+
+
 
 (defmethod ->interceptor 'demo/audit-log
   [[id {:keys [json-file] :as opts}] _]
@@ -92,5 +97,30 @@
    :doc "Provide access to the last `:n-of-lines` (defaults to 100)
    lines of `:json-file` (required) and render them in a HTML table."
    :enter
-   (fn [ctx]
+   (fn demo-audit-log-enter [ctx]
      (assoc ctx :response (audit-log-response opts)))))
+
+
+
+(defmethod  ->interceptor 'noodlebar/delegation
+  [[id base-request-expr mask-expr] & _]
+  (interceptor
+   :name (str id " delegation-chain")
+   :args [base-request-expr mask-expr]
+   :doc "Retrieves and evaluates delegation evidence for
+   request. Responds with 403 Forbidden when the evidence is not found
+   or does not match the delegation mask."
+   :enter
+   (fn delegation-chain-enter
+     [ctx base-request mask]
+     (let [evidence (validate-delegation/noodlebar-fetch-delegation-evidence base-request mask)
+           issues   (validate-delegation/delegation-mask-evidence-mismatch mask evidence)
+           ctx      (assoc ctx
+                           :delegation-evidence evidence
+                           :delegation-mask mask
+                           :delegation-issues issues)]
+       (cond-> ctx
+         issues
+         (assoc :response (-> response/forbidden
+                              (assoc-in [:headers "content-type"] "application/json")
+                              (assoc :body (json/json-str {:delegation-issues issues})))))))))

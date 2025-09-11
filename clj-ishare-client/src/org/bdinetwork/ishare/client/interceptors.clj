@@ -16,11 +16,11 @@
             [clojure.core.memoize :as memoize]
             [clojure.string :as string]
             [clojure.tools.logging.readable :as log]
+            [org.bdinetwork.ishare.client.cache :as cache]
             [org.bdinetwork.ishare.client.request :as request]
             [org.bdinetwork.ishare.jwt :as jwt])
-  (:import (java.net URI)))
+  (:import java.net.URI))
 
-;; TODO: Token cache
 ;; TODO: party cache configuration via data instead of function
 
 ;; Interceptors
@@ -87,11 +87,41 @@
          (:client request)]}
   (http/request request))
 
+(defn fetch-access-token*
+  "Execute access token request."
+  [request]
+  (let [response (-> request
+                     (request/access-token-request)
+                     (exec-in-interceptor))]
+    (assoc response ::cache/expires-at (cache/bearer-token-expires-at response))))
+
+(defn mk-caching-fetch-access-token
+  []
+  (memoize/memoizer (-> fetch-access-token*
+                        (with-meta {::memoize/args-fn
+                                    (fn [[req]]
+                                      (select-keys req [:ishare/x5c
+                                                        :ishare/private-key
+                                                        :ishare/client-id
+                                                        :ishare/server-id
+                                                        :ishare/base-url
+                                                        :ishare/satellite-id
+                                                        :ishare/satellite-base-url]))}))
+                    (cache/expires-cache-factory)))
+
+(def ^{:doc "Caching version of `fetch-access-token`."}
+  fetch-access-token-default
+  (mk-caching-fetch-access-token))
+
 (def fetch-bearer-token-interceptor
   {:name    ::fetch-bearer-token
    :doc     "When request has no :ishare/bearer-token, fetch it from the endpoint.
 When bearer token is not needed, provide a `nil` token"
-   :request (fn fetch-bearer-token-request [request]
+   :request (fn fetch-bearer-token-request
+              [{:ishare/keys [fetch-access-token-fn] :as request
+                ;; FIXME: no caching of access tokens by default, will
+                ;; cause endless loop fetching trusted list
+                :or {fetch-access-token-fn fetch-access-token-default}}]
               (if (contains? request :ishare/bearer-token)
                 request
                 (let [response (-> request
@@ -106,8 +136,7 @@ When bearer token is not needed, provide a `nil` token"
                                                   :client
                                                   :interceptors
                                                   :timeout])
-                                   (request/access-token-request)
-                                   exec-in-interceptor)
+                                   (fetch-access-token-fn))
                       token    (:ishare/result response)]
                   (when-not token
                     ;; FEEDBACK: bij invalid client op /token komt 202 status terug?
