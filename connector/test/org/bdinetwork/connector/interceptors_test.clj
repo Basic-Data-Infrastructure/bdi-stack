@@ -115,3 +115,6 @@
 
         (let [{:strs [token_type]} (json/read-str (:body response))]
           (is (= "Bearer" token_type)))))))
+
+(deftest oauth2-bearer-token
+  (is false))

@@ -247,10 +247,10 @@
                   (-> response/unauthorized
                       (assoc-in [:headers "www-authenticate"]
                                 (str "Bearer " auth-params))))
-           (try
-             (let [claims (oauth2/unsign-access-token bearer-token requirements)]
+           (d/catch
+             (d/let-flow [claims (oauth2/unsign-access-token bearer-token requirements)]
                (assoc ctx :oauth2/bearer-token-claims claims))
-             (catch Exception e
+             (fn oauth2-catch [e]
                (let [msg (.getMessage e)]
                  (assoc ctx :response
                         (-> response/unauthorized
