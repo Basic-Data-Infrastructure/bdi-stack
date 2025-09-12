@@ -11,6 +11,12 @@ multiple authentication and authorization schemes compatible with the
 [Basic Data Ifrastructure Trust Kit
 architecture](https://bdi.gitbook.io/public/readme/trust-kit/authentication/authentication).
 
+## ⚠ DISCLAIMER ⚠
+
+**The software is for development and testing purposes only!**  It has
+not been audited for security flaws and may not be suitable as a
+starting point for production quality software.  Use at your own risk.
+
 ## Obtaining the BDI Connector
 
 The BDI Connector is distributed as a standalone Java jar file and as
