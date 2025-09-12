@@ -11,8 +11,8 @@
             [nl.jomco.resources :refer [Resource]]
             [org.bdinetwork.connector.system :as system]
             [ring.adapter.jetty :refer [run-jetty]])
-  (:import (java.time Instant)
-           (java.net InetSocketAddress Socket)))
+  (:import (java.net InetSocketAddress Socket)
+           (java.time Instant)))
 
 (def backend-scheme :http)
 (def backend-host "127.0.0.1")
@@ -52,6 +52,8 @@
                         :port proxy-port})
     proxy))
 
+
+
 (def ^:private oauth-private-key (-> "test-config/association_register.key.pem"
                                      (io/resource)
                                      (keys/private-key)))
@@ -78,6 +80,7 @@
 (def openid-host "127.0.0.1")
 (def openid-port 11002)
 (def openid-uri (str (name openid-scheme) "://" openid-host ":" openid-port))
+(def openid-token-uri (str openid-uri "/token"))
 (def jwks-uri (str openid-uri "/.well-known/jwks.json"))
 
 (extend-protocol Resource
@@ -85,7 +88,7 @@
   (close [server] (.stop server)))
 
 (defn start-openid [keys]
-  (run-jetty (fn [{:keys [uri]}]
+  (run-jetty (fn [{:keys [uri] :as req}]
                (case uri
                  "/.well-known/openid-configuration"
                  {:status  http-status/ok
@@ -95,7 +98,16 @@
                  "/.well-known/jwks.json"
                  {:status  http-status/ok
                   :headers {"content-type" "application/json"}
-                  :body    (json/write-str {:keys keys})}))
+                  :body    (json/write-str {:keys keys})}
+
+                 "/token"
+                 (let [audience (-> req :body slurp json/read-str (get "audience"))
+                       token    (mk-token {:aud audience})]
+                   {:status  http-status/ok
+                    :headers {"content-type" "application/json"}
+                    :body    (json/write-str {:access_token token
+                                              :token_type   "Bearer"
+                                              :expires_in   300})})))
              {:host  openid-host
               :port  openid-port
               :join? false}))

@@ -3,17 +3,23 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.connector.interceptors-test
-  (:require [clojure.data.json :as json]
+  (:require [aleph.http :as http]
+            [clojure.data.json :as json]
             [clojure.java.io :as io]
             [clojure.string :as string]
             [clojure.test :refer [deftest is testing]]
             [nl.jomco.http-status-codes :as http-status]
+            [nl.jomco.resources :refer [with-resources]]
             [org.bdinetwork.authentication.access-token :as access-token]
+            [org.bdinetwork.gateway :as gateway]
             [org.bdinetwork.gateway.interceptors :refer [->interceptor]]
             [org.bdinetwork.ishare.jwt :as ishare-jwt]
             [org.bdinetwork.service-commons.config :as config]
+            [org.bdinetwork.test-helper :refer [jwks-keys mk-token openid-token-uri openid-uri proxy-url start-backend start-openid start-proxy]]
+            [ring.adapter.jetty :refer [run-jetty]]
             [ring.util.codec :as ring-codec])
-  (:import (java.io StringBufferInputStream)))
+  (:import (java.io StringBufferInputStream)
+           (java.time Instant)))
 
 ;; force loading BDI interceptor multi methods
 #_{:clj-kondo/ignore [:unused-namespace]}
@@ -115,3 +121,79 @@
 
         (let [{:strs [token_type]} (json/read-str (:body response))]
           (is (= "Bearer" token_type)))))))
+
+
+
+
+(def ^:private noodlebar-host "localhost")
+(def ^:private noodlebar-port 11003)
+(def ^:private noodlebar-uri (str "http://" noodlebar-host ":" noodlebar-port))
+
+(defn- start-noodlebar [evidence]
+  (run-jetty (fn [_]
+               {:status  http-status/ok
+                :headers {"content-type" "application/json"}
+                :body    (json/write-str evidence)})
+             {:host  noodlebar-host
+              :port  noodlebar-port
+              :join? false}))
+
+(deftest noodlebar-delegation
+  (with-resources
+      [_backend (start-backend (fn [req]
+                                 {:status  http-status/ok
+                                  :headers {"content-type" "application/edn"}
+                                  :body    (-> req
+                                               (select-keys [:request-method :uri :headers :body])
+                                               (update :body slurp)
+                                               (pr-str))}))
+       _proxy   (start-proxy (gateway/make-gateway
+                              {:rules [{:match {:uri "/"}
+                                        :interceptors
+                                        (mapv #(->interceptor % {})
+                                              [['noodlebar/delegation
+                                                {:oauth2/token-url     openid-token-uri
+                                                 :oauth2/client-id     "dummy"
+                                                 :oauth2/client-secret "dummy"
+                                                 :oauth2/audience      "test-subject"
+                                                 :coremanager-url      noodlebar-uri}
+                                                {:policyIssuer "test-issuer"
+                                                 :target       {:accessSubject "test-subject"}
+                                                 :policySets
+                                                 [{:policies
+                                                   [{:rules [{:effect "Permit"}]
+                                                     :target
+                                                     {:resource {:type        "test"
+                                                                 :identifiers ["*"]
+                                                                 :attributes  ["*"]}
+                                                      :actions  ["read"]
+                                                      :environment
+                                                      {:serviceProviders ["test-provider"]}}}]}]}]
+                                               ['respond
+                                                {:status 200
+                                                 :body   "pass"}]])}]}))
+       _openid    (start-openid jwks-keys)
+       _noodlebar (start-noodlebar
+                   {:policyIssuer "test-issuer"
+                    :target       {"accessSubject" "test-subject"}
+                    :notBefore    0
+                    :notOnOrAfter (+ (.getEpochSecond (Instant/now)) 60)
+                    :policySets   [{:target   {:environment {:licenses ["0001"]}}
+                                    :policies [{:rules  [{:effect "Permit"}]
+                                                :target {:resource    {:type        "test"
+                                                                       :identifiers ["*"]
+                                                                       :attributes  ["*"]}
+                                                         :actions     ["read"]
+                                                         :environment {:serviceProviders ["test-provider"]}}}]}]})]
+    (testing "success"
+      (let [token (mk-token {:iat (.getEpochSecond (Instant/now))
+                             :iss openid-uri
+                             :aud "audience"
+                             :sub "test-subject"})
+            {:keys [status body]}
+            @(http/get proxy-url
+                       {:throw-exceptions? false
+                        :headers           {"authorization" (str "Bearer " token)}})]
+        (is (= http-status/ok status))
+        (is (= "pass"
+               (slurp body)))))))
