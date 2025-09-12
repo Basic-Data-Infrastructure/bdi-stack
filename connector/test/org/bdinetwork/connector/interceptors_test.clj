@@ -13,7 +13,7 @@
             [org.bdinetwork.ishare.jwt :as ishare-jwt]
             [org.bdinetwork.service-commons.config :as config]
             [ring.util.codec :as ring-codec])
-  (:import java.io.StringBufferInputStream))
+  (:import (java.io StringBufferInputStream)))
 
 ;; force loading BDI interceptor multi methods
 #_{:clj-kondo/ignore [:unused-namespace]}
@@ -115,6 +115,3 @@
 
         (let [{:strs [token_type]} (json/read-str (:body response))]
           (is (= "Bearer" token_type)))))))
-
-(deftest oauth2-bearer-token
-  (is false))

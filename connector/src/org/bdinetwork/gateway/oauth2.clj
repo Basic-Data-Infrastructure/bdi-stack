@@ -74,13 +74,12 @@
                    _   (log/trace "Fetching openid configuration" {:url url})
                    res (d/chain url
                                 http/get
-                                guard-status-ok)
-                   exp (cache-control-extract-exp res)
-                   uri (->> (-> res
-                                :body
-                                (slurp)
-                                (json/read-str :key-fn keyword)))]
-        {:exp exp, :payload uri}))))
+                                guard-status-ok)]
+        {:exp     (cache-control-extract-exp res)
+         :payload (-> res
+                      :body
+                      (slurp)
+                      (json/read-str :key-fn keyword))}))))
 
 (defn- fetch-jwks-uri
   "Fetch `jwks_uri` from openid-configuration using `iss` from `token`.
