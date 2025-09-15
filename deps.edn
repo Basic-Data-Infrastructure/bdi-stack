@@ -30,7 +30,7 @@
                       org.clojure/core.async {:mvn/version "1.8.741"}
 
                       ;; connector tests
-                      ring/ring {:mvn/version "1.14.2"}}
+                      ring/ring {:mvn/version "1.15.1"}}
          :main-opts ["-m" "kaocha.runner"]
          :extra-paths ["test-resources"
                        "clj-ishare-jwt/test"
