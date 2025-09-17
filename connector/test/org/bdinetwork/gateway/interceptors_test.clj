@@ -9,19 +9,12 @@
             [nl.jomco.resources :refer [with-resources]]
             [org.bdinetwork.gateway :as gateway]
             [org.bdinetwork.gateway.interceptors :refer [->interceptor]]
-            [org.bdinetwork.test-helper :refer [jwks-keys mk-token openid-uri proxy-url start-backend start-openid start-proxy]])
+            [org.bdinetwork.test-helper :refer [jwks-keys mk-token openid-uri proxy-url start-openid start-proxy]])
   (:import (java.time Instant)))
 
 (deftest oauth2-bearer-token
   (with-resources
-      [_backend (start-backend (fn [req]
-                                 {:status  http-status/ok
-                                  :headers {"content-type" "application/edn"}
-                                  :body    (-> req
-                                               (select-keys [:request-method :uri :headers :body])
-                                               (update :body slurp)
-                                               (pr-str))}))
-       _proxy   (start-proxy (gateway/make-gateway
+      [_proxy   (start-proxy (gateway/make-gateway
                               {:rules [{:match {:uri "/"}
                                         :interceptors
                                         (mapv #(->interceptor % {})
