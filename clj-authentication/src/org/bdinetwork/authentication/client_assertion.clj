@@ -85,7 +85,8 @@
   [{:keys                                [association]
     {:strs [client_id client_assertion]} :form-params :as request}
    {:keys [private-key server-id jti-cache-atom access-token-ttl-seconds]}]
-  (log/debug "Client assertion: " client_assertion)
+  (log/debug "Client assert response" {:client_assertion client_assertion})
+
   (or (check-access-token-request request)
       (try
         (let [{:keys [iat exp jti sub aud iss]} (ishare.jwt/unsign-token client_assertion)

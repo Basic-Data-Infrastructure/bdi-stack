@@ -5,16 +5,42 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.ring.logging
-  (:require [clojure.tools.logging :as log]
-            [nl.jomco.http-status-codes :refer [client-error-status? server-error-status?] :as status]))
+  (:require [clojure.string :as string]
+            [clojure.tools.logging :as log]
+            [nl.jomco.http-status-codes :as http-status]))
 
 (defn- error-message-from-response
   [{:keys [body]}]
    (or (:message body)
        (str body)))
 
+(defn- summary
+  "Format a summary of the given request / response pair.
+
+  Example:
+
+    GET http://localhost:80/path?foo=bar HTTP/1.1 200 OK"
+  [{:keys [request-method
+           scheme
+           server-name
+           server-port
+           uri
+           query-string
+           protocol]}
+   {:keys [status]}]
+  (format "%s %s://%s:%s%s%s %s / %d %s"
+          (string/upper-case (name request-method))
+          (name scheme)
+          server-name
+          server-port
+          uri
+          (if query-string (str "?" query-string) "")
+          protocol
+          status
+          (http-status/->description status)))
+
 (defn wrap-logging
-  "Ring middleware logging request/reponse.
+  "Ring middleware logging request/response.
 
   If the response has an error status, logs as an error line. If
   response has an `:exception` key, include the exception in the
@@ -27,16 +53,16 @@
     [request]
     (let [{:keys [status exception] :as response} (handler request)]
       (cond
-        (client-error-status? status)
-        (log/warn (str (:status response) " " (:request-method request) " " (:uri request) (error-message-from-response response)))
+        (http-status/client-error-status? status)
+        (log/warnf "%s: %s" (summary request response) (error-message-from-response response))
 
-        (server-error-status? status)
+        (http-status/server-error-status? status)
         (if exception
-          (log/error exception (str (:status response) " " (:request-method request) " " (:uri request) " " (ex-message exception)))
-          (log/error (str (:status response) " " (:request-method request) " " (:uri request) " " (error-message-from-response response))))
+          (log/errorf exception "%s: %s" (summary request response) (ex-message exception))
+          (log/errorf "%s: %s" (summary request response) (error-message-from-response response)))
 
         :else
-        (log/info (str (:status response) " " (:request-method request) " " (:uri request))))
+        (log/info (summary request response)))
       response)))
 
 (defn wrap-server-error
@@ -46,8 +72,9 @@
   [f]
   (fn server-error-wrapper
     [request]
-    (try (f request)
-         (catch Exception e
-           {:status    status/internal-server-error
-            :exception e
-            :body      {:error "Internal server error"}}))))
+    (try
+      (f request)
+      (catch Exception e
+        {:status    http-status/internal-server-error
+         :exception e
+         :body      {:error "Internal server error"}}))))

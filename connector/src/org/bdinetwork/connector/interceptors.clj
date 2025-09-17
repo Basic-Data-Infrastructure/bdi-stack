@@ -23,7 +23,7 @@
       (try
         (access-token/access-token->client-id token config)
         (catch Exception e
-          (log/info e "Invalid access token")
+          (log/infof e "Invalid access token: %s" (ex-message e))
           nil)))))
 
 (defmethod ->interceptor 'bdi/authenticate
