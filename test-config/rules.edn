@@ -21,6 +21,7 @@
                    {:aud "ITV"
                     :iss "https://topsector-logistiek.eu.auth0.com/"}
                    {:realm "ITV events"}]
+                  [request/update update :headers dissoc "authorization"]
 
                   [noodlebar/delegation {:oauth2/token-url     #env NOODLEBAR_TOKEN_URL
                                          :oauth2/client-id     #env NOODLEBAR_CLIENT_ID
@@ -70,7 +71,7 @@
   {:match {:uri "/test/echo"}
    :interceptors [[logger]
                   [test/echo]]}
-  
+
   {:match {:uri "/test/drip"}
    :interceptors [[logger]
                   [test/drip]]}
@@ -95,6 +96,7 @@
                            "uri"             uri
                            "request-method"  request-method}]
                   [reverse-proxy/forwarded-headers]
+                  [request/update update :headers dissoc "authorization"]
                   [request/rewrite "http://localhost:9991"]
                   [response/update update :headers assoc "x-bdi-connector" "passed"]
                   [reverse-proxy/proxy-request]]}]}

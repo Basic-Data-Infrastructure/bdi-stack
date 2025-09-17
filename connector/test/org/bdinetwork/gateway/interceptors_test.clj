@@ -4,12 +4,13 @@
 
 (ns org.bdinetwork.gateway.interceptors-test
   (:require [aleph.http :as http]
+            [clojure.edn :as edn]
             [clojure.test :refer [deftest is testing]]
             [nl.jomco.http-status-codes :as http-status]
             [nl.jomco.resources :refer [with-resources]]
             [org.bdinetwork.gateway :as gateway]
             [org.bdinetwork.gateway.interceptors :refer [->interceptor]]
-            [org.bdinetwork.test-helper :refer [jwks-keys mk-token openid-uri proxy-url start-openid start-proxy]])
+            [org.bdinetwork.test-helper :refer [backend-url jwks-keys mk-token openid-uri proxy-url start-backend start-openid start-proxy]])
   (:import (java.time Instant)))
 
 (deftest oauth2-bearer-token
@@ -66,3 +67,39 @@
         (is (= http-status/ok status))
         (is (= "test-subject"
                (slurp body)))))))
+
+(deftest request-update
+  (testing "header deletion"
+    (with-resources
+        [_backend (start-backend (fn [req]
+                                   {:status  http-status/ok
+                                    :headers {"content-type" "application/edn"}
+                                    :body    (-> req
+                                                 :headers
+                                                 (pr-str))}))
+         _proxy   (start-proxy (gateway/make-gateway
+                                {:rules [{:match {:uri "/"}
+                                          :interceptors
+                                          (mapv #(->interceptor % {})
+                                                [['request/update 'update :headers 'dissoc "removed-header"]
+                                                 ['request/rewrite backend-url]
+                                                 ['reverse-proxy/proxy-request]])}]}))]
+      (testing "direct match"
+        (let [{:keys [status body]}
+              @(http/get proxy-url {:headers           {"removed-header" "test"
+                                                        "passed-header"  "test"}
+                                    :throw-exceptions? false})
+              request-headers (-> body slurp edn/read-string)]
+          (is (= http-status/ok status))
+          (is (contains? request-headers "passed-header"))
+          (is (not (contains? request-headers "removed-header")))))
+
+      (testing "case insensitive match"
+        (let [{:keys [status body]}
+              @(http/get proxy-url {:headers           {"ReMoVeD-HeAdEr" "test"
+                                                        "PaSsEd-hEaDeR"  "test"}
+                                    :throw-exceptions? false})
+              request-headers (-> body slurp edn/read-string)]
+          (is (= http-status/ok status))
+          (is (contains? request-headers "passed-header"))
+          (is (not (contains? request-headers "removed-header"))))))))
