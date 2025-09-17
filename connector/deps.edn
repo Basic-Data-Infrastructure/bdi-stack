@@ -14,7 +14,7 @@
         nl.jomco/clj-http-status-codes {:mvn/version "0.2"}
 
         org.clojure/data.json {:mvn/version "2.5.1"}
-        ring/ring-core        {:mvn/version "1.15.1"}
+        ring/ring-core        {:mvn/version "1.15.2"}
         ring/ring-json        {:mvn/version "0.5.1"}
         hiccup/hiccup         {:mvn/version "2.0.0"}
 
@@ -30,6 +30,6 @@
             :main-opts     ["-m" "uberdeps.uberjar" "--aliases" "package"]}
 
   :test {:extra-paths ["test" "test-resources"]
-         :extra-deps  {ring/ring {:mvn/version "1.15.1"}}}
+         :extra-deps  {ring/ring {:mvn/version "1.15.2"}}}
 
   :run {:main-opts ["-m" "org.bdinetwork.connector.main"]}}}
