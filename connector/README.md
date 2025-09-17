@@ -256,7 +256,20 @@ The following example is protected by a basic authentication username / password
 
 Not supported (yet).
 
-## Building the connector from source
+## Security considerations
+
+### End-user header overrides
+
+The connector sits between the consumer and the provider, any HTTP request header from the consumer is passed on to the provider thus sensitive headers which, for example, are used to allow access MUST be filtered out using the `request/update` or `bdi/deauthenticate` (for `X-Bdi-Client-Id`) interceptor.  For example:
+
+```edn
+[request/update update :headers dissoc "X-User-ID"]
+```
+
+
+## Development
+
+### Building the connector from source
 
 The connector can be build from source as part of the BDI-Stack, by running
 
@@ -266,7 +279,7 @@ make bdi-connector.jar
 
 in the root of this repository. See also [the "Developing" section in the top-level README file](../README.md#developing).
 
-## Running the test suite
+### Running the test suite
 
 To run the test suite, run:
 
