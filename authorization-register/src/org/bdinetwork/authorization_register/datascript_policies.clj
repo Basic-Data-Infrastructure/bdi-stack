@@ -82,7 +82,7 @@
   PolicyStore
   (add-policy! [_ policy]
     (let [id (UUID/randomUUID)]
-      (log/debug "Adding policy " id policy)
+      (log/debug "Adding policy" id policy)
       (ds/transact! conn [(assoc (select-keys policy (keys schema)) :policy/id id)])
       id))
   (delete-policy! [_ id]

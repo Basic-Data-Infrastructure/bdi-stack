@@ -11,9 +11,9 @@
          nl.jomco/with-resources            {:mvn/version "0.1.2"}
          nl.jomco/openapi-v3-validator      {:mvn/version "0.2.6"}
          clj-commons/clj-yaml               {:mvn/version "1.0.29"}
-         ring/ring-core                     {:mvn/version "1.15.1"}
+         ring/ring-core                     {:mvn/version "1.15.2"}
          ring/ring-json                     {:mvn/version "0.5.1"}
-         ring/ring-jetty-adapter            {:mvn/version "1.15.1"}
+         ring/ring-jetty-adapter            {:mvn/version "1.15.2"}
          compojure/compojure                {:mvn/version "1.7.2"}
          ch.qos.logback/logback-classic     {:mvn/version "1.5.18"}
          nl.jomco/clj-http-status-codes     {:mvn/version "0.2"}
@@ -27,6 +27,7 @@
             :replace-paths []
             :main-opts     ["-m" "uberdeps.uberjar" "--aliases" "package"]}
 
-  :test {:extra-paths ["test-resources"]}
+  :test {:extra-paths ["test-resources"]
+         :extra-deps  {ring/ring-mock {:mvn/version "0.6.2"}}}
 
   :run {:main-opts ["-m" "org.bdinetwork.association-register.main"]}}}

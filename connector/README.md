@@ -26,14 +26,14 @@ The jar file can be downloaded from [the BDI Stack releases page on
 GitHub](https://github.com/Basic-Data-Infrastructure/bdi-stack/releases)
 and can be run on a Java 21 runtime:
 
-```
+```sh
 java -jar bdi-connector-VERSION.jar
 ```
 
 The docker image can be downloaded and run using docker or podman as
 `bdinetwork.azurecr.io/connector`:
 
-```
+```sh
 docker run bdinetwork.azurecr.io/connector:VERSION
 ```
 
@@ -117,7 +117,7 @@ This gateway comes with the following base interceptors:
 
   Example:
 
-  ```
+  ```edn
   [response {:status 200, :body "hello world"}]
   ```
 
@@ -125,7 +125,7 @@ This gateway comes with the following base interceptors:
 
   Example:
 
-  ```
+  ```edn
   [request/update assoc-in [:headers "x-request"] "updated"]
   ```
 
@@ -133,7 +133,7 @@ This gateway comes with the following base interceptors:
 
   Example:
 
-  ```
+  ```edn
   [response/update assoc-in [:headers "x-response"] "updated"]
   ```
 
@@ -141,7 +141,7 @@ This gateway comes with the following base interceptors:
 
   Example:
 
-  ```
+  ```edn
   [request/rewrite "http://example.com"]
   ```
 
@@ -161,7 +161,7 @@ This gateway comes with the following base interceptors:
 
   The following example expects a token from example.com and responds with "Hello subject" where "subject" is the "sub" of the token.
 
-  ```
+  ```edn
   [oauth2/bearer-token {:iss "http://example.com"
                         :aud "example"}
                        {:realm "example"}]
@@ -172,6 +172,8 @@ This gateway comes with the following base interceptors:
   The claims for a valid access token will be place in `ctx` property `:oauth2/bearer-token-claims`.
   
   Both arguments to this intercepted are evaluated as an expression and includes `request` and `ctx` in the evaluation environment.
+  
+  ⚠ Consider removing the "authentication" header from the request after the `oauth2/bearer-token` interceptor using the `request/update` interceptor, see also [Strip tokens](#strip-tokens). ⚠
 
 - `bdi/authenticate` validate bearer token on incoming request, when none given responds with "401 Unauthorized", otherwise adds "X-Bdi-Client-Id" request header and vars for consumption downstream.  Note: put this interceptor *before* `logger` when logging the client-id.
 
@@ -181,7 +183,7 @@ This gateway comes with the following base interceptors:
 
   Example:
 
-  ```
+  ```edn
   {:match        {:uri "/connect/token"}
    :interceptors [[bdi/connect-token]]}
   ```
@@ -256,7 +258,34 @@ The following example is protected by a basic authentication username / password
 
 Not supported (yet).
 
-## Building the connector from source
+## Security considerations
+
+### End-user header overrides
+
+The connector sits between the consumer and the provider, any HTTP request header from the consumer is passed on to the provider thus sensitive headers which, for example, are used to allow access MUST be filtered out using the `request/update` or `bdi/deauthenticate` (for `X-Bdi-Client-Id`) interceptor.  For example:
+
+```edn
+[request/update update :headers dissoc "x-user-id"]
+```
+
+⚠ Headers case insensitive and always lower case in a request object, so when removing a header using `dissoc` use the lower case value! ⚠
+
+### Strip tokens
+
+Authentication an authorization tokens handled by the connector SHOULD be stripped before passing the request to a backend.  For example, when using `oauth2/bearer-token` interceptor, remove the "authorization" header immediately after.
+
+```edn
+[oauth2/bearer-token {:iss "http://example.com"
+                      :aud "example"}
+                     {:realm "example"}]
+[request/update update :headers dissoc "authorization"]
+```
+
+⚠ Headers case insensitive and always lower case in a request object, so when removing a header using `dissoc` use the lower case value! ⚠
+
+## Development
+
+### Building the connector from source
 
 The connector can be build from source as part of the BDI-Stack, by running
 
@@ -266,7 +295,7 @@ make bdi-connector.jar
 
 in the root of this repository. See also [the "Developing" section in the top-level README file](../README.md#developing).
 
-## Running the test suite
+### Running the test suite
 
 To run the test suite, run:
 

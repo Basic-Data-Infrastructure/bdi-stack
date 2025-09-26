@@ -15,7 +15,7 @@
             [babashka.json :as json]
             [clojure.core.memoize :as memoize]
             [clojure.string :as string]
-            [clojure.tools.logging.readable :as log]
+            [clojure.tools.logging :as log]
             [org.bdinetwork.ishare.client.cache :as cache]
             [org.bdinetwork.ishare.client.request :as request]
             [org.bdinetwork.ishare.jwt :as jwt])
@@ -163,7 +163,8 @@ When bearer token is not needed, provide a `nil` token"
 (def logging-interceptor
   {:name     ::logging
    :response (fn logging-response [{:keys [request] :as response}]
-               (log/debug {:request  (select-keys request [:method :uri :ishare/client-id])
+               (log/debug "Processed"
+                          {:request  (select-keys request [:method :uri :ishare/client-id])
                            :response (select-keys response [:status :ishare/result])})
                response)})
 
