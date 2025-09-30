@@ -4,6 +4,7 @@
 
 (ns org.bdinetwork.connector.interceptors-test
   (:require [aleph.http :as http]
+            [buddy.core.keys :as keys]
             [clojure.data.json :as json]
             [clojure.java.io :as io]
             [clojure.string :as string]
@@ -21,28 +22,22 @@
   (:import (java.io StringBufferInputStream)
            (java.time Instant)))
 
-;; force loading BDI interceptor multi methods
-#_{:clj-kondo/ignore [:unused-namespace]}
-(require '[org.bdinetwork.connector.interceptors :as _bdi-interceptors])
-
 (def server-id "EU.EORI.CONNECTOR")
 
-(def connector-env
-  {:server-id   server-id
-   :private-key (io/resource "test-config/connector.key.pem")
-   :public-key  (io/resource "test-config/connector.cert.pem")
-   :x5c         (io/resource "test-config/connector.x5c.pem")})
-
 (def config
-  (-> connector-env
-      (config/config config/server-party-opt-specs)
-      (assoc :in-memory-association-data-source (io/resource "test-config/association-register-config.yml"))))
+  {:server-id   server-id
+   :private-key (keys/private-key (io/resource "test-config/connector.key.pem"))
+   :public-key  (keys/public-key (io/resource "test-config/connector.cert.pem"))
+   :x5c         (config/split-x5c (io/resource "test-config/connector.x5c.pem"))
+
+   :in-memory-association-data-source
+   (io/resource "test-config/association-register-config.yml")})
 
 (defn mk-access-token [client-id]
   (access-token/mk-access-token (assoc config :client-id client-id)))
 
 (deftest bdi-authenticate
-  (let [{:keys [name enter]} (->interceptor ['bdi/authenticate] config)]
+  (let [{:keys [name enter]} (->interceptor ['bdi/authenticate config] nil)]
     (is (= "bdi/authenticate EU.EORI.CONNECTOR" name))
 
     (testing "without token"
@@ -66,7 +61,7 @@
         (is (= client-id (get-in request [:headers "x-bdi-client-id"])))))))
 
 (deftest bdi-deauthenticate
-  (let [{:keys [name enter]} (->interceptor ['bdi/deauthenticate] config)]
+  (let [{:keys [name enter]} (->interceptor ['bdi/deauthenticate] nil)]
     (is (= "bdi/deauthenticate" name))
 
     (let [req  {:headers {"x-test" "test"}}
@@ -95,7 +90,7 @@
        (StringBufferInputStream.)))
 
 (deftest bdi-connect-token
-  (let [{:keys [name enter]} (->interceptor ['bdi/connect-token] config)]
+  (let [{:keys [name enter]} (->interceptor ['bdi/connect-token config] nil)]
     (is (= "bdi/connect-token EU.EORI.CONNECTOR" name))
     (let [request            {:request-method :post, :headers {"content-type" "application/x-www-form-urlencoded"}}
           {:keys [response]} (enter {:request request})]

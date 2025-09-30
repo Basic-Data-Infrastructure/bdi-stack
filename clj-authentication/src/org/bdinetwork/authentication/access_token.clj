@@ -10,6 +10,8 @@
   (:import java.time.Instant
            java.util.UUID))
 
+(def default-access-token-ttl-seconds 600)
+
 (defn- seconds-since-unix-epoch
   "Current number of seconds since the UNIX epoch."
   []
@@ -24,7 +26,8 @@
   Warning: the access token is not encrypted; all data in `claims` is
   directly readable from the access token. Do not store private data
   in `claims`."
-  [{:keys [client-id server-id private-key access-token-ttl-seconds]}]
+  [{:keys [client-id server-id private-key access-token-ttl-seconds]
+    :or {access-token-ttl-seconds default-access-token-ttl-seconds}}]
   {:pre [client-id server-id private-key access-token-ttl-seconds]}
   (let [now (seconds-since-unix-epoch)
         exp (+ access-token-ttl-seconds now)]
@@ -43,7 +46,9 @@
   "Validate `access-token` and return client from claims.
 
   Throws exception if access token is invalid."
-  [access-token {:keys [server-id public-key access-token-ttl-seconds]}]
+  [access-token
+   {:keys [server-id public-key access-token-ttl-seconds]
+    :or {access-token-ttl-seconds default-access-token-ttl-seconds}}]
   {:pre [server-id public-key access-token-ttl-seconds]}
   (let [decoded (jwt/decode-header access-token)]
     (when (not= {:alg :rs256 :typ "JWT"} decoded)

@@ -4,8 +4,10 @@
 
 (ns org.bdinetwork.gateway.rules
   (:require [aero.core :as aero]
+            [buddy.core.keys :as keys]
             [clojure.string :as string]
-            [org.bdinetwork.gateway.interceptors :as interceptors]))
+            [org.bdinetwork.gateway.interceptors :as interceptors]
+            [org.bdinetwork.service-commons.config :as config]))
 
 (defmethod aero/reader 'b64
   [_ _ value]
@@ -23,6 +25,18 @@
       (throw (ex-info (str "Environment variable " value " blank")
                       {:var value})))
     v))
+
+(defmethod aero/reader 'private-key
+  [_ _ file-name]
+  (keys/private-key file-name))
+
+(defmethod aero/reader 'public-key
+  [_ _ file-name]
+  (keys/public-key file-name))
+
+(defmethod aero/reader 'x5c
+  [_ _ file-name]
+  (config/split-x5c file-name))
 
 (defn- parse-interceptors [rule & args]
   (update rule :interceptors

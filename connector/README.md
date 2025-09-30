@@ -60,6 +60,9 @@ The rules file is parsed using [aero](https://github.com/juxt/aero) and is exten
 - `#rx` to produce regular expressions
 - `#b64` to produce base64 encoded strings
 - `#env!` same as `#env` but raises an error when the value is unset or blank
+- `#private-key` read a private key from the given file name
+- `#public-key` read a public key from the given file name
+- `#x5c` read a certificate chain from the given file name
 
 Top-level configuration:
 
@@ -178,6 +181,17 @@ This gateway comes with the following base interceptors:
 
 - `bdi/authenticate` validate bearer token on incoming request, when none given responds with "401 Unauthorized", otherwise adds "X-Bdi-Client-Id" request header and vars for consumption downstream.  Note: put this interceptor *before* `logger` when logging the client-id.
 
+  Example:
+
+  ```edn
+  [bdi/authenticate {:server-id   "EU.EORI.CONNECTOR"
+                     :private-key #private-key "certs/connector.key.pem"
+                     :public-key  #public-key "certs/connector.cert.pem"
+                     :x5c         #x5c "certs/connector.x5c.pem"
+                     :association-server-id  "EU.EORI.ASSOCIATION-REGISTER"
+                     :association-server-url "https://association-register.com"}]
+  ```
+
 - `bdi/deauthenticate` ensure the "X-Bdi-Client-Id" request header is **not** already set on a request for public endpoints which do not need authentication.  This prevents clients from fooling the backend into being authenticated.  **Always use this on public routes when authentication is optional downstream.**
 
 - `bdi/connect-token` provide a access token endpoint to provide access tokens for machine-to-machine (M2M) operations.  Note: this interceptor does no matching, so it needs to be added to a separate rule with a match like: `{:uri "/connect/token", :request-method :post}`.
@@ -186,7 +200,13 @@ This gateway comes with the following base interceptors:
 
   ```edn
   {:match        {:uri "/connect/token"}
-   :interceptors [[bdi/connect-token]]}
+   :interceptors
+   [[bdi/connect-token {:server-id   "EU.EORI.CONNECTOR"
+                        :private-key #private-key "certs/connector.key.pem"
+                        :public-key  #public-key "certs/connector.cert.pem"
+                        :x5c         #x5c "certs/connector.x5c.pem"
+                        :association-server-id  "EU.EORI.ASSOCIATION-REGISTER"
+                        :association-server-url "https://association-register.com"}]
   ```
 
 ## Evaluation

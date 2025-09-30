@@ -27,7 +27,7 @@
           nil)))))
 
 (defmethod ->interceptor 'bdi/authenticate
-  [[id] {:keys [server-id] :as config}]
+  [[id {:keys [server-id] :as config}] _]
   (interceptor
    :name (str id " " server-id)
    :doc "Enforce BDI authentication on incoming requests and add
@@ -73,7 +73,7 @@
       (ring-json/json-response {})))
 
 (defmethod ->interceptor 'bdi/connect-token
-  [[id] {:keys [server-id] :as config}]
+  [[id {:keys [server-id] :as config}] _]
   (interceptor
    :name (str id " " server-id)
    :doc "Provide a access token (M2M) endpoint to acquire a

@@ -84,7 +84,8 @@
 (defn client-assertion-response
   [{:keys                                [association]
     {:strs [client_id client_assertion]} :form-params :as request}
-   {:keys [private-key server-id jti-cache-atom access-token-ttl-seconds]}]
+   {:keys [private-key server-id jti-cache-atom access-token-ttl-seconds]
+    :or   {access-token-ttl-seconds access-token/default-access-token-ttl-seconds}}]
   (log/debug "Client assert response" {:client_assertion client_assertion})
 
   (or (check-access-token-request request)
