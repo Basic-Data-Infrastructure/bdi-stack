@@ -4,6 +4,7 @@
 
 (ns org.bdinetwork.gateway.rules
   (:require [aero.core :as aero]
+            [clojure.string :as string]
             [org.bdinetwork.gateway.interceptors :as interceptors]))
 
 (defmethod aero/reader 'b64
@@ -14,6 +15,14 @@
 (defmethod aero/reader 'rx
   [_ _ value]
   (re-pattern value))
+
+(defmethod aero/reader 'env!
+  [_ _ value]
+  (let [v (System/getenv (name value))]
+    (when (string/blank? v)
+      (throw (ex-info (str "Environment variable " value " blank")
+                      {:var value})))
+    v))
 
 (defn- parse-interceptors [rule & args]
   (update rule :interceptors

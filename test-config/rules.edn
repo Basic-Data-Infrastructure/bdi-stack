@@ -18,16 +18,16 @@
                            "delegation-mask"     (get ctx :delegation-mask)}]
 
                   [oauth2/bearer-token
-                   {:aud #env OAUTH_AUDIENCE
-                    :iss #env OAUTH_ISSUER}
-                   {:realm #env OAUTH_REALM}]
+                   {:aud #env! OAUTH_AUDIENCE
+                    :iss #env! OAUTH_ISSUER}
+                   {:realm #env! OAUTH_REALM}]
                   [request/update update :headers dissoc "authorization"]
 
-                  [noodlebar/delegation {:oauth2/token-url     #env NOODLEBAR_TOKEN_URL
-                                         :oauth2/client-id     #env NOODLEBAR_CLIENT_ID
-                                         :oauth2/client-secret #env NOODLEBAR_CLIENT_SECRET
-                                         :oauth2/audience      #env NOODLEBAR_AUDIENCE
-                                         :coremanager-url      #env NOODLEBAR_COREMANAGER_URL}
+                  [noodlebar/delegation {:oauth2/token-url     #env! NOODLEBAR_TOKEN_URL
+                                         :oauth2/client-id     #env! NOODLEBAR_CLIENT_ID
+                                         :oauth2/client-secret #env! NOODLEBAR_CLIENT_SECRET
+                                         :oauth2/audience      #env! NOODLEBAR_AUDIENCE
+                                         :coremanager-url      #env! NOODLEBAR_COREMANAGER_URL}
                    {:policyIssuer (str/replace owner "kvk:" "NL.KVK.") ; translate itv to p8 notation
                     :target       {:accessSubject (get-in ctx [:oauth2/bearer-token-claims :organizationId])}
                     :policySets
@@ -39,11 +39,11 @@
                                     :attributes  ["*"]}
                          :actions  ["read"]
                          :environment
-                         {:serviceProviders [#env BACKEND_KVK]}}}]}]}]
+                         {:serviceProviders [#env! BACKEND_KVK]}}}]}]}]
 
                   [reverse-proxy/forwarded-headers]
-                  [request/rewrite #env BACKEND_URL]
-                  [request/update assoc-in [:headers "x-api-key"] #env BACKEND_API_KEY]
+                  [request/rewrite #env! BACKEND_URL]
+                  [request/update assoc-in [:headers "x-api-key"] #env! BACKEND_API_KEY]
                   [request/update update :query-string str/replace "ownerId=NL.KVK." "ownerId=kvk%3a"] ; translate p8 to itv notation
                   [reverse-proxy/proxy-request]]}
 
@@ -51,9 +51,9 @@
   ;; authentication (for demo purposes only!)
   {:match        {:headers {"authorization"
                             #join ["Basic " #b64 #join
-                                   [#env AUDIT_LOG_USER ":" #env AUDIT_LOG_PASSWD]]}
+                                   [#env! AUDIT_LOG_USER ":" #env! AUDIT_LOG_PASSWD]]}
                   :uri     "/audit-log"}
-   :interceptors [[demo/audit-log {:json-file #env AUDIT_LOG_FILE}]]} ;; as configured in logback.xml
+   :interceptors [[demo/audit-log {:json-file #env! AUDIT_LOG_FILE}]]} ;; as configured in logback.xml
   {:match        {:uri "/audit-log"}
    :interceptors [[respond {:status  401
                             :headers {"content-type"     "text/html"

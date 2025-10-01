@@ -59,6 +59,7 @@ The rules file is parsed using [aero](https://github.com/juxt/aero) and is exten
 
 - `#rx` to produce regular expressions
 - `#b64` to produce base64 encoded strings
+- `#env!` same as `#env` but raises an error when the value is unset or blank
 
 Top-level configuration:
 
@@ -234,17 +235,18 @@ The following example is protected by a basic authentication username / password
 
 ```edn
 {:rules [{:match {:headers {"authorization"
-                            #join ["Basic " #b64 #join [#env "USER" ":" #env "PASS"]]}}
-          :interceptors [[logger]
-                         [reverse-proxy/forwarded-headers]
-                         [request/update assoc
-                          :scheme #keyword #env "BACKEND_PROTO"
-                          :server-name #env "BACKEND_HOST"
-                          :server-port #long #env "BACKEND_PORT"]
-                         [request/update update :headers assoc "authorization"
-                          #join ["Basic " #b64 #join [#env "BACKEND_USER" ":" #env "BACKEND_PASS"]]]
-                         [response/update update :headers assoc "x-bdi-connector" "passed"]
-                         [reverse-proxy/proxy-request]]}
+                            #join ["Basic " #b64 #join [#env! "USER" ":" #env! "PASS"]]}}
+          :interceptors
+          [[logger]
+           [reverse-proxy/forwarded-headers]
+           [request/update assoc
+            :scheme #keyword #env! "BACKEND_PROTO"
+            :server-name #env! "BACKEND_HOST"
+            :server-port #long #env! "BACKEND_PORT"]
+           [request/update update :headers assoc "authorization"
+            #join ["Basic " #b64 #join [#env! "BACKEND_USER" ":" #env! "BACKEND_PASS"]]]
+           [response/update update :headers assoc "x-bdi-connector" "passed"]
+           [reverse-proxy/proxy-request]]}
 
          {:match        {}
           :interceptors [[logger]
