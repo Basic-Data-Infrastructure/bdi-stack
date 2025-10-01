@@ -18,9 +18,9 @@
                            "delegation-mask"     (get ctx :delegation-mask)}]
 
                   [oauth2/bearer-token
-                   {:aud "ITV"
-                    :iss "https://topsector-logistiek.eu.auth0.com/"}
-                   {:realm "ITV events"}]
+                   {:aud #env OAUTH_AUDIENCE
+                    :iss #env OAUTH_ISSUER}
+                   {:realm #env OAUTH_REALM}]
                   [request/update update :headers dissoc "authorization"]
 
                   [noodlebar/delegation {:oauth2/token-url     #env NOODLEBAR_TOKEN_URL
@@ -39,64 +39,25 @@
                                     :attributes  ["*"]}
                          :actions  ["read"]
                          :environment
-                         {:serviceProviders ["NL.KVK.17187159"]}}}]}]}]
+                         {:serviceProviders [#env BACKEND_KVK]}}}]}]}]
 
                   [reverse-proxy/forwarded-headers]
-                  [request/rewrite "https://fake-source-ll79.jomco.nl"]
+                  [request/rewrite #env BACKEND_URL]
+                  [request/update assoc-in [:headers "x-api-key"] #env BACKEND_API_KEY]
                   [request/update update :query-string str/replace "ownerId=NL.KVK." "ownerId=kvk%3a"] ; translate p8 to itv notation
-                  #_ [response/update update :headers assoc "x-api-key" #env ITV_API_KEY]
                   [reverse-proxy/proxy-request]]}
 
   ;; example access to audit log protected by basic
   ;; authentication (for demo purposes only!)
-  {:match        {:headers {"authorization" #join ["Basic " #b64 "demo:test123"]}
+  {:match        {:headers {"authorization"
+                            #join ["Basic " #b64 #join
+                                   [#env AUDIT_LOG_USER ":" #env AUDIT_LOG_PASSWD]]}
                   :uri     "/audit-log"}
-   :interceptors [[demo/audit-log {:json-file "log/audit.json"}]]} ;; as configured in logback.xml
+   :interceptors [[demo/audit-log {:json-file #env AUDIT_LOG_FILE}]]} ;; as configured in logback.xml
   {:match        {:uri "/audit-log"}
    :interceptors [[respond {:status  401
                             :headers {"content-type"     "text/html"
                                       "www-authenticate" "Basic realm=\"audit\""}
                             :body    "<html><body><em>not allowed</em><body></html>"}]]}
   {:match        {:uri "/favicon.ico"} ;; prevent chrome for asking for basic auth again
-   :interceptors [[respond {:status 204}]]}
-
-  ;; add endpoint to get access token and pass the rest to
-  ;; backend (when authenticated)
-  {:match        {:uri "/connect/token"}
-   :interceptors [[logger]
-                  [bdi/connect-token]
-                  [response/update update :headers assoc "x-bdi-connector" "passed"]]}
-
-  ;; test endpoints
-  {:match {:uri "/test/echo"}
-   :interceptors [[logger]
-                  [test/echo]]}
-
-  {:match {:uri "/test/drip"}
-   :interceptors [[logger]
-                  [test/drip]]}
-
-  ;; proxy the incoming request on /test/loopback back to the gateway
-  ;;
-  ;; i.e. curl -v -N 'http://localhost:8081/test/loopback?uri=/test/drip&interval=0.4'
-  {:match {:uri "/test/loopback"
-           :query-params {"uri" uri}}
-   :interceptors [[request/rewrite "http://localhost:8081"]
-                  [request/update assoc :uri uri]
-                  [request/update update :request-params dissoc "uri"]
-                  [request/update update :params dissoc "uri"]
-                  [reverse-proxy/proxy-request]]}
-
-  ;; anthing else that can be authenticated is proxied
-  {:match        {:request-method request-method
-                  :uri            uri}
-   :interceptors [[bdi/authenticate]
-                  ;; logged properties end up in audit log
-                  [logger {"x-bdi-client-id" x-bdi-client-id
-                           "uri"             uri
-                           "request-method"  request-method}]
-                  [reverse-proxy/forwarded-headers]
-                  [request/update update :headers dissoc "authorization"]
-                  [request/rewrite "http://localhost:9991"]
-                  [response/update update :headers assoc "x-bdi-connector" "passed"]
-                  [reverse-proxy/proxy-request]]}]}
+   :interceptors [[respond {:status 204}]]}]}

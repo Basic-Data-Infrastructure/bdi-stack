@@ -15,7 +15,8 @@
   ([v k] (prn k v) v))
 
 (ns user
-  (:require [clojure.tools.logging :as log]
+  (:require [babashka.http-client :as http]
+            [clojure.data.json :as json]
             [nl.jomco.resources :refer [defresource close mk-system]]
             [org.bdinetwork.association-register.main :as association-register.main]
             [org.bdinetwork.authentication-service.main :as authentication-service.main]
@@ -133,3 +134,21 @@
          :ishare/satellite-base-url (:association-server-url client-env)}
         (ishare-client/exec)
         (select-keys [:status :headers :body]))))
+
+(comment
+  (def token
+    (let [res (-> (System/getenv "OAUTH_TOKEN_ENDPOINT")
+                  (http/post {:headers {"content-type" "application/json"}
+                              :body    (json/write-str
+                                        {"client_id"     (System/getenv "OAUTH_CLIENT_ID")
+	                                 "client_secret" (System/getenv "OAUTH_CLIENT_SECRET")
+	                                 "audience"      (System/getenv "OAUTH_AUDIENCE")
+	                                 "grant_type"    "client_credentials"})})
+                  (update :body json/read-str :key-fn keyword))]
+      (-> res :body :access_token)))
+  (let [bol   (System/getenv "EXAMPLE_BOL")
+        bic   (System/getenv "EXAMPLE_BIC")
+        owner (System/getenv "EXAMPLE_OWNER")]
+    (http/get (str "http://" (:hostname connector-env) ":" (:port connector-env)
+                   "/v3/events?eventTypes=EQUIPMENT&transportDocumentReference=" bol "&equipmentReference=" bic "&ownerId=" owner)
+              {:headers {"authorization" (str "Bearer " token)}})))
