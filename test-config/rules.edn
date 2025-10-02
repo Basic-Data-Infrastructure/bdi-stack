@@ -60,4 +60,10 @@
                                       "www-authenticate" "Basic realm=\"audit\""}
                             :body    "<html><body><em>not allowed</em><body></html>"}]]}
   {:match        {:uri "/favicon.ico"} ;; prevent chrome for asking for basic auth again
-   :interceptors [[respond {:status 204}]]}]}
+   :interceptors [[respond {:status 204}]]}
+
+  ;; health check
+  {:match        {:uri "/ping"}
+   :interceptors [[respond {:status 200
+                            :header {"content-type" "text/plain"}
+                            :body   "pong\n"}]]}]}
