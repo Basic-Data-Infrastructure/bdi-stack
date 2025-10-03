@@ -251,8 +251,7 @@
              (d/let-flow [claims (oauth2/unsign-access-token bearer-token requirements)]
                (assoc ctx :oauth2/bearer-token-claims claims))
              (fn oauth2-catch [e]
-               (log/error e "OAUTH2 bearer token invalid" {:description
-                                                           (.getMessage e)})
+               (log/error e "OAUTH2 bearer token invalid" {:message (ex-message e)})
                (assoc ctx :response
                       (-> response/unauthorized
                           (assoc-in [:headers "www-authenticate"]
