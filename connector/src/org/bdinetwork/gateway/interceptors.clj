@@ -251,14 +251,14 @@
              (d/let-flow [claims (oauth2/unsign-access-token bearer-token requirements)]
                (assoc ctx :oauth2/bearer-token-claims claims))
              (fn oauth2-catch [e]
-               (let [msg (.getMessage e)]
-                 (assoc ctx :response
-                        (-> response/unauthorized
-                            (assoc-in [:headers "www-authenticate"]
-                                      (str "Bearer " auth-params
-                                           ", error=\"invalid_token\""
-                                           ", error_description=\"" msg "\""))
-                            (assoc :body msg))))))))))))
+               (log/error e "OAUTH2 bearer token invalid" {:description
+                                                           (.getMessage e)})
+               (assoc ctx :response
+                      (-> response/unauthorized
+                          (assoc-in [:headers "www-authenticate"]
+                                    (str "Bearer " auth-params
+                                         ", error=\"invalid_token\""))
+                          (assoc :body "Unauthorized")))))))))))
 
 (defn echo
   [{{{:strs [delay] :or {delay "0"}} :params :as request} :request :as ctx}]

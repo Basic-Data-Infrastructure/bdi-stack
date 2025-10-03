@@ -39,8 +39,7 @@
                        {:throw-exceptions? false
                         :headers           {"authorization" "Bearer test"}})]
         (is (= http-status/unauthorized status))
-        (is (= "Message seems corrupt or manipulated"
-               (slurp body)))))
+        (is (= "Unauthorized" (slurp body)))))
 
     (testing "wrong audience"
       (let [token (mk-token {:iat (.getEpochSecond (Instant/now))
@@ -52,8 +51,7 @@
                        {:throw-exceptions? false
                         :headers           {"authorization" (str "Bearer " token)}})]
         (is (= http-status/unauthorized status))
-        (is (= "Audience does not match test-audience" ;; TODO helpful but a security issue
-               (slurp body)))))
+        (is (= "Unauthorized" (slurp body)))))
 
     (testing "success"
       (let [token (mk-token {:iat (.getEpochSecond (Instant/now))
