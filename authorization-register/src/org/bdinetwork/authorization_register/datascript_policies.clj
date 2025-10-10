@@ -76,8 +76,9 @@
 (defrecord DataScriptPolicies [conn]
   PolicyView
   (get-policies [_ selector]
-    (first (ds/q (selector->query selector)
-                 (ds/db conn))))
+    (seq (map #(dissoc % :db/id)
+              (first (ds/q (selector->query selector)
+                           (ds/db conn))))))
 
   PolicyStore
   (add-policy! [_ policy]

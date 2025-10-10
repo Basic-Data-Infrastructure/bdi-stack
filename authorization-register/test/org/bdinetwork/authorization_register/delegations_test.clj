@@ -61,8 +61,7 @@
     (is (uuid? policy-id)
         "can insert delegation")
 
-    (is (= [{:db/id                       1
-             :policy/id                   policy-id
+    (is (= [{:policy/id                   policy-id
              :policy/issuer               "EU.EORI.PRECIOUSG"
              :policy/max-delegation-depth 4
              :policy/licenses             ["AGPL"]

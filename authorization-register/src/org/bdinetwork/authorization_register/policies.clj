@@ -13,7 +13,9 @@
 
 (defprotocol PolicyView
   (get-policies [x selector]
-    "Return all policies matching selector."))
+    "Return all policies matching `selector`.
+
+    `selector` is a map of attributes to values, see `query-attributes`."))
 
 (defprotocol PolicyStore
   (add-policy! [x policy]
