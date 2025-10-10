@@ -14,7 +14,7 @@
   (:require [clojure.java.io :as io]
             [clojure.tools.logging :as log]
             [datascript.core :as ds]
-            [org.bdinetwork.authorization-register.policies :refer [PolicyStore PolicyView schema] :as policies])
+            [org.bdinetwork.authorization-register.policies :refer [PolicyStore schema] :as policies])
   (:import java.util.UUID))
 
 (defn- bound-key-clause
@@ -74,13 +74,11 @@
         (selector->where selector)))
 
 (defrecord DataScriptPolicies [conn]
-  PolicyView
+  PolicyStore
   (get-policies [_ selector]
     (seq (map #(dissoc % :db/id)
               (first (ds/q (selector->query selector)
                            (ds/db conn))))))
-
-  PolicyStore
   (add-policy! [_ policy]
     (let [id (UUID/randomUUID)]
       (log/debug "Adding policy" id policy)

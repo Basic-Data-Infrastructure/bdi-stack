@@ -10,6 +10,7 @@
             [nl.jomco.resources :refer [mk-system Resource]]
             [org.bdinetwork.authentication.remote-association :refer [remote-association]]
             [org.bdinetwork.authorization-register.datascript-policies :refer [file-backed-policies]]
+            [org.bdinetwork.authorization-register.psql-policies :refer [psql-policies]]
             [org.bdinetwork.authorization-register.web :as web]
             [ring.adapter.jetty :refer [run-jetty]]))
 
@@ -28,10 +29,16 @@
   (close [jetty]
     (.stop jetty)))
 
+(defn policy-engine
+  [{:keys [policies-directory dbspec] :as _config}]
+  (if policies-directory
+    (file-backed-policies policies-directory)
+    (psql-policies dbspec)))
+
 (defn run-system
-  [{:keys [policies-db server-id x5c private-key association-server-id association-server-url] :as config}]
-  {:pre [policies-db server-id x5c private-key association-server-id association-server-url]}
-  (mk-system [policies    (file-backed-policies policies-db)
+  [{:keys [server-id x5c private-key association-server-id association-server-url] :as config}]
+  {:pre [server-id x5c private-key association-server-id association-server-url]}
+  (mk-system [policies    (policy-engine config)
               association (remote-association #:ishare {:client-id          server-id
                                                         :x5c                x5c
                                                         :private-key        private-key

@@ -66,9 +66,8 @@
    :server-id              "EU.EORI.AUTHORIZATION-REGISTER"
    :association-server-id  (:server-id association-env)
    :association-server-url association-url
-
    :port                   "8882"
-   :policies-db            "policies.db"})
+   :policies-directory     "policies.db"})
 
 (def connector-env
   {:private-key            "test-config/connector.key.pem"

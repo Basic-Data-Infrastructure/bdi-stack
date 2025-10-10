@@ -168,7 +168,7 @@
   (let [dir (temp-dir)]
     (with-resources [_association-system (association/run-system association-config)
                      _authorization-system (system/run-system (assoc auth-register-config
-                                                                     :policies-db dir))]
+                                                                     :policies-directory dir))]
 
       (let [resp (client/exec (policy-request ar-request
                                               {"delegationEvidence" delegation-evidence}))]
