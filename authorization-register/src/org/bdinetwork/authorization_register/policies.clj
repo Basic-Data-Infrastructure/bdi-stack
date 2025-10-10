@@ -25,19 +25,19 @@
   {
    ;; policies are the root entities in the schema
    ;; the policy root has a "Permit" effect
-   :policy/id                     {:db/unique :db.unique/identity}
-   :policy/issuer                 {}
-   :policy/not-before             {}
-   :policy/not-on-or-after        {}
-   :policy/max-delegation-depth   {}
-   :policy/licenses               {:db/cardinality :db.cardinality/many}
-   :target/access-subject         {}
-   :target/actions                {:db/cardinality :db.cardinality/many}
+   :policy/id                   {:db/unique :db.unique/identity}
+   :policy/issuer               {}
+   :policy/not-before           {}
+   :policy/not-on-or-after      {}
+   :policy/max-delegation-depth {}
+   :policy/licenses             {:db/cardinality :db.cardinality/many}
+   :policy/access-subject       {}
+   :policy/actions              {:db/cardinality :db.cardinality/many}
    ;; delegation depth
-   :resource/type                 {}
-   :resource/identifiers          {:db/cardinality :db.cardinality/many}
-   :resource/attributes           {:db/cardinality :db.cardinality/many}
-   :environment/service-providers {:db/cardinality :db.cardinality/many}})
+   :policy/resource-type        {}
+   :policy/resource-identifiers {:db/cardinality :db.cardinality/many}
+   :policy/resource-attributes  {:db/cardinality :db.cardinality/many}
+   :policy/service-providers    {:db/cardinality :db.cardinality/many}})
 
 (def query-attributes
   "These attributes can be queried on using `get-policies`.
@@ -52,9 +52,9 @@
   In the case of :db.cardinality/many attributes, the policy may have
   additional values for the given attribute."
   [:policy/issuer
-   :target/access-subject
-   :target/actions
-   :resource/type
-   :resource/identifiers
-   :resource/attributes
-   :environment/service-providers])
+   :policy/access-subject
+   :policy/actions
+   :policy/resource-type
+   :policy/resource-identifiers
+   :policy/resource-attributes
+   :policy/service-providers])

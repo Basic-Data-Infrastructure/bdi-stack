@@ -31,11 +31,11 @@
                                            "rules"  [{"effect" "Permit"}]}]}]
    })
 
-(deftest mappoing
+(deftest mapping
   (is (= {:policy/issuer         "EU.EORI.PRECIOUSG"
-          :resource/identifiers  ["SOME.RESOURCE.ID"]
-          :target/access-subject "EU.EORI.FLEXTRANS"
-          :target/actions        ["READ"]}
+          :policy/resource-identifiers  ["SOME.RESOURCE.ID"]
+          :policy/access-subject "EU.EORI.FLEXTRANS"
+          :policy/actions        ["READ"]}
          (delegations/delegation-mask->policy-selector
           {"policyIssuer"    "EU.EORI.PRECIOUSG"
            "target"          {"accessSubject" "EU.EORI.FLEXTRANS"}
@@ -47,11 +47,11 @@
   (is (= {:policy/issuer               "EU.EORI.PRECIOUSG"
           :policy/not-before           1
           :policy/not-on-or-after      2
-          :resource/identifiers        ["SOME.RESOURCE.ID"]
-          :target/access-subject       "EU.EORI.FLEXTRANS"
+          :policy/resource-identifiers        ["SOME.RESOURCE.ID"]
+          :policy/access-subject       "EU.EORI.FLEXTRANS"
           :policy/licenses             ["AGPL"]
           :policy/max-delegation-depth 4
-          :target/actions              ["READ" "WRITE"]}
+          :policy/actions              ["READ" "WRITE"]}
          (delegations/delegation-evidence->policy
           delegation-evidence))))
 
@@ -68,13 +68,13 @@
              :policy/licenses             ["AGPL"]
              :policy/not-before           1
              :policy/not-on-or-after      2
-             :resource/identifiers        ["SOME.RESOURCE.ID"]
-             :target/access-subject       "EU.EORI.FLEXTRANS"
-             :target/actions              ["READ" "WRITE"]}]
+             :policy/resource-identifiers        ["SOME.RESOURCE.ID"]
+             :policy/access-subject       "EU.EORI.FLEXTRANS"
+             :policy/actions              ["READ" "WRITE"]}]
            (policies/get-policies p {:policy/issuer         "EU.EORI.PRECIOUSG"
-                                     :resource/identifiers  ["SOME.RESOURCE.ID"]
-                                     :target/access-subject "EU.EORI.FLEXTRANS"
-                                     :target/actions        ["READ"]}))
+                                     :policy/resource-identifiers  ["SOME.RESOURCE.ID"]
+                                     :policy/access-subject "EU.EORI.FLEXTRANS"
+                                     :policy/actions        ["READ"]}))
         "Can fetch policies")
 
     (is (= {"policyIssuer" "EU.EORI.PRECIOUSG",

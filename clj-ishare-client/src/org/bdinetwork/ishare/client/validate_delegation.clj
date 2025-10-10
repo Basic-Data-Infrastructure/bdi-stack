@@ -58,22 +58,22 @@
                         (some-mismatch? policy-selector policy :policy/licenses)
                         (conj "no matching license")
 
-                        (exact-mismatch? policy-selector policy :target/access-subject)
+                        (exact-mismatch? policy-selector policy :policy/access-subject)
                         (conj "invalid access subject")
 
-                        (every-mismatch? policy-selector policy :target/actions)
+                        (every-mismatch? policy-selector policy :policy/actions)
                         (conj "invalid action")
 
-                        (exact-mismatch? policy-selector policy :resource/type)
+                        (exact-mismatch? policy-selector policy :policy/resource-type)
                         (conj "invalid resource type")
 
-                        (every-mismatch? policy-selector policy :resource/identifiers)
+                        (every-mismatch? policy-selector policy :policy/resource-identifiers)
                         (conj "invalid resource identifier")
 
-                        (every-mismatch? policy-selector policy :resource/attributes)
+                        (every-mismatch? policy-selector policy :policy/resource-attributes)
                         (conj "invalid resource attribute")
 
-                        (every-mismatch? policy-selector policy :environment/service-providers)
+                        (every-mismatch? policy-selector policy :policy/service-providers)
                         (conj "invalid service provider")))]
     {:issues          issues
      :policy          policy
@@ -111,29 +111,27 @@
            [{max-dd :policy/max-delegation-depth  :as policy} & rest-policies] policy-chain]
       (or (policy-mismatch now (cond-> policy-selector
                                  (seq rest-policies)
-                                 (dissoc :target/access-subject)) policy)
+                                 (dissoc :policy/access-subject)) policy)
           (if (seq rest-policies)
             (recur (-> policy-selector
-                       (assoc :policy/issuer (:target/access-subject policy))
+                       (assoc :policy/issuer (:policy/access-subject policy))
                        (update :policy/max-delegation-depth dec-max-delegation-depth max-dd))
                    rest-policies)
             nil)))))
 
 (defn policy-selector->delegation-mask
-  [{:resource/keys    [type identifiers attributes]
-    :environment/keys [service-providers]
-    :target/keys      [actions] :as policy}]
+  [{:policy/keys    [resource-type resource-identifiers resource-attributes service-providers actions] :as policy}]
   {:policyIssuer (:policy/issuer policy)
-   :target       {:accessSubject (:target/access-subject policy)}
+   :target       {:accessSubject (:policy/access-subject policy)}
    :policySets   [(cond-> {:policies [{:target (cond-> {:resource (cond-> {}
-                                                                    (some? type)
-                                                                    (assoc :type type)
+                                                                    (some? resource-type)
+                                                                    (assoc :type resource-type)
 
-                                                                    (some? identifiers)
-                                                                    (assoc :identifiers identifiers)
+                                                                    (some? resource-identifiers)
+                                                                    (assoc :identifiers resource-identifiers)
 
-                                                                    (some? attributes)
-                                                                    (assoc :attributes attributes))}
+                                                                    (some? resource-attributes)
+                                                                    (assoc :attributes resource-attributes))}
                                                  (seq actions)
                                                  (assoc :actions actions)
 
@@ -177,17 +175,17 @@
            policy))
        {}
        ;; map of selector key -> delegation mask path
-       {:policy/issuer                 [:policyIssuer]
-        :policy/max-delegation-depth   [:policySets 0 :maxDelegationDepth]
-        :policy/not-before             [:notBefore]
-        :policy/not-on-or-after        [:notOnOrAfter]
-        :target/access-subject         [:target :accessSubject]
-        :policy/licenses               [:policySets 0 :target :environment :licenses]
-        :target/actions                [:policySets 0 :policies 0 :target :actions]
-        :resource/type                 [:policySets 0 :policies 0 :target :resource :type]
-        :resource/identifiers          [:policySets 0 :policies 0 :target :resource :identifiers]
-        :resource/attributes           [:policySets 0 :policies 0 :target :resource :attributes]
-        :environment/service-providers [:policySets 0 :policies 0 :target :environment :serviceProviders]}))))
+       {:policy/issuer               [:policyIssuer]
+        :policy/max-delegation-depth [:policySets 0 :maxDelegationDepth]
+        :policy/not-before           [:notBefore]
+        :policy/not-on-or-after      [:notOnOrAfter]
+        :policy/access-subject       [:target :accessSubject]
+        :policy/licenses             [:policySets 0 :target :environment :licenses]
+        :policy/actions              [:policySets 0 :policies 0 :target :actions]
+        :policy/resource-type        [:policySets 0 :policies 0 :target :resource :type]
+        :policy/resource-identifiers [:policySets 0 :policies 0 :target :resource :identifiers]
+        :policy/resource-attributes  [:policySets 0 :policies 0 :target :resource :attributes]
+        :policy/service-providers    [:policySets 0 :policies 0 :target :environment :serviceProviders]}))))
 
 (defn- delegation-mask-chain
   "Create delegation masks for fetching delegation evidence chain.
