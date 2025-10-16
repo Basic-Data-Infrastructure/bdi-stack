@@ -105,7 +105,7 @@
     #_{:clj-kondo/ignore [:unused-binding]}
     (with-resources [association-system (association/run-system association-config)
                      authorization-system (system/run-system (assoc auth-register-config
-                                                                    :policies-db dir))]
+                                                                    :policies-directory dir))]
       (let [resp (client/exec (request/access-token-request (assoc client-config
                                                                   :ishare/base-url "http://localhost:9991"
                                                                   :ishare/server-id (:server-id association-config))))]

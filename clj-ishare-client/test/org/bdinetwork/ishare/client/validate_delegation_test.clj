@@ -87,12 +87,12 @@
 
 (def policy-selector
   {:policy/issuer (:ishare/client-id client-config)
-   :target/access-subject "EU.EORI.NLPRECIOUSG"
-   :target/actions ["BDI.PICKUP"]
-   :resource/type "klantordernummer"
-   :resource/identifiers ["112233"]
-   :resource/attributes ["*"]
-   :environment/service-providers ["SP1"]})
+   :policy/access-subject "EU.EORI.NLPRECIOUSG"
+   :policy/actions ["BDI.PICKUP"]
+   :policy/resource-type "klantordernummer"
+   :policy/resource-identifiers ["112233"]
+   :policy/resource-attributes ["*"]
+   :policy/service-providers ["SP1"]})
 
 (deftest conversions
   (is (= delegation-mask
@@ -168,7 +168,7 @@
   (let [dir (temp-dir)]
     (with-resources [_association-system (association/run-system association-config)
                      _authorization-system (system/run-system (assoc auth-register-config
-                                                                     :policies-db dir))]
+                                                                     :policies-directory dir))]
 
       (let [resp (client/exec (policy-request ar-request
                                               {"delegationEvidence" delegation-evidence}))]
@@ -186,6 +186,6 @@
                                                                     "EU.EORI.NLPRECIOUSG"])))
 
       (is (validate-delegation/fetch-and-validate-delegation client-config
-                                                             (assoc policy-selector :resource/type "something else")
+                                                             (assoc policy-selector :policy/resource-type "something else")
                                                              ["EU.EORI.CLIENT"
                                                               "EU.EORI.NLPRECIOUSG"])))))

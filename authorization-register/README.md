@@ -87,12 +87,21 @@ Environment variables:
 |`ASSOCIATION_SERVER_ID`   |Association Server id
 |`ASSOCIATION_SERVER_URL`  |Assocation Server url
 |`HOSTNAME`                |Server hostname
-|`POLICIES_DB`             |Directory to store policy data
+|`POLICIES_DIRECTORY`      |Directory storing policy data using datascript engine
+|`POLICIES_DB_DBNAME`      |PSQL database name for storing policy data
+|`POLICIES_DB_USER`        |PSQL database user
+|`POLICIES_DB_PASSWORD`    |PSQL database password
+|`POLICIES_DB_HOSTNAME`    |PSQL database hostname
+|`POLICIES_DB_PORT`        |PSQL database port (default: 5432)
 |`PORT`                    |Server HTTP Port (default: 8080)
 |`PRIVATE_KEY`             |Server private key pem file
 |`PUBLIC_KEY`              |Server public key pem file
 |`SERVER_ID`               |Server ID (EORI)
 |`X5C`                     |Server certificate chain pem file
+
+When `POLICIES_DIRECTORY` is specified, the datascript engine is used
+and PSQL options are ignored. If `POLICIES_DIRECTORY` is not
+specified, PSQL policy engine is used.
 
 ## Development
 

@@ -30,17 +30,17 @@
        policy))
    {}
    ;; map of selector key -> delegation mask path
-   {:policy/issuer                 ["policyIssuer"]
-    :policy/max-delegation-depth   ["policySets" 0 "maxDelegationDepth"]
-    :policy/not-before             ["notBefore"]
-    :policy/not-on-or-after        ["notOnOrAfter"]
-    :target/access-subject         ["target" "accessSubject"]
-    :policy/licenses               ["policySets" 0 "target" "environment" "licenses"]
-    :target/actions                ["policySets" 0 "policies" 0 "target" "actions"]
-    :resource/type                 ["policySets" 0 "policies" 0 "target" "resource" "type"]
-    :resource/identifiers          ["policySets" 0 "policies" 0 "target" "resource" "identifiers"]
-    :resource/attributes           ["policySets" 0 "policies" 0 "target" "resource" "attributes"]
-    :environment/service-providers ["policySets" 0 "policies" 0 "target" "environment" "serviceProviders"]}))
+   {:policy/issuer               ["policyIssuer"]
+    :policy/max-delegation-depth ["policySets" 0 "maxDelegationDepth"]
+    :policy/not-before           ["notBefore"]
+    :policy/not-on-or-after      ["notOnOrAfter"]
+    :policy/access-subject       ["target" "accessSubject"]
+    :policy/licenses             ["policySets" 0 "target" "environment" "licenses"]
+    :policy/actions              ["policySets" 0 "policies" 0 "target" "actions"]
+    :policy/resource-type        ["policySets" 0 "policies" 0 "target" "resource" "type"]
+    :policy/resource-identifiers ["policySets" 0 "policies" 0 "target" "resource" "identifiers"]
+    :policy/resource-attributes  ["policySets" 0 "policies" 0 "target" "resource" "attributes"]
+    :policy/service-providers    ["policySets" 0 "policies" 0 "target" "environment" "serviceProviders"]}))
 
 (defn delegation-mask->policy-selector
   "Convert an iSHARE delegation mask into a policy selector as defined by the PolicyView protocol."
@@ -52,42 +52,43 @@
        selector))
    {}
    ;; map of selector key -> delegation mask path
-   {:policy/issuer                 ["policyIssuer"]
-    :policy/max-delegation-depth   ["policySets" 0 "maxDelegationDepth"]
-    :target/access-subject         ["target" "accessSubject"]
-    :target/actions                ["policySets" 0 "policies" 0 "target" "actions"]
-    :resource/type                 ["policySets" 0 "policies" 0 "target" "resource" "type"]
-    :resource/identifiers          ["policySets" 0 "policies" 0 "target" "resource" "identifiers"]
-    :resource/attributes           ["policySets" 0 "policies" 0 "target" "resource" "attributes"]
-    :environment/service-providers ["policySets" 0 "policies" 0 "target" "environment" "serviceProviders"]}))
+   {:policy/issuer               ["policyIssuer"]
+    :policy/max-delegation-depth ["policySets" 0 "maxDelegationDepth"]
+    :policy/access-subject       ["target" "accessSubject"]
+    :policy/actions              ["policySets" 0 "policies" 0 "target" "actions"]
+    :policy/resource-type        ["policySets" 0 "policies" 0 "target" "resource" "type"]
+    :policy/resource-identifiers ["policySets" 0 "policies" 0 "target" "resource" "identifiers"]
+    :policy/resource-attributes  ["policySets" 0 "policies" 0 "target" "resource" "attributes"]
+    :policy/service-providers    ["policySets" 0 "policies" 0 "target" "environment" "serviceProviders"]}))
 
 (defn policy->delegation-evidence
-  [{:resource/keys    [type identifiers attributes]
-    :environment/keys [service-providers]
-    :target/keys      [actions] :as policy}
+  [{:policy/keys [access-subject actions licenses max-delegation-depth
+                  not-before not-on-or-after resource-attributes resource-identifiers resource-type
+                  service-providers issuer]}
    permit?]
-  {"policyIssuer" (:policy/issuer policy)
-   "target"       {"accessSubject" (:target/access-subject policy)}
-   "notBefore"    (:policy/not-before policy)
-   "notOnOrAfter" (:policy/not-on-or-after policy)
-   "policySets"   [(cond-> {"target"   {"environment" {"licenses" (:policy/licenses policy)}}
+  {"policyIssuer" issuer
+   "target"       {"accessSubject" access-subject}
+   "notBefore"    not-before
+   "notOnOrAfter" not-on-or-after
+   "policySets"   [(cond-> {"target"   {"environment" {"licenses" licenses}}
                             "policies" [{"target" (cond-> {"resource" (cond-> {}
-                                                                        (some? type)
-                                                                        (assoc "type" type)
+                                                                        (some? resource-type)
+                                                                        (assoc "type" resource-type)
 
-                                                                        (some? identifiers)
-                                                                        (assoc "identifiers" identifiers)
+                                                                        (some? resource-identifiers)
+                                                                        (assoc "identifiers" resource-identifiers)
 
-                                                                        (some? attributes)
-                                                                        (assoc "attributes" attributes))}
+                                                                        (some? resource-attributes)
+                                                                        (assoc "attributes" resource-attributes))}
                                                     (seq actions)
                                                     (assoc "actions" actions)
 
                                                     (seq service-providers)
                                                     (assoc-in ["environment" "serviceProviders"] service-providers))
                                          "rules"  [{"effect" (if permit? "Permit" "Deny")}]}]}
-                     (:policy/max-delegation-depth policy)
-                     (assoc "maxDelegationDepth" (:policy/max-delegation-depth policy)))]})
+
+                     max-delegation-depth
+                     (assoc "maxDelegationDepth" max-delegation-depth))]})
 
 (defn delegation-evidence
   [policy-view delegation-mask]
@@ -117,6 +118,5 @@
   (policies/delete-policy! policy-store id))
 
 ;; https://dev.ishare.eu/reference/delegation-mask
-;; 3https://dev.ishare.eu/reference/delegation-mask/policy-sets
+;; https://dev.ishare.eu/reference/delegation-mask/policy-sets
 ;; https://framework.ishare.eu/detailed-descriptions/technical/structure-of-delegation-evidence
-;; Data model
