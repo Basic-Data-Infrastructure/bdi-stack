@@ -9,7 +9,8 @@
             [clojure.java.io :as io]
             [nl.jomco.http-status-codes :as http-status]
             [nl.jomco.resources :refer [Resource]]
-            [org.bdinetwork.connector.system :as system]
+            [org.bdinetwork.connector.main]
+            [passage.system :as system]
             [ring.adapter.jetty :refer [run-jetty]])
   (:import (java.net InetSocketAddress Socket)
            (java.time Instant)))

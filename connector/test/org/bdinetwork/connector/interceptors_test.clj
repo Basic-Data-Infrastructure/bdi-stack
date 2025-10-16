@@ -12,16 +12,15 @@
             [nl.jomco.http-status-codes :as http-status]
             [nl.jomco.resources :refer [with-resources]]
             [org.bdinetwork.authentication.access-token :as access-token]
-            [org.bdinetwork.gateway :as gateway]
-            [org.bdinetwork.gateway.interceptors :refer [->interceptor]]
             [org.bdinetwork.ishare.jwt :as ishare-jwt]
             [org.bdinetwork.service-commons.config :as config]
             [org.bdinetwork.test-helper :refer [jwks-keys mk-token openid-token-uri openid-uri proxy-url start-backend start-openid start-proxy]]
+            [passage :as gateway]
+            [passage.interceptors :refer [->interceptor]]
             [ring.adapter.jetty :refer [run-jetty]]
             [ring.util.codec :as ring-codec])
   (:import (java.io StringBufferInputStream)
            (java.time Instant)))
-
 (def server-id "EU.EORI.CONNECTOR")
 
 (def config

@@ -11,9 +11,9 @@
             [org.bdinetwork.authentication.in-memory-association :refer [in-memory-association read-source]]
             [org.bdinetwork.authentication.remote-association :refer [remote-association]]
             [org.bdinetwork.connector.interceptors.audit-log :refer [audit-log-response]]
-            [org.bdinetwork.gateway.interceptors :refer [->interceptor interceptor]]
-            [org.bdinetwork.gateway.response :as response]
             [org.bdinetwork.ishare.client.validate-delegation :as validate-delegation]
+            [passage.interceptors :refer [->interceptor interceptor]]
+            [passage.response :as response]
             [ring.middleware.json :as ring-json]
             [ring.middleware.params :as ring-params]))
 
