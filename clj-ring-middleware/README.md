@@ -1,6 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2024 Jomco B.V.
-SPDX-FileCopyrightText: 2024 Topsector Logistiek
+SPDX-FileCopyrightText: 2024 Stichting Connekt
 SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
 SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
 
@@ -35,6 +35,6 @@ software.  Use at your own risk.
 
 Copyright (C) 2024 Jomco B.V.
 
-Copyright (C) 2024 Topsector Logistiek
+Copyright (C) 2024 Stichting Connekt
 
 [AGPL-3.0-or-later](LICENSES/AGPL-3.0-or-later.txt)

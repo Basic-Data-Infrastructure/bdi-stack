@@ -1,6 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2024 Jomco B.V.
-SPDX-FileCopyrightText: 2024 Topsector Logistiek
+SPDX-FileCopyrightText: 2024 Stichting Connekt
 SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
 SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
 
@@ -103,7 +103,7 @@ docker build -f authentication-service.dockerfile .
 
 Copyright (C) 2025 Jomco B.V.
 
-Copyright (C) 2025 Topsector Logistiek
+Copyright (C) 2025 Stichting Connekt
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

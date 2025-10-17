@@ -1,6 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2025 Jomco B.V.
-SPDX-FileCopyrightText: 2025 Topsector Logistiek
+SPDX-FileCopyrightText: 2025 Stichting Connekt
 SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 # BDI Connector

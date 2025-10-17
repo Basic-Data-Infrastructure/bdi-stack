@@ -1,5 +1,5 @@
 ;;; SPDX-FileCopyrightText: 2024, 2025 Jomco B.V.
-;;; SPDX-FileCopyrightText: 2024, 2025 Topsector Logistiek
+;;; SPDX-FileCopyrightText: 2024, 2025 Stichting Connekt
 ;;; SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
 ;;; SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
 ;;;

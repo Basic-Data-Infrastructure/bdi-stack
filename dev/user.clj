@@ -1,5 +1,5 @@
 ;;; SPDX-FileCopyrightText: 2025 Jomco B.V.
-;;; SPDX-FileCopyrightText: 2025 Topsector Logistiek
+;;; SPDX-FileCopyrightText: 2025 Stichting Connekt
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (in-ns 'clojure.core)
@@ -100,7 +100,7 @@
   (defresource system
     (mk-system [association (association-register.main/start association-env)
                 authentication (authentication-service.main/start authentication-env)
-                authorization (authorization-register.main/start authorization-env)
+                 authorization (authorization-register.main/start authorization-env)
                 example-backend (example-backend/start example-backend-config)
                 connector (connector.main/start connector-env)])))
 

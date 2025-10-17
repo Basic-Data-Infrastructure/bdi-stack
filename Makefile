@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: 2024, 2025 Jomco B.V.
-# SPDX-FileCopyrightText: 2024, 2025 Topsector Logistiek
+# SPDX-FileCopyrightText: 2024, 2025 Stichting Connekt
 # SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
 # SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
 #
@@ -38,7 +38,7 @@ outdated:
 copyright-headers:
 	reuse annotate \
 		--copyright="Jomco B.V."  \
-		--copyright="Topsector Logistiek" \
+		--copyright="Stichting Connekt" \
 		--license="AGPL-3.0-or-later" \
 		--contributor="Joost Diepenmaat <joost@jomco.nl>" \
 		--contributor="Remco van 't Veer <remco@jomco.nl>" \
@@ -48,7 +48,7 @@ copyright-headers:
 
 	reuse annotate \
 		--copyright="Jomco B.V."  \
-		--copyright="Topsector Logistiek" \
+		--copyright="Stichting Connekt" \
 		--license="AGPL-3.0-or-later" \
 		--contributor="Joost Diepenmaat <joost@jomco.nl>" \
 		--contributor="Remco van 't Veer <remco@jomco.nl>" \
