@@ -258,15 +258,14 @@ The following example is protected by a basic authentication username / password
                             #join ["Basic " #b64 #join [#env! "USER" ":" #env! "PASS"]]}}
           :interceptors
           [[logger]
-           [reverse-proxy/forwarded-headers]
-           [request/update assoc
+           [request assoc
             :scheme #keyword #env! "BACKEND_PROTO"
             :server-name #env! "BACKEND_HOST"
             :server-port #long #env! "BACKEND_PORT"]
-           [request/update update :headers assoc "authorization"
+           [request update :headers assoc "authorization"
             #join ["Basic " #b64 #join [#env! "BACKEND_USER" ":" #env! "BACKEND_PASS"]]]
-           [response/update update :headers assoc "x-bdi-connector" "passed"]
-           [reverse-proxy/proxy-request]]}
+           [response update :headers assoc "x-bdi-connector" "passed"]
+           [proxy (str "http://backend:port/" (get request :uri))]]}
 
          {:match        {}
           :interceptors [[logger]
@@ -287,7 +286,7 @@ Not supported (yet).
 The connector sits between the consumer and the provider, any HTTP request header from the consumer is passed on to the provider thus sensitive headers which, for example, are used to allow access MUST be filtered out using the `request/update` or `bdi/deauthenticate` (for `X-Bdi-Client-Id`) interceptor.  For example:
 
 ```edn
-[request/update update :headers dissoc "x-user-id"]
+[request update :headers dissoc "x-user-id"]
 ```
 
 ⚠ Headers case insensitive and always lower case in a request object, so when removing a header using `dissoc` use the lower case value! ⚠
@@ -300,7 +299,7 @@ Authentication an authorization tokens handled by the connector SHOULD be stripp
 [oauth2/bearer-token {:iss "http://example.com"
                       :aud "example"}
                      {:realm "example"}]
-[request/update update :headers dissoc "authorization"]
+[request update :headers dissoc "authorization"]
 ```
 
 ⚠ Headers case insensitive and always lower case in a request object, so when removing a header using `dissoc` use the lower case value! ⚠
