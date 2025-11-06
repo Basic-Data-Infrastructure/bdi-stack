@@ -8,7 +8,7 @@
 {:deps  {org.bdinetwork/clj-authentication  {:local/root "../clj-authentication"}
          org.bdinetwork/clj-ring-middleware {:local/root "../clj-ring-middleware"}
          org.bdinetwork/service-commons     {:local/root "../service-commons"}
-         ch.qos.logback/logback-classic     {:mvn/version "1.5.19"}
+         ch.qos.logback/logback-classic     {:mvn/version "1.5.20"}
          nl.jomco/with-resources            {:mvn/version "0.1.2"}
          nl.jomco/openapi-v3-validator      {:mvn/version "0.2.6"}
          clj-commons/clj-yaml               {:mvn/version "1.0.29"}

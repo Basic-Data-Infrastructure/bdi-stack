@@ -3,16 +3,15 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 {:rules [{:match {:headers {"authorization" #join ["Basic " #b64 #join ["foo" ":" "bar"]]}}
-          :interceptors [[reverse-proxy/forwarded-headers]
-                         [dummy-with-args]
-                         [request/update assoc
+          :interceptors [[dummy-with-args]
+                         [request assoc
                           :scheme :http
                           :server-name "localhost"
                           :server-port 1234]
-                         [request/update update :headers assoc "authorization"
+                         [request update :headers assoc "authorization"
                           #join ["Basic " #b64 "zoo:quux"]]
-                         [response/update update :headers assoc "x-bdi-connector" "passed"]
-                         [reverse-proxy/proxy-request]]}
+                         [response update :headers assoc "x-bdi-connector" "passed"]
+                         [proxy (get request :uri)]]}
 
          {:match        {}
           :interceptors [[respond {:status  401
