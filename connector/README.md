@@ -125,40 +125,29 @@ This gateway comes with the following base interceptors:
   [response {:status 200, :body "hello world"}]
   ```
 
-- `request/update` evaluates an update on the request in the "entering" phase, includes `request` and `ctx` in the evaluation environment.
+- `request` evaluates an update on the request in the "entering" phase, includes `request` and `ctx` in the evaluation environment.
 
   Example:
 
   ```edn
-  [request/update assoc-in [:headers "x-request"] "updated"]
+  [request assoc-in [:headers "x-request"] "updated"]
   ```
 
-- `response/update` evaluates an update on the response in the "leaving" phase, includes `request`,  `response` and `ctx` in the evaluation environment.
+- `response` evaluates an update on the response in the "leaving" phase, includes `request`,  `response` and `ctx` in the evaluation environment.
 
   Example:
 
   ```edn
-  [response/update assoc-in [:headers "x-response"] "updated"]
+  [response assoc-in [:headers "x-response"] "updated"]
   ```
 
-- `request/rewrite` rewrites the server part of the request to the given URL in preparation of the `reverse-proxy/proxy-request` interceptor.
-
-  Example:
-
-  ```edn
-  [request/rewrite "http://example.com"]
-  ```
-
-- `reverse-proxy/forwarded-headers` record information for "x-forwarded" headers on the request in the "entering" phase on the `:proxy-request-overrides`.  Note: put this interceptor near the top to prevent overwriting request properties by other interceptors like `request/update`.
-
-- `reverse-proxy/proxy-request` produce a response by executing the (rewritten) request (including the recorded "x-forwarded" headers information in `:proxy-request-overrides`) in the "entering" phase.  When the request fails to connect to the down stream server it responds with "503 Service Unavailable".
+- `proxy` produce a response by executing the (rewritten) request (including the recorded "x-forwarded" headers information in `:proxy-request-overrides`) in the "entering" phase.  When the request fails to connect to the down stream server it responds with "503 Service Unavailable".
 
   Here are example rules for a minimal reverse proxy to [httpbin](https://httpbin.org):
 
   ```edn
-  [[reverse-proxy/forwarded-headers]
-   [request/rewrite "https://httpbin.org"]
-   [reverse-proxy/proxy-request]]
+  [
+   [proxy (str "https://httpbin.org (get request :uri))]
   ```
 
 - `oauth2/bearer-token` require an OAuth 2.0 Bearer token with the given requirements and auth-params for a 401 Unauthorized response.  The absence of a token or it not complying to the requirements causes a 401 Unauthorized response.  At least the audience `:aud` and issuer `:iss` should be supplied to validate the token.  The JWKs are derived from the issuer openid-configuration (issuer is expected to be a URL and the well-known suffix is appended), if not available `jwks-uri` should be supplied.  The claims in the token will be available through var `oauth2/claims`.
@@ -169,7 +158,7 @@ This gateway comes with the following base interceptors:
   [oauth2/bearer-token {:iss "http://example.com"
                         :aud "example"}
                        {:realm "example"}]
-  [response/update assoc :body (str "Hello " (get oauth2/claims :sub))]
+  [response assoc :body (str "Hello " (get oauth2/claims :sub))]
   [respond {:status 200}]
   ```
 
@@ -177,7 +166,7 @@ This gateway comes with the following base interceptors:
   
   Both arguments to this intercepted are evaluated as an expression and includes `request` and `ctx` in the evaluation environment.
   
-  ⚠ Consider removing the "authentication" header from the request after the `oauth2/bearer-token` interceptor using the `request/update` interceptor, see also [Strip tokens](#strip-tokens). ⚠
+  ⚠ Consider removing the "authentication" header from the request after the `oauth2/bearer-token` interceptor using the `request` interceptor, see also [Strip tokens](#strip-tokens). ⚠
 
 - `bdi/authenticate` validate bearer token on incoming request, when none given responds with "401 Unauthorized", otherwise adds "X-Bdi-Client-Id" request header and vars for consumption downstream.  Note: put this interceptor *before* `logger` when logging the client-id.
 
@@ -258,10 +247,6 @@ The following example is protected by a basic authentication username / password
                             #join ["Basic " #b64 #join [#env! "USER" ":" #env! "PASS"]]}}
           :interceptors
           [[logger]
-           [request assoc
-            :scheme #keyword #env! "BACKEND_PROTO"
-            :server-name #env! "BACKEND_HOST"
-            :server-port #long #env! "BACKEND_PORT"]
            [request update :headers assoc "authorization"
             #join ["Basic " #b64 #join [#env! "BACKEND_USER" ":" #env! "BACKEND_PASS"]]]
            [response update :headers assoc "x-bdi-connector" "passed"]
@@ -283,7 +268,7 @@ Not supported (yet).
 
 ### End-user header overrides
 
-The connector sits between the consumer and the provider, any HTTP request header from the consumer is passed on to the provider thus sensitive headers which, for example, are used to allow access MUST be filtered out using the `request/update` or `bdi/deauthenticate` (for `X-Bdi-Client-Id`) interceptor.  For example:
+The connector sits between the consumer and the provider, any HTTP request header from the consumer is passed on to the provider thus sensitive headers which, for example, are used to allow access MUST be filtered out using the `request` or `bdi/deauthenticate` (for `X-Bdi-Client-Id`) interceptor.  For example:
 
 ```edn
 [request update :headers dissoc "x-user-id"]
