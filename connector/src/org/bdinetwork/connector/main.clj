@@ -12,5 +12,9 @@
 ;; load bdi specific interceptors
 (require '[org.bdinetwork.connector.interceptors])
 
+
+;; TODO: Ensure that proper interceptor aliases are set up
+;; -- maybe add a dynamic var for '*default-aliases*`?
+
 (defn -main [& _]
   (passage/-main))
