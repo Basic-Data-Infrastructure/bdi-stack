@@ -22,7 +22,7 @@
       (try
         (access-token/access-token->client-id token config)
         (catch Exception e
-          (log/infof e "Invalid access token: %s" (ex-message e))
+          (log/infof "Invalid access token: %s" (ex-message e))
           nil)))))
 
 (defn ^{:interceptor true} authenticate
