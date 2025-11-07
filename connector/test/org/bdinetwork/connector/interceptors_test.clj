@@ -12,11 +12,12 @@
             [nl.jomco.http-status-codes :as http-status]
             [nl.jomco.resources :refer [with-resources]]
             [org.bdinetwork.authentication.access-token :as access-token]
+            [org.bdinetwork.connector.interceptors :as interceptors]
             [org.bdinetwork.ishare.jwt :as ishare-jwt]
             [org.bdinetwork.service-commons.config :as config]
             [org.bdinetwork.test-helper :refer [jwks-keys mk-token openid-token-uri openid-uri proxy-url start-backend start-openid start-proxy]]
             [passage :as gateway]
-            [passage.interceptors :refer [->interceptor]]
+            [passage.interceptors]
             [ring.adapter.jetty :refer [run-jetty]]
             [ring.util.codec :as ring-codec])
   (:import (java.io StringBufferInputStream)
@@ -35,9 +36,8 @@
 (defn mk-access-token [client-id]
   (access-token/mk-access-token (assoc config :client-id client-id)))
 
-(deftest bdi-authenticate
-  (let [{:keys [name enter]} (->interceptor ['bdi/authenticate config] nil)]
-    (is (= "bdi/authenticate EU.EORI.CONNECTOR" name))
+(deftest authenticate
+  (let [{:keys [enter]} (interceptors/authenticate config)]
 
     (testing "without token"
       (let [{:keys [response]} (enter {:request {}})]
@@ -60,9 +60,7 @@
         (is (= client-id (get-in request [:headers "x-bdi-client-id"])))))))
 
 (deftest bdi-deauthenticate
-  (let [{:keys [name enter]} (->interceptor ['bdi/deauthenticate] nil)]
-    (is (= "bdi/deauthenticate" name))
-
+  (let [{:keys [enter]} interceptors/deauthenticate]
     (let [req  {:headers {"x-test" "test"}}
           req' {:headers {"x-test" "test", "x-bdi-client-id" "test"}}]
       (testing "without x-bdi-client-id request header"
@@ -89,8 +87,7 @@
        (StringBufferInputStream.)))
 
 (deftest bdi-connect-token
-  (let [{:keys [name enter]} (->interceptor ['bdi/connect-token config] nil)]
-    (is (= "bdi/connect-token EU.EORI.CONNECTOR" name))
+  (let [{:keys [enter]} (interceptors/connect-token config)]
     (let [request            {:request-method :post, :headers {"content-type" "application/x-www-form-urlencoded"}}
           {:keys [response]} (enter {:request request})]
       (is (= http-status/bad-request (:status response)))
@@ -144,28 +141,27 @@
        _proxy   (start-proxy (gateway/make-gateway
                               {:rules [{:match {:uri "/"}
                                         :interceptors
-                                        (mapv #(->interceptor % {})
-                                              [['noodlebar/delegation
-                                                {:oauth2/token-url     openid-token-uri
-                                                 :oauth2/client-id     "dummy"
-                                                 :oauth2/client-secret "dummy"
-                                                 :oauth2/audience      "test-subject"
-                                                 :coremanager-url      noodlebar-uri}
-                                                {:policyIssuer "test-issuer"
-                                                 :target       {:accessSubject "test-subject"}
-                                                 :policySets
-                                                 [{:policies
-                                                   [{:rules [{:effect "Permit"}]
-                                                     :target
-                                                     {:resource {:type        "test"
-                                                                 :identifiers ["*"]
-                                                                 :attributes  ["*"]}
-                                                      :actions  ["read"]
-                                                      :environment
-                                                      {:serviceProviders ["test-provider"]}}}]}]}]
-                                               ['respond
-                                                {:status 200
-                                                 :body   "pass"}]])}]}))
+                                        [[(list interceptors/noodlebar-delegation
+                                           {:oauth2/token-url     openid-token-uri
+                                            :oauth2/client-id     "dummy"
+                                            :oauth2/client-secret "dummy"
+                                            :oauth2/audience      "test-subject"
+                                            :coremanager-url      noodlebar-uri})
+                                          {:policyIssuer "test-issuer"
+                                           :target       {:accessSubject "test-subject"}
+                                           :policySets
+                                           [{:policies
+                                             [{:rules [{:effect "Permit"}]
+                                               :target
+                                               {:resource {:type        "test"
+                                                           :identifiers ["*"]
+                                                           :attributes  ["*"]}
+                                                :actions  ["read"]
+                                                :environment
+                                                {:serviceProviders ["test-provider"]}}}]}]}]
+                                         [passage.interceptors/respond
+                                          {:status 200
+                                           :body   "pass"}]]}]}))
        _openid    (start-openid jwks-keys)
        _noodlebar (start-noodlebar
                    {:policyIssuer "test-issuer"
@@ -184,7 +180,7 @@
                              :iss openid-uri
                              :aud "audience"
                              :sub "test-subject"})
-            {:keys [status body]}
+            {:keys [status body] :as response}
             @(http/get proxy-url
                        {:throw-exceptions? false
                         :headers           {"authorization" (str "Bearer " token)}})]

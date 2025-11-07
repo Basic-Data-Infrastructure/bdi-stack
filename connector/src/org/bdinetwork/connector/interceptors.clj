@@ -12,7 +12,6 @@
             [org.bdinetwork.authentication.remote-association :refer [remote-association]]
             [org.bdinetwork.connector.interceptors.audit-log :refer [audit-log-response]]
             [org.bdinetwork.ishare.client.validate-delegation :as validate-delegation]
-            [passage.interceptors :refer [->interceptor interceptor]]
             [passage.response :as response]
             [ring.middleware.json :as ring-json]
             [ring.middleware.params :as ring-params]))
@@ -26,34 +25,28 @@
           (log/infof e "Invalid access token: %s" (ex-message e))
           nil)))))
 
-(defmethod ->interceptor 'bdi/authenticate
-  [[id {:keys [server-id] :as config}] _]
-  (interceptor
-   :name (str id " " server-id)
-   :doc "Enforce BDI authentication on incoming requests and add
+(defn ^{:interceptor true} authenticate
+  "Enforce BDI authentication on incoming requests and add
    \"x-bdi-client-id\" request header.  Responds with 401 Unauthorized
    when request is not allowed."
-   :enter
-   (fn bdi-authenticate-enter [{:keys [request] :as ctx}]
+  [config]
+  {:enter
+   (fn authenticate-enter [{:keys [request] :as ctx}]
      (if-let [client-id (extract-client-id request config)]
        (-> ctx
            (assoc-in [:request :headers "x-bdi-client-id"] client-id)
            (assoc-in [:vars 'x-bdi-client-id] client-id))
        (assoc ctx :response
               {:status  http-status/unauthorized
-               :headers {"www-authenticate" "Bearer scope=\"BDI\""}})))))
+               :headers {"www-authenticate" "Bearer scope=\"BDI\""}})))})
 
-(defmethod ->interceptor 'bdi/deauthenticate
-  [[id] _]
-  (interceptor
-   :name (str id)
-   :doc "Remove \"x-bdi-client-id\" request header for avoid clients
-   from fooling backend into being authenticated."
-   :enter
-   (fn bdi-deauthenticate-enter [ctx]
-     (update-in ctx [:request :headers] dissoc "x-bdi-client-id"))))
+(def ^{:interceptor true} deauthenticate
+  "Remove \"x-bdi-client-id\" request header for avoid clients from
+  fooling backend into being authenticated."
+  {:enter  (fn bdi-deauthenticate-enter [ctx]
+             (update-in ctx [:request :headers] dissoc "x-bdi-client-id"))})
 
-(defn ->association
+(defn- ->association
   "Setup an association interface from the given `config`."
   [{:keys [in-memory-association-data-source
            server-id x5c private-key association-server-id association-server-url]}]
@@ -72,55 +65,46 @@
       (client-assertion/client-assertion-response config)
       (ring-json/json-response {})))
 
-(defmethod ->interceptor 'bdi/connect-token
-  [[id {:keys [server-id] :as config}] _]
-  (interceptor
-   :name (str id " " server-id)
-   :doc "Provide a access token (M2M) endpoint to acquire a
-   authentication token.  Note: this interceptor does not match on an
-   `uri`, use a `:match` in the rules for that."
-   :enter
-   (let [jti-cache-atom (client-assertion/mk-jti-cache-atom)
-         config         (assoc config
-                               :jti-cache-atom jti-cache-atom
-                               :association (->association config))]
-     (fn bdi-connect-token-enter [{:keys [request] :as ctx}]
-       (assoc ctx :response (client-assertion-response config request))))))
+(defn ^{:interceptor true} connect-token
+  "Provide a access token (M2M) endpoint to acquire an authentication
+  token.  Note: this interceptor does not match on an `uri`, use a
+  `:match` in the rules for that."
+  [config]
+  (let [jti-cache-atom (client-assertion/mk-jti-cache-atom)
+        config         (assoc config
+                              :jti-cache-atom jti-cache-atom
+                              :association (->association config))]
+    {:enter (fn bdi-connect-token-enter [{:keys [request] :as ctx}]
+              (assoc ctx :response (client-assertion-response config request)))}))
 
 
 
-(defmethod ->interceptor 'demo/audit-log
-  [[id {:keys [json-file] :as opts}] _]
-  {:pre [json-file]}
-  (interceptor
-   :name (str id " " (pr-str opts))
-   :doc "Provide access to the last `:n-of-lines` (defaults to 100)
+(defn ^{:interceptor true} demo-audit-log
+  "Provide access to the last `:n-of-lines` (defaults to 100)
    lines of `:json-file` (required) and render them in a HTML table."
-   :enter
-   (fn demo-audit-log-enter [ctx]
-     (assoc ctx :response (audit-log-response opts)))))
+  [{:keys [json-file] :as opts}]
+  {:pre [json-file]}
+  {:enter (fn demo-audit-log-enter [ctx & _]
+            (assoc ctx :response (audit-log-response opts)))} )
 
 
 
-(defmethod  ->interceptor 'noodlebar/delegation
-  [[id base-request-expr mask-expr] & _]
-  (interceptor
-   :name (str id " delegation-chain")
-   :args [base-request-expr mask-expr]
-   :doc "Retrieves and evaluates delegation evidence for
+(def ^{:interceptor true
+      :doc         "Retrieves and evaluates delegation evidence for
    request. Responds with 403 Forbidden when the evidence is not found
-   or does not match the delegation mask."
-   :enter
-   (fn delegation-chain-enter
-     [ctx base-request mask]
-     (let [evidence (validate-delegation/noodlebar-fetch-delegation-evidence base-request mask)
-           issues   (validate-delegation/delegation-mask-evidence-mismatch mask evidence)
-           ctx      (assoc ctx
-                           :delegation-evidence evidence
-                           :delegation-mask mask
-                           :delegation-issues issues)]
-       (cond-> ctx
-         issues
-         (assoc :response (-> response/forbidden
-                              (assoc-in [:headers "content-type"] "application/json")
-                              (assoc :body (json/json-str {:delegation-issues issues})))))))))
+   or does not match the delegation mask."}
+  noodlebar-delegation
+  {:enter (fn delegation-chain-enter
+             [ctx base-request mask]
+            (let [evidence (validate-delegation/noodlebar-fetch-delegation-evidence base-request mask)
+                  issues   (validate-delegation/delegation-mask-evidence-mismatch mask evidence)
+                  ctx      (assoc ctx
+                                  :delegation-evidence evidence
+                                  :delegation-mask mask
+                                  :delegation-issues issues)]
+               (cond-> ctx
+                 issues
+                 (assoc :response (-> response/forbidden
+                                      (assoc-in [:headers "content-type"] "application/json")
+                                      (assoc :body (json/json-str {:delegation-issues issues})))))))}
+)
