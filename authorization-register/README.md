@@ -120,6 +120,27 @@ To build a docker image, **in the parent directory**, run
 docker build -f authorization-register.dockerfile .
 ```
 
+### Running tests
+
+All components have a test suite.  Some tests need  a PostgreSQL database to run.
+
+In the example below a docker container is started to service as test database:
+
+```sh
+docker run -p 5432:5432 -e POSTGRES_PASSWORD=x docker.io/library/postgres
+```
+
+Use `-d` to run it in the background and use `--name bdi-stack-test-pg` to make it reusable with `docker start bdi-stack-test-pg`.
+
+Now the tests can be run using:
+
+```sh
+env AR_TEST_DB_NAME=postgres \
+    AR_TEST_DB_USER=postgres \
+    AR_TEST_DB_PASSWORD=x \
+    make test
+```
+
 ## Copying
 
 Copyright (C) 2024 Jomco B.V.
