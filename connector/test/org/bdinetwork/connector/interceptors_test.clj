@@ -60,14 +60,14 @@
         (is (= client-id (get-in request [:headers "x-bdi-client-id"])))))))
 
 (deftest bdi-deauthenticate
-  (let [{:keys [enter]} interceptors/deauthenticate]
-    (let [req  {:headers {"x-test" "test"}}
-          req' {:headers {"x-test" "test", "x-bdi-client-id" "test"}}]
-      (testing "without x-bdi-client-id request header"
-        (is (= req (:request (enter {:request req})))))
+  (let [{:keys [enter]} interceptors/deauthenticate
+        req  {:headers {"x-test" "test"}}
+        req' {:headers {"x-test" "test", "x-bdi-client-id" "test"}}]
+    (testing "without x-bdi-client-id request header"
+      (is (= req (:request (enter {:request req})))))
 
-      (testing "with x-bdi-client-id request header"
-        (is (= req (:request (enter {:request req'}))))))))
+    (testing "with x-bdi-client-id request header"
+      (is (= req (:request (enter {:request req'})))))))
 
 
 
@@ -87,31 +87,31 @@
        (StringBufferInputStream.)))
 
 (deftest bdi-connect-token
-  (let [{:keys [enter]} (interceptors/connect-token config)]
-    (let [request            {:request-method :post, :headers {"content-type" "application/x-www-form-urlencoded"}}
+  (let [{:keys [enter]} (interceptors/connect-token config)
+        request            {:request-method :post, :headers {"content-type" "application/x-www-form-urlencoded"}}
+        {:keys [response]} (enter {:request request})]
+    (is (= http-status/bad-request (:status response)))
+
+    (let [config             (config/config client-env client-party-opt-specs)
+          client-assertion   (ishare-jwt/make-client-assertion {:ishare/client-id   client-id
+                                                                :ishare/server-id   server-id
+                                                                :ishare/x5c         (:x5c config)
+                                                                :ishare/private-key (:private-key config)})
+          params             {:grant_type            "client_credentials"
+                              :scope                 "iSHARE"
+                              :client_id             client-id
+                              :client_assertion_type "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
+                              :client_assertion      client-assertion}
+          request            (assoc request
+                                    :body (form-params-encode params))
           {:keys [response]} (enter {:request request})]
-      (is (= http-status/bad-request (:status response)))
 
-      (let [config             (config/config client-env client-party-opt-specs)
-            client-assertion   (ishare-jwt/make-client-assertion {:ishare/client-id   client-id
-                                                                  :ishare/server-id   server-id
-                                                                  :ishare/x5c         (:x5c config)
-                                                                  :ishare/private-key (:private-key config)})
-            params             {:grant_type            "client_credentials"
-                                :scope                 "iSHARE"
-                                :client_id             client-id
-                                :client_assertion_type "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
-                                :client_assertion      client-assertion}
-            request            (assoc request
-                                      :body (form-params-encode params))
-            {:keys [response]} (enter {:request request})]
+      (is (= http-status/ok (:status response)))
+      (is (string/starts-with? (get-in response [:headers "Content-Type"]) ;; ring-json sends camelcase header
+                               "application/json"))
 
-        (is (= http-status/ok (:status response)))
-        (is (string/starts-with? (get-in response [:headers "Content-Type"]) ;; ring-json sends camelcase header
-                                 "application/json"))
-
-        (let [{:strs [token_type]} (json/read-str (:body response))]
-          (is (= "Bearer" token_type)))))))
+      (let [{:strs [token_type]} (json/read-str (:body response))]
+        (is (= "Bearer" token_type))))))
 
 
 
@@ -180,7 +180,7 @@
                              :iss openid-uri
                              :aud "audience"
                              :sub "test-subject"})
-            {:keys [status body] :as response}
+            {:keys [status body]}
             @(http/get proxy-url
                        {:throw-exceptions? false
                         :headers           {"authorization" (str "Bearer " token)}})]

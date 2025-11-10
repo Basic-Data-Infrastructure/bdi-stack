@@ -26,9 +26,8 @@
           nil)))))
 
 (defn ^{:interceptor true} authenticate
-  "Enforce BDI authentication on incoming requests and add
-   \"x-bdi-client-id\" request header.  Responds with 401 Unauthorized
-   when request is not allowed."
+  "Enforce BDI authentication on incoming requests and add \"x-bdi-client-id\" request header.
+  Responds with 401 Unauthorized when request is not allowed."
   [config]
   {:enter
    (fn authenticate-enter [{:keys [request] :as ctx}]
@@ -41,8 +40,7 @@
                :headers {"www-authenticate" "Bearer scope=\"BDI\""}})))})
 
 (def ^{:interceptor true} deauthenticate
-  "Remove \"x-bdi-client-id\" request header for avoid clients from
-  fooling backend into being authenticated."
+  "Remove \"x-bdi-client-id\" request header for avoid clients from fooling backend into being authenticated."
   {:enter  (fn bdi-deauthenticate-enter [ctx]
              (update-in ctx [:request :headers] dissoc "x-bdi-client-id"))})
 
@@ -66,9 +64,9 @@
       (ring-json/json-response {})))
 
 (defn ^{:interceptor true} connect-token
-  "Provide a access token (M2M) endpoint to acquire an authentication
-  token.  Note: this interceptor does not match on an `uri`, use a
-  `:match` in the rules for that."
+  "Provide a access token (M2M) endpoint to acquire an authentication token.
+  Note: this interceptor does not match on an `uri`, use a `:match` in
+  the rules for that."
   [config]
   (let [jti-cache-atom (client-assertion/mk-jti-cache-atom)
         config         (assoc config
@@ -80,8 +78,7 @@
 
 
 (defn ^{:interceptor true} demo-audit-log
-  "Provide access to the last `:n-of-lines` (defaults to 100)
-   lines of `:json-file` (required) and render them in a HTML table."
+  "Provide access to the last `:n-of-lines` (defaults to 100) lines of `:json-file` (required) and render them in a HTML table."
   [{:keys [json-file] :as opts}]
   {:pre [json-file]}
   {:enter (fn demo-audit-log-enter [ctx & _]
@@ -89,22 +86,22 @@
 
 
 
-(def ^{:interceptor true
-      :doc         "Retrieves and evaluates delegation evidence for
-   request. Responds with 403 Forbidden when the evidence is not found
-   or does not match the delegation mask."}
+(def ^{:interceptor true}
   noodlebar-delegation
-  {:enter (fn delegation-chain-enter
-             [ctx base-request mask]
-            (let [evidence (validate-delegation/noodlebar-fetch-delegation-evidence base-request mask)
-                  issues   (validate-delegation/delegation-mask-evidence-mismatch mask evidence)
-                  ctx      (assoc ctx
-                                  :delegation-evidence evidence
-                                  :delegation-mask mask
-                                  :delegation-issues issues)]
-               (cond-> ctx
-                 issues
-                 (assoc :response (-> response/forbidden
-                                      (assoc-in [:headers "content-type"] "application/json")
-                                      (assoc :body (json/json-str {:delegation-issues issues})))))))}
-)
+  "Retrieves and evaluates delegation evidence for request.
+  Responds with 403 Forbidden when the evidence is not found or does
+  not match the delegation mask."
+  {:enter
+   (fn delegation-chain-enter
+     [ctx base-request mask]
+     (let [evidence (validate-delegation/noodlebar-fetch-delegation-evidence base-request mask)
+           issues   (validate-delegation/delegation-mask-evidence-mismatch mask evidence)
+           ctx      (assoc ctx
+                           :delegation-evidence evidence
+                           :delegation-mask mask
+                           :delegation-issues issues)]
+       (cond-> ctx
+         issues
+         (assoc :response (-> response/forbidden
+                              (assoc-in [:headers "content-type"] "application/json")
+                              (assoc :body (json/json-str {:delegation-issues issues})))))))})
