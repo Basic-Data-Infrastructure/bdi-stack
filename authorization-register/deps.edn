@@ -5,7 +5,7 @@
 ;;;
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-{:deps {ch.qos.logback/logback-classic     {:mvn/version "1.5.20"}
+{:deps {ch.qos.logback/logback-classic     {:mvn/version "1.5.21"}
         clj-commons/clj-yaml               {:mvn/version "1.0.29"}
         com.github.seancorfield/next.jdbc  {:mvn/version "1.3.1070"}
         compojure/compojure                {:mvn/version "1.7.2"}
