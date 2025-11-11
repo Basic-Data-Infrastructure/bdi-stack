@@ -13,7 +13,7 @@
         aleph/aleph                    {:mvn/version "0.9.3"}
         nl.jomco/clj-http-status-codes {:mvn/version "0.2"}
         nl.jomco/passage               {:git/url "https://codeberg.org/jomco/passage.git"
-                                        :git/sha "861370a13a0787f5d9f188ba2a240de0a9025f6c"}
+                                        :git/sha "d3cec54d1a41a0c081b9d9fa1971aae00056a57a"}
         org.clojure/data.json {:mvn/version "2.5.1"}
         ring/ring-core        {:mvn/version "1.15.3"}
         ring/ring-json        {:mvn/version "0.5.1"}
@@ -29,8 +29,4 @@
   :uberjar {:replace-deps  {uberdeps/uberdeps {:mvn/version "RELEASE"}}
             :replace-paths []
             :main-opts     ["-m" "uberdeps.uberjar" "--aliases" "package"]}
-
-  :test {:extra-paths ["test" "test-resources"]
-         :extra-deps  {ring/ring {:mvn/version "1.15.3"}}}
-
   :run {:main-opts ["-m" "org.bdinetwork.connector.main"]}}}

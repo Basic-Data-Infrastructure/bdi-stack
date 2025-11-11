@@ -7,14 +7,12 @@
 
 (ns org.bdinetwork.connector.main
   (:gen-class)
-  (:require [passage.main :as passage]))
+  (:require [passage.main :as passage]
+            [passage.rules :refer [*default-aliases*]]))
 
 ;; load bdi specific interceptors
 (require '[org.bdinetwork.connector.interceptors])
 
-
-;; TODO: Ensure that proper interceptor aliases are set up
-;; -- maybe add a dynamic var for '*default-aliases*`?
-
 (defn -main [& _]
-  (passage/-main))
+  (binding [*default-aliases* '{bdi org.bdinetwork.connector.interceptors}]
+    (passage/-main)))

@@ -18,14 +18,7 @@ lint: prep-lint
 	reuse lint
 
 test: test-config
-	make -C association-register test
-	make -C authentication-service test
-	make -C authorization-register test
-	make -C clj-authentication test
-	make -C clj-ishare-client test
-	make -C clj-ishare-jwt test
-	make -C clj-ring-middleware test
-	make -C connector test
+	clojure -M:test
 
 clean:
 	rm -rf ./*/classes ./*/target test-config/*pem ./*/*.jar ./*.zip
