@@ -1,5 +1,5 @@
-;;; SPDX-FileCopyrightText: 2024 Jomco B.V.
-;;; SPDX-FileCopyrightText: 2024 Stichting Connekt
+;;; SPDX-FileCopyrightText: 2025 Jomco B.V.
+;;; SPDX-FileCopyrightText: 2025 Stichting Connekt
 ;;; SPDX-FileContributor: Joost Diepenmaat <joost@jomco.nl>
 ;;; SPDX-FileContributor: Remco van 't Veer <remco@jomco.nl>
 ;;;
@@ -7,12 +7,15 @@
 
 (ns org.bdinetwork.connector.main
   (:gen-class)
-  (:require [passage.main :as passage]
-            [passage.rules :refer [*default-aliases*]]))
+  (:require [environ.core :refer [env]]
+            [nl.jomco.resources :refer [with-resources wait-until-interrupted]]
+            [org.bdinetwork.connector.system :as system]
+            [passage.main :as passage]))
 
-;; load bdi specific interceptors
-(require '[org.bdinetwork.connector.interceptors])
+(defn start!
+  [env]
+  (system/run-system (passage/config env passage/opt-specs)))
 
 (defn -main [& _]
-  (binding [*default-aliases* '{bdi org.bdinetwork.connector.interceptors}]
-    (passage/-main)))
+  (with-resources [_sys (start! env)]
+    (wait-until-interrupted)))

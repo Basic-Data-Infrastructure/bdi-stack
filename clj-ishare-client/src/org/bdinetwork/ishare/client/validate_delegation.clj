@@ -201,14 +201,17 @@
              (assoc-in ["target" "accessSubject"] access-subject)))
        (partition 2 1 party-ids)))
 
+(defn fetch-delegation-evidence
+  [base-request delegation-mask]
+  (-> base-request
+      (ishare.request/delegation-evidence-request {:delegationRequest delegation-mask})
+      client/exec
+      :ishare/result
+      :delegationEvidence))
+
 (defn- fetch-delegation-chain
   [base-request delegation-mask party-ids]
-  (map (fn [mask]
-         (-> base-request
-             (ishare.request/delegation-evidence-request {:delegationRequest mask})
-             client/exec
-             :ishare/result
-             :delegationEvidence))
+  (map #(fetch-delegation-evidence base-request %)
        (delegation-mask-chain delegation-mask party-ids)))
 
 (defn fetch-and-validate-delegation

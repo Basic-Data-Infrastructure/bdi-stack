@@ -11,7 +11,7 @@
             [nl.jomco.resources :refer [with-resources]]
             [org.bdinetwork.ishare.client :as client]
             [org.bdinetwork.ishare.client.request :as request]
-            [org.bdinetwork.test.system-helpers :refer [association-system authentication-system client-config association-server-request authentication-server-request]]))
+            [org.bdinetwork.test.system-helpers :refer [association-system authentication-system association-server-request authentication-server-request]]))
 
 (deftest system-test
   (with-resources [_association-system (association-system)

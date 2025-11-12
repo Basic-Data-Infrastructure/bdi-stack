@@ -6,51 +6,23 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.connector.system-test
-  (:require
-
-            [clojure.test :refer [deftest is testing]]
+  (:require [clojure.test :refer [deftest is testing]]
             [nl.jomco.http-status-codes :as http-status]
             [nl.jomco.resources :refer [with-resources]]
+            [org.bdinetwork.ishare.client :as client]
+            [org.bdinetwork.ishare.client.request :as request]
             [org.bdinetwork.test.system-helpers :refer [association-system
                                                         authorization-system
                                                         client-config
-                                                        association-server-request
-                                                        authorization-server-request
-                                                        ]]
-            [passage.rules :refer [*default-aliases*]]
-            [passage.system :as system]
-            [org.bdinetwork.connector.main :as main]
-            [org.bdinetwork.ishare.client :as client]
-            [org.bdinetwork.ishare.client.request :as request]
-            [org.bdinetwork.association-register.system :as association]
-            [org.bdinetwork.authorization-register.system :as authorization]
-            [org.bdinetwork.authorization-register.main :as authorization-register.main])
-  (:import (java.nio.file Files)
-           (java.nio.file.attribute FileAttribute)))
-
-(defn- own-ar-request
-  [{:ishare/keys [authorization-registry-id
-                  authorization-registry-base-url
-                  base-url
-                  server-id]
-    :as          request}]
-  (if (and base-url server-id)
-    request
-    (assoc request
-           :ishare/base-url  authorization-registry-base-url
-           :ishare/server-id authorization-registry-id)))
-
-(defn policy-request ;; non-standard request
-  [request delegation-evidence]
-  {:pre [delegation-evidence]}
-  (-> request
-      (own-ar-request)
-      (assoc :method       :post
-             :path         "policy"
-             :as           :json
-             :json-params  delegation-evidence
-             :ishare/unsign-token "policy_token"
-             :ishare/lens         [:body "policy_token"])))
+                                                        client-id
+                                                        data-owner-config
+                                                        data-owner-id
+                                                        backend-connector-request
+                                                        policy-request
+                                                        authorization-server-id
+                                                        authorization-server-url
+                                                        static-backend-system
+                                                        backend-connector-system]]))
 
 (def delegation-mask
   {:delegationRequest
@@ -77,35 +49,74 @@
                                            "environment" {"licenses"         ["0001"]
                                                           "serviceProviders" []}}}]}]})
 
+(defn now
+  []
+  (.getEpochSecond (java.time.Instant/now)))
+
+(defn next-hour
+  []
+  (+ (now) (* 60 60)))
+
 (deftest system-test
   (with-resources [_association-system (association-system)
-                   _authorization-system (authorization-system)]
-    (let [resp (client/exec (request/access-token-request association-server-request))]
-      (is (= http-status/ok (:status resp)))
-      (is (string? (get-in resp [:body "access_token"]))))
+                   _authorization-system (authorization-system)
+                   _backend (static-backend-system)
+                   _backend-connector (backend-connector-system)]
+    (testing "authentication"
+      (testing "fetching access token"
+        (let [resp  (client/exec (request/access-token-request backend-connector-request))
+              token (get-in resp [:body "access_token"])]
+          (is (= http-status/ok (:status resp))
+              "status ok")
+          (is (string? token)
+              "access token present")))
 
-    (let [resp  (client/exec (request/access-token-request authorization-server-request))
-          token (get-in resp [:body "access_token"])]
-      (is (= http-status/ok (:status resp)))
-      (is (string? token))
+      (testing "accessing authenticated backend"
+        (testing "using provided access token"
+          (let [resp (client/exec (assoc backend-connector-request
+                                         :method :get
+                                         :path "/api/authenticated"))]
+            (is (= http-status/ok (:status resp))
+                "status ok"))))
 
-      (let [resp (client/exec (policy-request (assoc authorization-server-request
-                                                     :ishare/bearer-token token)
-                                              {"delegationEvidence" delegation-evidence}))]
-        (is (= http-status/ok (:status resp))
-            "Policy accepted"))
+      (testing "using fake access token"
+        (is (= http-status/unauthorized
+               (:status (client/exec (assoc backend-connector-request
+                                            :method :get
+                                            :path "/api/authenticated"
+                                            :ishare/bearer-token "NONSENSE"))))
+            "status unauthorized")))
 
-      (testing "attempt to insert policy for other party"
-        (let [resp (client/exec (-> (assoc authorization-server-request
-                                           :ishare/bearer-token token)
-                                    (policy-request {"delegationEvidence" (assoc delegation-evidence "policyIssuer" "someone-else")})))]
-          (is (= http-status/forbidden (:status resp))
-              "Policy rejected")))
-
-      (let [resp (client/exec (request/delegation-evidence-request
-                               (assoc authorization-server-request
-                                      :ishare/bearer-token token)
-                               delegation-mask))]
-        (is (= http-status/ok (:status resp)))
-        (is (= "Permit" (get-in resp [:ishare/result :delegationEvidence :policySets 0 :policies 0 :rules 0 :effect]))
-            "Permit when matching policy found")))))
+    (testing "authorization"
+      (testing "accessing authorzed backend"
+        (testing "without correct policy"
+          (let [resp (client/exec (assoc backend-connector-request
+                                         :method :get
+                                         :path "/api/authorized"))]
+            (is (= http-status/forbidden (:status resp))
+                "status ok")))
+        (testing "with correct policy"
+          (is (= http-status/ok 
+                 (:status (client/exec (-> data-owner-config
+                                           (assoc :ishare/server-id authorization-server-id
+                                                  :ishare/base-url authorization-server-url)
+                                           (policy-request
+                                            {:delegationEvidence
+                                             {:policyIssuer data-owner-id
+                                              :target       {:accessSubject client-id}
+                                              :notBefore    (now)
+                                              :notOnOrAfter (next-hour)
+                                              :policySets
+                                              [{:target   {:environment {:licenses ["0001"]}}
+                                                :policies [{:rules [{:effect "Permit"}]
+                                                            :target
+                                                            {:resource    {:type        "Container-BOL-Events"
+                                                                           :identifiers ["*"]
+                                                                           :attributes  ["*"]}
+                                                             :actions     ["read"]
+                                                             :environment {:serviceProviders ["EU.EORI.CONNECTOR"]}}}]}]}}))))))
+          (let [resp (client/exec (assoc backend-connector-request
+                                         :method :get
+                                         :path "/api/authorized"))]
+            (is (= http-status/ok (:status resp))
+                "status ok")))))))

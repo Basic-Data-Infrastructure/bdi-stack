@@ -1,0 +1,56 @@
+;;; SPDX-FileCopyrightText: 2025 Jomco B.V.
+;;; SPDX-FileCopyrightText: 2025 Stichting Connekt
+;;; SPDX-License-Identifier: AGPL-3.0-or-later
+
+{:ns-alias {bdi org.bdinetwork.connector.interceptors}
+ :vars     {server-id              "EU.EORI.CONNECTOR"
+            x5c                    #x5c "test-config/connector.x5c.pem"
+            private-key            #private-key "test-config/connector.key.pem"
+            association-server-id  "EU.EORI.ASSOCIATION-REGISTER"
+            association-server-url "http://localhost:9991"
+            public-key             #public-key "test-config/connector.cert.pem"}
+ :rules
+ [{:match        {:uri            #rx "/connect/token"
+                  :request-method :post}
+   :interceptors [[(bdi/connect-token {:x5c                    x5c
+                                       :server-id              server-id
+                                       :private-key            private-key
+                                       :association-server-url association-server-url
+                                       :association-server-id  association-server-id})]]}
+
+  {:match        {:uri #rx "/api/authenticated.*"}
+   :interceptors [[logger {"uri"    (get request :uri)
+                           "server" "backend-connector"}]
+                  [(bdi/authenticate  {:server-id  server-id
+                                       :public-key public-key})]
+                  [bdi/deauthenticate]
+                  [proxy "http://localhost:9994"]]}
+
+  {:match        {:uri #rx "/api/authorized.*"}
+   :interceptors [[logger {"uri"    (get request :uri)
+                           "server" "backend-connector"}]
+                  [(bdi/authenticate {:server-id  server-id
+                                      :public-key public-key})]
+                  [bdi/delegation {:x5c                    x5c
+                                   :server-id              server-id
+                                   :private-key            private-key
+                                   :association-server-url association-server-url
+                                   :association-server-id  association-server-id
+                                   :dataspace-id           "ORG.BDI.VGU-DEMO"}
+                   {:policyIssuer "EU.EORI.DATA-OWNER"
+                    :target       {:accessSubject x-bdi-client-id}
+                    :policySets
+                    [{:policies
+                      [{:rules [{:effect "Permit"}]
+                        :target
+                        {:resource {:type        "Container-BOL-Events"
+                                    :identifiers ["*"]
+                                    :attributes  ["*"]}
+                         :actions  ["read"]
+                         :environment
+                         {:serviceProviders ["EU.EORI.CONNECTOR"]}}}]}]}]
+                  [bdi/deauthenticate]
+                  [proxy "http://localhost:9994"]]}
+
+  {:match        {:uri "/favicon.ico"} ;; prevent chrome for asking for basic auth again
+   :interceptors [[respond {:status 204}]]}]}

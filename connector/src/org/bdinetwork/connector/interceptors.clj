@@ -50,11 +50,13 @@
            server-id x5c private-key association-server-id association-server-url]}]
   (if in-memory-association-data-source
     (in-memory-association (read-source in-memory-association-data-source))
-    (remote-association #:ishare {:client-id          server-id
-                                  :x5c                x5c
-                                  :private-key        private-key
-                                  :satellite-id       association-server-id
-                                  :satellite-base-url association-server-url})))
+    (do
+      (assert [server-id x5c private-key association-server-id association-server-url])
+      (remote-association #:ishare {:client-id          server-id
+                                    :x5c                x5c
+                                    :private-key        private-key
+                                    :satellite-id       association-server-id
+                                    :satellite-base-url association-server-url}))))
 
 (defn client-assertion-response [{:keys [association] :as config} request]
   (-> request
@@ -74,6 +76,36 @@
                               :association (->association config))]
     {:enter (fn bdi-connect-token-enter [{:keys [request] :as ctx}]
               (assoc ctx :response (client-assertion-response config request)))}))
+
+
+
+(def ^{:interceptor true}
+  delegation
+  "Retrieves and evaluates delegation evidence for request.
+  Responds with 403 Forbidden when the evidence is not found or does
+  not match the delegation mask."
+  {:enter
+   (fn delegation-enter
+     [ctx {:keys [server-id x5c private-key association-server-id association-server-url dataspace-id] :as _config} mask]
+     (assert [server-id x5c private-key association-server-id association-server-url dataspace-id])
+     (let [base-request {:ishare/satellite-base-url association-server-url
+                         :ishare/satellite-id       association-server-id
+                         :ishare/x5c                x5c
+                         :ishare/client-id          server-id
+                         :ishare/private-key        private-key
+                         :ishare/dataspace-id       dataspace-id
+                         :throw                     false}
+           evidence     (validate-delegation/fetch-delegation-evidence base-request mask)
+           issues       (validate-delegation/delegation-mask-evidence-mismatch mask evidence)
+           ctx          (assoc ctx
+                           :delegation-evidence evidence
+                           :delegation-mask mask
+                           :delegation-issues issues)]
+       (cond-> ctx
+         issues
+         (assoc :response (-> response/forbidden
+                              (assoc-in [:headers "content-type"] "application/json")
+                              (assoc :body (json/json-str {:delegation-issues issues})))))))})
 
 
 
