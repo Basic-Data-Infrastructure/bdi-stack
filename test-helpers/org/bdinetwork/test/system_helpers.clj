@@ -13,7 +13,8 @@
             [org.bdinetwork.authentication.in-memory-association :as in-memory-association]
             [org.bdinetwork.authorization-register.system :as authorization]
             [org.bdinetwork.connector.system :as connector]
-            [org.bdinetwork.test.helpers :refer [temp-dir]]))
+            [org.bdinetwork.test.helpers :refer [temp-dir]]
+            [org.bdinetwork.test.oidc-helper :as oidc-helper]))
 
 (def association-server-id "EU.EORI.ASSOCIATION-REGISTER")
 (def association-server-port 9991)
@@ -134,6 +135,16 @@
   {:rules-file "test-config/connector-rules.edn"
    :port 9993})
 
+(def openid-port 9996)
+(def openid-host "localhost")
+(def openid-url (str "http://" openid-host ":" openid-port))
+(def openid-private-key (keys/private-key (io/resource "test-config/oidc.key.pem")))
+(def openid-config
+  {:host        openid-host
+   :port        openid-port
+   :private-key openid-private-key
+   :public-key  (keys/public-key (io/resource "test-config/oidc.cert.pem"))})
+
 ;; These functions all return `nl.jomco.resource` systems, meaning
 ;; they can be used in a
 ;; `nl.jomco.resource/with-resources [foo (xxx-system)] ...)` call
@@ -157,3 +168,17 @@
 (defn backend-connector-system
   []
   (connector/run-system backend-connector-config))
+
+(defn oidc-system
+  []
+  (oidc-helper/openid-test-server openid-config))
+
+(defn mk-oidc-access-token
+  [{:keys [aud sub] :as claims}]
+  {:pre [aud sub]}
+  (oidc-helper/mk-token (assoc claims :iss openid-url) openid-private-key))
+
+(def noodlebar-request
+  {:ishare/server-adherent? true
+   :ishare/base-url backend-connector-url
+   :throw false})

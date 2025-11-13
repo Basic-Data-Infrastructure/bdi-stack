@@ -18,11 +18,15 @@
                                                         data-owner-config
                                                         data-owner-id
                                                         backend-connector-request
+                                                        backend-connector-id
                                                         policy-request
+                                                        noodlebar-request
                                                         authorization-server-id
                                                         authorization-server-url
                                                         static-backend-system
-                                                        backend-connector-system]]))
+                                                        backend-connector-system
+                                                        oidc-system
+                                                        mk-oidc-access-token]]))
 
 (def delegation-mask
   {:delegationRequest
@@ -61,62 +65,83 @@
   (with-resources [_association-system (association-system)
                    _authorization-system (authorization-system)
                    _backend (static-backend-system)
-                   _backend-connector (backend-connector-system)]
-    (testing "authentication"
-      (testing "fetching access token"
-        (let [resp  (client/exec (request/access-token-request backend-connector-request))
-              token (get-in resp [:body "access_token"])]
-          (is (= http-status/ok (:status resp))
-              "status ok")
-          (is (string? token)
-              "access token present")))
-
-      (testing "accessing authenticated backend"
-        (testing "using provided access token"
-          (let [resp (client/exec (assoc backend-connector-request
-                                         :method :get
-                                         :path "/api/authenticated"))]
+                   _backend-connector (backend-connector-system)
+                   _oidc (oidc-system)]
+    (testing "ishare protocols"
+      (testing "authentication"
+        (testing "fetching access token"
+          (let [resp  (client/exec (request/access-token-request backend-connector-request))
+                token (get-in resp [:body "access_token"])]
             (is (= http-status/ok (:status resp))
-                "status ok"))))
+                "status ok")
+            (is (string? token)
+                "access token present")))
 
-      (testing "using fake access token"
-        (is (= http-status/unauthorized
-               (:status (client/exec (assoc backend-connector-request
-                                            :method :get
-                                            :path "/api/authenticated"
-                                            :ishare/bearer-token "NONSENSE"))))
-            "status unauthorized")))
+        (testing "accessing authenticated backend"
+          (testing "using provided access token"
+            (let [resp (client/exec (assoc backend-connector-request
+                                           :method :get
+                                           :path "/api/bdi/authenticated"))]
+              (is (= http-status/ok (:status resp))
+                  "status ok"))))
 
-    (testing "authorization"
-      (testing "accessing authorzed backend"
-        (testing "without correct policy"
-          (let [resp (client/exec (assoc backend-connector-request
-                                         :method :get
-                                         :path "/api/authorized"))]
-            (is (= http-status/forbidden (:status resp))
-                "status ok")))
-        (testing "with correct policy"
-          (is (= http-status/ok 
-                 (:status (client/exec (-> data-owner-config
-                                           (assoc :ishare/server-id authorization-server-id
-                                                  :ishare/base-url authorization-server-url)
-                                           (policy-request
-                                            {:delegationEvidence
-                                             {:policyIssuer data-owner-id
-                                              :target       {:accessSubject client-id}
-                                              :notBefore    (now)
-                                              :notOnOrAfter (next-hour)
-                                              :policySets
-                                              [{:target   {:environment {:licenses ["0001"]}}
-                                                :policies [{:rules [{:effect "Permit"}]
-                                                            :target
-                                                            {:resource    {:type        "Container-BOL-Events"
-                                                                           :identifiers ["*"]
-                                                                           :attributes  ["*"]}
-                                                             :actions     ["read"]
-                                                             :environment {:serviceProviders ["EU.EORI.CONNECTOR"]}}}]}]}}))))))
-          (let [resp (client/exec (assoc backend-connector-request
-                                         :method :get
-                                         :path "/api/authorized"))]
-            (is (= http-status/ok (:status resp))
-                "status ok")))))))
+        (testing "using fake access token"
+          (is (= http-status/unauthorized
+                 (:status (client/exec (assoc backend-connector-request
+                                              :method :get
+                                              :path "/api/bdi/authenticated"
+                                              :ishare/bearer-token "NONSENSE"))))
+              "status unauthorized")))
+
+      (testing "authorization"
+        (testing "accessing authorzed backend"
+          (testing "without correct policy"
+            (let [resp (client/exec (assoc backend-connector-request
+                                           :method :get
+                                           :path "/api/bdi/authorized"))]
+              (is (= http-status/forbidden (:status resp))
+                  "status ok")))
+          (testing "with correct policy"
+            (is (= http-status/ok
+                   (:status (client/exec (-> data-owner-config
+                                             (assoc :ishare/server-id authorization-server-id
+                                                    :ishare/base-url authorization-server-url)
+                                             (policy-request
+                                              {:delegationEvidence
+                                               {:policyIssuer data-owner-id
+                                                :target       {:accessSubject client-id}
+                                                :notBefore    (now)
+                                                :notOnOrAfter (next-hour)
+                                                :policySets
+                                                [{:target   {:environment {:licenses ["0001"]}}
+                                                  :policies [{:rules [{:effect "Permit"}]
+                                                              :target
+                                                              {:resource    {:type        "Container-BOL-Events"
+                                                                             :identifiers ["*"]
+                                                                             :attributes  ["*"]}
+                                                               :actions     ["read"]
+                                                               :environment {:serviceProviders ["EU.EORI.CONNECTOR"]}}}]}]}}))))))
+            (let [resp (client/exec (assoc backend-connector-request
+                                           :method :get
+                                           :path "/api/bdi/authorized"))]
+              (is (= http-status/ok (:status resp))
+                  "status ok"))))))
+    (testing "noodlebar"
+      (testing "authentication"
+        (testing "accessing authenticated backend"
+          (is (= http-status/unauthorized (-> noodlebar-request
+                                              (assoc :method :get
+                                                     :ishare/bearer-token nil
+                                                     :path "/api/noodlebar/authenticated")
+                                              client/exec
+                                              :status))
+              "unauthenticated")
+
+          (is (= http-status/ok (-> noodlebar-request
+                                    (assoc :method :get
+                                           :ishare/bearer-token (mk-oidc-access-token {:aud backend-connector-id
+                                                                                       :sub client-id})
+                                           :path "/api/noodlebar/authenticated")
+                                    client/exec
+                                    :status))
+              "authenticated"))))))
