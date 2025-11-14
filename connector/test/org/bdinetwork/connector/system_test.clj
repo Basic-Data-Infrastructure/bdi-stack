@@ -11,22 +11,24 @@
             [nl.jomco.resources :refer [with-resources]]
             [org.bdinetwork.ishare.client :as client]
             [org.bdinetwork.ishare.client.request :as request]
-            [org.bdinetwork.test.system-helpers :refer [association-system
-                                                        authorization-system
-                                                        client-config
-                                                        client-id
-                                                        data-owner-config
-                                                        data-owner-id
-                                                        backend-connector-request
-                                                        backend-connector-id
-                                                        policy-request
-                                                        noodlebar-request
-                                                        authorization-server-id
-                                                        authorization-server-url
-                                                        static-backend-system
-                                                        backend-connector-system
-                                                        oidc-system
-                                                        mk-oidc-access-token]]))
+            [org.bdinetwork.test.system-helpers
+             :refer [association-system
+                     authorization-server-id
+                     authorization-server-url
+                     authorization-system
+                     backend-connector-id
+                     backend-connector-request
+                     backend-connector-system
+                     client-config
+                     client-id
+                     data-owner-config
+                     data-owner-id
+                     mk-oidc-access-token
+                     noodlebar-request
+                     noodlebar-system
+                     oidc-system
+                     policy-request
+                     static-backend-system]]))
 
 (def delegation-mask
   {:delegationRequest
@@ -66,6 +68,7 @@
                    _authorization-system (authorization-system)
                    _backend (static-backend-system)
                    _backend-connector (backend-connector-system)
+                   _noodbar-system (noodlebar-system)
                    _oidc (oidc-system)]
     (testing "ishare protocols"
       (testing "authentication"
@@ -126,13 +129,34 @@
                                            :path "/api/bdi/authorized"))]
               (is (= http-status/ok (:status resp))
                   "status ok"))))))
+
     (testing "noodlebar"
-      (testing "authentication"
-        (testing "accessing authenticated backend"
+      (testing "authentication checks"
+        (testing "without an access token"
           (is (= http-status/unauthorized (-> noodlebar-request
                                               (assoc :method :get
                                                      :ishare/bearer-token nil
                                                      :path "/api/noodlebar/authenticated")
+                                              client/exec
+                                              :status))
+              "unauthenticated"))
+
+        (testing "with a valid access token"
+          (is (= http-status/ok (-> noodlebar-request
+                                    (assoc :method :get
+                                           :ishare/bearer-token (mk-oidc-access-token {:aud backend-connector-id
+                                                                                       :sub client-id})
+                                           :path "/api/noodlebar/authenticated")
+                                    client/exec
+                                    :status))
+              "authenticated")))
+
+      (testing "authorization"
+        (testing "accessing authorized backend"
+          (is (= http-status/unauthorized (-> noodlebar-request
+                                              (assoc :method :get
+                                                     :ishare/bearer-token nil
+                                                     :path "/api/noodlebar/authorized")
                                               client/exec
                                               :status))
               "unauthenticated")
@@ -141,7 +165,7 @@
                                     (assoc :method :get
                                            :ishare/bearer-token (mk-oidc-access-token {:aud backend-connector-id
                                                                                        :sub client-id})
-                                           :path "/api/noodlebar/authenticated")
+                                           :path "/api/noodlebar/authorized")
                                     client/exec
                                     :status))
               "authenticated"))))))

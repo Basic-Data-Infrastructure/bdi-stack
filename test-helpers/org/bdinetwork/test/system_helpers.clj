@@ -14,7 +14,8 @@
             [org.bdinetwork.authorization-register.system :as authorization]
             [org.bdinetwork.connector.system :as connector]
             [org.bdinetwork.test.helpers :refer [temp-dir]]
-            [org.bdinetwork.test.oidc-helper :as oidc-helper]))
+            [org.bdinetwork.test.oidc-helper :as oidc-helper]
+            [org.bdinetwork.test.noodlebar-helper :as noodlebar-helper]))
 
 (def association-server-id "EU.EORI.ASSOCIATION-REGISTER")
 (def association-server-port 9991)
@@ -182,3 +183,12 @@
   {:ishare/server-adherent? true
    :ishare/base-url backend-connector-url
    :throw false})
+
+(def noodlebar-host "localhost")
+(def noodlebar-port 9997)
+(def noodlebar-url (str "http://" noodlebar-host ":" noodlebar-port))
+
+(defn noodlebar-system
+  []
+  (noodlebar-helper/noodlebar-test-server {:host noodlebar-host
+                                           :port noodlebar-port}))

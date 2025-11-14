@@ -118,13 +118,15 @@
 
 
 
+;; https://tsl-dataspace-coremanager.azurewebsites.net/scalar/#tag/authorization/POST/api/authorization/unsigned-delegation
+
 (def ^{:interceptor true}
   noodlebar-delegation
   "Retrieves and evaluates delegation evidence for request.
   Responds with 403 Forbidden when the evidence is not found or does
   not match the delegation mask."
   {:enter
-   (fn delegation-chain-enter
+   (fn noodlebar-delegation-enter
      [ctx base-request mask]
      (let [evidence (validate-delegation/noodlebar-fetch-delegation-evidence base-request mask)
            issues   (validate-delegation/delegation-mask-evidence-mismatch mask evidence)

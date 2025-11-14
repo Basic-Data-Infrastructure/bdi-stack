@@ -2,13 +2,14 @@
 ;;; SPDX-FileCopyrightText: 2025 Stichting Connekt
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-{:vars     {openid-url             "http://localhost:9996"
-            server-id              "EU.EORI.CONNECTOR"
-            x5c                    #x5c "test-config/connector.x5c.pem"
-            private-key            #private-key "test-config/connector.key.pem"
-            association-server-id  "EU.EORI.ASSOCIATION-REGISTER"
-            association-server-url "http://localhost:9991"
-            public-key             #public-key "test-config/connector.cert.pem"}
+{:vars {openid-url             "http://localhost:9996"
+        noodlebar-url          "http://localhost:9997/api"
+        server-id              "EU.EORI.CONNECTOR"
+        x5c                    #x5c "test-config/connector.x5c.pem"
+        private-key            #private-key "test-config/connector.key.pem"
+        association-server-id  "EU.EORI.ASSOCIATION-REGISTER"
+        association-server-url "http://localhost:9991"
+        public-key             #public-key "test-config/connector.cert.pem"}
  :rules
  [
 
@@ -69,6 +70,33 @@
                   [oauth2/bearer-token {:aud server-id
                                         :iss openid-url}
                    {:realm "test"}]
+                  [bdi/deauthenticate]
+                  [proxy "http://localhost:9994"]]}
+
+  ;; allow valid openid access token
+  {:match        {:uri #rx "/api/noodlebar/authorized.*"}
+   :interceptors [[logger {"uri"    (get request :uri)
+                           "server" "backend-connector"}]
+                  [oauth2/bearer-token {:aud server-id
+                                        :iss openid-url}
+                   {:realm "test"}]
+                  [bdi/noodlebar-delegation {:oauth2/token-url     (str openid-url "/token")
+                                             :oauth2/client-id     "client-id"
+                                             :oauth2/client-secret "client-secret"
+                                             :oauth2/audience      noodlebar-url
+                                             :coremanager-url      noodlebar-url}
+                   {:policyIssuer "EU.EORI.DATA-OWNER"
+                    :target       {:accessSubject (get-in ctx [:oauth2/bearer-token-claims :organizationId])}
+                    :policySets
+                    [{:policies
+                      [{:rules [{:effect "Permit"}]
+                        :target
+                        {:resource {:type        "Container-BOL-Events"
+                                    :identifiers ["*"]
+                                    :attributes  ["*"]}
+                         :actions  ["read"]
+                         :environment
+                         {:serviceProviders ["EU.EORI.CONNECTOR"]}}}]}]}]
                   [bdi/deauthenticate]
                   [proxy "http://localhost:9994"]]}
 
