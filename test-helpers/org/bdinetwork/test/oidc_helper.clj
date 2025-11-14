@@ -1,13 +1,12 @@
 ;;; SPDX-FileCopyrightText: 2025 Jomco B.V.
 ;;; SPDX-FileCopyrightText: 2025 Stichting Connekt
-;;; SPDX-License-Identifier: MIT
+;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.test.oidc-helper
   "Implements a minimal OIDC server for testing."
   (:require [buddy.core.keys :as keys]
             [buddy.sign.jwt :as jwt]
             [clojure.data.json :as json]
-            [clojure.tools.logging :as log]
             [nl.jomco.http-status-codes :as http-status]
             [nl.jomco.resources :refer [Resource]]
             [ring.adapter.jetty :refer [run-jetty]])

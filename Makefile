@@ -14,7 +14,7 @@ prep-lint:
 	clojure -M:lint --lint $$(clojure -Spath)  --copy-configs --dependencies --skip-lint
 
 lint: prep-lint
-	clojure -M:lint --lint */src */test
+	clojure -M:lint --lint */src */test test-helpers dev
 	reuse lint
 
 test: test-config

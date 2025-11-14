@@ -14,8 +14,8 @@
             [org.bdinetwork.authorization-register.system :as authorization]
             [org.bdinetwork.connector.system :as connector]
             [org.bdinetwork.test.helpers :refer [temp-dir]]
-            [org.bdinetwork.test.oidc-helper :as oidc-helper]
-            [org.bdinetwork.test.noodlebar-helper :as noodlebar-helper]))
+            [org.bdinetwork.test.noodlebar-helper :as noodlebar-helper]
+            [org.bdinetwork.test.oidc-helper :as oidc-helper]))
 
 (def association-server-id "EU.EORI.ASSOCIATION-REGISTER")
 (def association-server-port 9991)

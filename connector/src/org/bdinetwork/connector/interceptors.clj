@@ -1,4 +1,4 @@
-;;; SPDX-FileCopyrightText: 2025 Jomco B.V.
+ ;;; SPDX-FileCopyrightText: 2025 Jomco B.V.
 ;;; SPDX-FileCopyrightText: 2025 Stichting Connekt
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
@@ -98,9 +98,9 @@
            evidence     (validate-delegation/fetch-delegation-evidence base-request mask)
            issues       (validate-delegation/delegation-mask-evidence-mismatch mask evidence)
            ctx          (assoc ctx
-                           :delegation-evidence evidence
-                           :delegation-mask mask
-                           :delegation-issues issues)]
+                               :delegation-evidence evidence
+                               :delegation-mask mask
+                               :delegation-issues issues)]
        (cond-> ctx
          issues
          (assoc :response (-> response/forbidden

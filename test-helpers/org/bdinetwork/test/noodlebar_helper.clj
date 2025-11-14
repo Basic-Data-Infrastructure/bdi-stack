@@ -1,6 +1,6 @@
 ;;; SPDX-FileCopyrightText: 2025 Jomco B.V.
 ;;; SPDX-FileCopyrightText: 2025 Stichting Connekt
-;;; SPDX-License-Identifier: MIT
+;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.test.noodlebar-helper
   "Implements a minimal Noodlebar server for testing."

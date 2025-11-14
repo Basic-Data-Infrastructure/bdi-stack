@@ -41,4 +41,4 @@
   [{:keys [port hostname] :or {hostname "localhost"}}]
   {:pre [port hostname]}
   (mk-system [handler (mk-handler)
-              jetty (run-jetty handler {:join? false :port port :hostname hostname})]))
+              _jetty (run-jetty handler {:join? false :port port :hostname hostname})]))

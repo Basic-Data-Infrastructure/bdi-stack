@@ -59,7 +59,7 @@
         (is (not response) "no response yet")
         (is (= client-id (get-in request [:headers "x-bdi-client-id"])))))))
 
-(deftest bdi-deauthenticate
+(deftest deauthenticate
   (let [{:keys [enter]} interceptors/deauthenticate
         req  {:headers {"x-test" "test"}}
         req' {:headers {"x-test" "test", "x-bdi-client-id" "test"}}]
@@ -86,7 +86,7 @@
        (ring-codec/form-encode)
        (StringBufferInputStream.)))
 
-(deftest bdi-connect-token
+(deftest connect-token
   (let [{:keys [enter]} (interceptors/connect-token config)
         request            {:request-method :post, :headers {"content-type" "application/x-www-form-urlencoded"}}
         {:keys [response]} (enter {:request request})]
