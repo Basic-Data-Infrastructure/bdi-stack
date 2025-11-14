@@ -109,3 +109,28 @@ parties:
       complaiancy_verified: false
       legal_adherence: false
     agreements: []
+
+  - party_id: EU.EORI.DATA-OWNER
+    party_name: Some Data Owner
+    capability_url: ''
+    certificates:
+      - test-config/data_owner.cert.pem
+    adherence:
+      status: Active
+      start_date: '2024-02-12T00:00:00.000Z'
+      end_date: '2100-02-13T00:00:00.000Z'
+    registrar_id: EU.EORI.ASSOCIATION-REGISTER
+    auth_registries:
+    - name: BDI Authorization Register
+      id: EU.EORI.AUTHORIZATION-REGISTER
+      url: http://localhost:9992/
+      dataspace_id: ORG.BDI.VGU-DEMO
+      dataspace_name: BDI VGU DataSpace
+    roles:
+    - role: EntitledParty
+      start_date: '2024-02-12T00:00:00.000Z'
+      end_date: '2100-02-12T00:00:00.000Z'
+      loa: 'Low'
+      complaiancy_verified: false
+      legal_adherence: false 
+    agreements: []    

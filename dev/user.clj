@@ -22,11 +22,11 @@
             [org.bdinetwork.authentication-service.main :as authentication-service.main]
             [org.bdinetwork.authentication.access-token :as access-token]
             [org.bdinetwork.authorization-register.main :as authorization-register.main]
-            [org.bdinetwork.connector.main :as connector.main]
             [org.bdinetwork.example.backend :as example-backend]
             [org.bdinetwork.ishare.client :as ishare-client]
             [org.bdinetwork.ishare.jwt :as ishare-jwt]
-            [org.bdinetwork.service-commons.config :as config])
+            [org.bdinetwork.service-commons.config :as config]
+            [passage.main :as passage.main])
   (:import (ch.qos.logback.classic Level)
            (org.slf4j LoggerFactory)))
 
@@ -36,7 +36,7 @@
 ;;
 ;; We change the log level for some application-specific namespaces to
 ;; DEBUG when when dev/user.clj is loaded
-(.setLevel (LoggerFactory/getLogger "org.bdinetwork.gateway") Level/DEBUG)
+(.setLevel (LoggerFactory/getLogger "org.bdinetwork.ishare.client") Level/DEBUG)
 
 (def association-env
   {:private-key "test-config/association_register.key.pem"
@@ -102,7 +102,7 @@
                 authentication (authentication-service.main/start authentication-env)
                  authorization (authorization-register.main/start authorization-env)
                 example-backend (example-backend/start example-backend-config)
-                connector (connector.main/start connector-env)])))
+                connector (passage.main/start! connector-env)])))
 
 (defn stop! []
   (close system))

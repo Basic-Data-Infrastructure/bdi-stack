@@ -1,0 +1,105 @@
+;;; SPDX-FileCopyrightText: 2025 Jomco B.V.
+;;; SPDX-FileCopyrightText: 2025 Stichting Connekt
+;;; SPDX-License-Identifier: AGPL-3.0-or-later
+
+{:vars {openid-url             "http://localhost:9996"
+        noodlebar-url          "http://localhost:9997/api"
+        server-id              "EU.EORI.CONNECTOR"
+        x5c                    #x5c "test-config/connector.x5c.pem"
+        private-key            #private-key "test-config/connector.key.pem"
+        association-server-id  "EU.EORI.ASSOCIATION-REGISTER"
+        association-server-url "http://localhost:9991"
+        public-key             #public-key "test-config/connector.cert.pem"}
+ :rules
+ [
+
+;;;; bdi/ishare style authentication and authorization
+
+  ;; access token from client assertion
+
+  {:match        {:uri            #rx "/connect/token"
+                  :request-method :post}
+   :interceptors [[(bdi/connect-token {:x5c                    x5c
+                                       :server-id              server-id
+                                       :private-key            private-key
+                                       :association-server-url association-server-url
+                                       :association-server-id  association-server-id})]]}
+
+  ;; authentication only; allow valid access tokens
+  {:match        {:uri #rx "/api/bdi/authenticated.*"}
+   :interceptors [[logger {"uri"    (get request :uri)
+                           "server" "backend-connector"}]
+                  [(bdi/authenticate  {:server-id  server-id
+                                       :public-key public-key})]
+                  [bdi/deauthenticate]
+                  [proxy "http://localhost:9994"]]}
+
+  ;; authorization; ensure valid delegation evidence can be found
+  {:match        {:uri #rx "/api/bdi/authorized.*"}
+   :interceptors [[logger {"uri"    (get request :uri)
+                           "server" "backend-connector"}]
+                  [(bdi/authenticate {:server-id  server-id
+                                      :public-key public-key})]
+                  [bdi/delegation {:x5c                    x5c
+                                   :server-id              server-id
+                                   :private-key            private-key
+                                   :association-server-url association-server-url
+                                   :association-server-id  association-server-id
+                                   :dataspace-id           "ORG.BDI.VGU-DEMO"}
+                   {:policyIssuer "EU.EORI.DATA-OWNER"
+                    :target       {:accessSubject x-bdi-client-id}
+                    :policySets
+                    [{:policies
+                      [{:rules [{:effect "Permit"}]
+                        :target
+                        {:resource {:type        "Container-BOL-Events"
+                                    :identifiers ["*"]
+                                    :attributes  ["*"]}
+                         :actions  ["read"]
+                         :environment
+                         {:serviceProviders ["EU.EORI.CONNECTOR"]}}}]}]}]
+                  [bdi/deauthenticate]
+                  [proxy "http://localhost:9994"]]}
+
+;;;; noodlebar/oauth authentication and authorization
+
+  ;; allow valid openid access token
+  {:match        {:uri #rx "/api/noodlebar/authenticated.*"}
+   :interceptors [[logger {"uri"    (get request :uri)
+                           "server" "backend-connector"}]
+                  [oauth2/bearer-token {:aud server-id
+                                        :iss openid-url}
+                   {:realm "test"}]
+                  [bdi/deauthenticate]
+                  [proxy "http://localhost:9994"]]}
+
+  ;; allow valid openid access token
+  {:match        {:uri #rx "/api/noodlebar/authorized.*"}
+   :interceptors [[logger {"uri"    (get request :uri)
+                           "server" "backend-connector"}]
+                  [oauth2/bearer-token {:aud server-id
+                                        :iss openid-url}
+                   {:realm "test"}]
+                  [bdi/noodlebar-delegation {:oauth2/token-url     (str openid-url "/token")
+                                             :oauth2/client-id     "client-id"
+                                             :oauth2/client-secret "client-secret"
+                                             :oauth2/audience      noodlebar-url
+                                             :coremanager-url      noodlebar-url}
+                   {:policyIssuer "EU.EORI.DATA-OWNER"
+                    :target       {:accessSubject (get-in ctx [:oauth2/bearer-token-claims :organizationId])}
+                    :policySets
+                    [{:policies
+                      [{:rules [{:effect "Permit"}]
+                        :target
+                        {:resource {:type        "Container-BOL-Events"
+                                    :identifiers ["*"]
+                                    :attributes  ["*"]}
+                         :actions  ["read"]
+                         :environment
+                         {:serviceProviders ["EU.EORI.CONNECTOR"]}}}]}]}]
+                  [bdi/deauthenticate]
+                  [proxy "http://localhost:9994"]]}
+
+
+  {:match        {:uri "/favicon.ico"} ;; prevent chrome for asking for basic auth again
+   :interceptors [[respond {:status 204}]]}]}

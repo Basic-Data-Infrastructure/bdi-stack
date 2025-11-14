@@ -12,11 +12,12 @@
             [nl.jomco.http-status-codes :as http-status]
             [nl.jomco.resources :refer [with-resources]]
             [org.bdinetwork.authentication.access-token :as access-token]
+            [org.bdinetwork.connector.interceptors :as interceptors]
             [org.bdinetwork.ishare.jwt :as ishare-jwt]
             [org.bdinetwork.service-commons.config :as config]
             [org.bdinetwork.test-helper :refer [jwks-keys mk-token openid-token-uri openid-uri proxy-url start-backend start-openid start-proxy]]
             [passage :as gateway]
-            [passage.interceptors :refer [->interceptor]]
+            [passage.interceptors]
             [ring.adapter.jetty :refer [run-jetty]]
             [ring.util.codec :as ring-codec])
   (:import (java.io StringBufferInputStream)
@@ -35,9 +36,8 @@
 (defn mk-access-token [client-id]
   (access-token/mk-access-token (assoc config :client-id client-id)))
 
-(deftest bdi-authenticate
-  (let [{:keys [name enter]} (->interceptor ['bdi/authenticate config] nil)]
-    (is (= "bdi/authenticate EU.EORI.CONNECTOR" name))
+(deftest authenticate
+  (let [{:keys [enter]} (interceptors/authenticate config)]
 
     (testing "without token"
       (let [{:keys [response]} (enter {:request {}})]
@@ -59,17 +59,15 @@
         (is (not response) "no response yet")
         (is (= client-id (get-in request [:headers "x-bdi-client-id"])))))))
 
-(deftest bdi-deauthenticate
-  (let [{:keys [name enter]} (->interceptor ['bdi/deauthenticate] nil)]
-    (is (= "bdi/deauthenticate" name))
+(deftest deauthenticate
+  (let [{:keys [enter]} interceptors/deauthenticate
+        req  {:headers {"x-test" "test"}}
+        req' {:headers {"x-test" "test", "x-bdi-client-id" "test"}}]
+    (testing "without x-bdi-client-id request header"
+      (is (= req (:request (enter {:request req})))))
 
-    (let [req  {:headers {"x-test" "test"}}
-          req' {:headers {"x-test" "test", "x-bdi-client-id" "test"}}]
-      (testing "without x-bdi-client-id request header"
-        (is (= req (:request (enter {:request req})))))
-
-      (testing "with x-bdi-client-id request header"
-        (is (= req (:request (enter {:request req'}))))))))
+    (testing "with x-bdi-client-id request header"
+      (is (= req (:request (enter {:request req'})))))))
 
 
 
@@ -88,33 +86,32 @@
        (ring-codec/form-encode)
        (StringBufferInputStream.)))
 
-(deftest bdi-connect-token
-  (let [{:keys [name enter]} (->interceptor ['bdi/connect-token config] nil)]
-    (is (= "bdi/connect-token EU.EORI.CONNECTOR" name))
-    (let [request            {:request-method :post, :headers {"content-type" "application/x-www-form-urlencoded"}}
+(deftest connect-token
+  (let [{:keys [enter]} (interceptors/connect-token config)
+        request            {:request-method :post, :headers {"content-type" "application/x-www-form-urlencoded"}}
+        {:keys [response]} (enter {:request request})]
+    (is (= http-status/bad-request (:status response)))
+
+    (let [config             (config/config client-env client-party-opt-specs)
+          client-assertion   (ishare-jwt/make-client-assertion {:ishare/client-id   client-id
+                                                                :ishare/server-id   server-id
+                                                                :ishare/x5c         (:x5c config)
+                                                                :ishare/private-key (:private-key config)})
+          params             {:grant_type            "client_credentials"
+                              :scope                 "iSHARE"
+                              :client_id             client-id
+                              :client_assertion_type "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
+                              :client_assertion      client-assertion}
+          request            (assoc request
+                                    :body (form-params-encode params))
           {:keys [response]} (enter {:request request})]
-      (is (= http-status/bad-request (:status response)))
 
-      (let [config             (config/config client-env client-party-opt-specs)
-            client-assertion   (ishare-jwt/make-client-assertion {:ishare/client-id   client-id
-                                                                  :ishare/server-id   server-id
-                                                                  :ishare/x5c         (:x5c config)
-                                                                  :ishare/private-key (:private-key config)})
-            params             {:grant_type            "client_credentials"
-                                :scope                 "iSHARE"
-                                :client_id             client-id
-                                :client_assertion_type "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
-                                :client_assertion      client-assertion}
-            request            (assoc request
-                                      :body (form-params-encode params))
-            {:keys [response]} (enter {:request request})]
+      (is (= http-status/ok (:status response)))
+      (is (string/starts-with? (get-in response [:headers "Content-Type"]) ;; ring-json sends camelcase header
+                               "application/json"))
 
-        (is (= http-status/ok (:status response)))
-        (is (string/starts-with? (get-in response [:headers "Content-Type"]) ;; ring-json sends camelcase header
-                                 "application/json"))
-
-        (let [{:strs [token_type]} (json/read-str (:body response))]
-          (is (= "Bearer" token_type)))))))
+      (let [{:strs [token_type]} (json/read-str (:body response))]
+        (is (= "Bearer" token_type))))))
 
 
 
@@ -144,28 +141,27 @@
        _proxy   (start-proxy (gateway/make-gateway
                               {:rules [{:match {:uri "/"}
                                         :interceptors
-                                        (mapv #(->interceptor % {})
-                                              [['noodlebar/delegation
-                                                {:oauth2/token-url     openid-token-uri
-                                                 :oauth2/client-id     "dummy"
-                                                 :oauth2/client-secret "dummy"
-                                                 :oauth2/audience      "test-subject"
-                                                 :coremanager-url      noodlebar-uri}
-                                                {:policyIssuer "test-issuer"
-                                                 :target       {:accessSubject "test-subject"}
-                                                 :policySets
-                                                 [{:policies
-                                                   [{:rules [{:effect "Permit"}]
-                                                     :target
-                                                     {:resource {:type        "test"
-                                                                 :identifiers ["*"]
-                                                                 :attributes  ["*"]}
-                                                      :actions  ["read"]
-                                                      :environment
-                                                      {:serviceProviders ["test-provider"]}}}]}]}]
-                                               ['respond
-                                                {:status 200
-                                                 :body   "pass"}]])}]}))
+                                        [[(list interceptors/noodlebar-delegation
+                                           {:oauth2/token-url     openid-token-uri
+                                            :oauth2/client-id     "dummy"
+                                            :oauth2/client-secret "dummy"
+                                            :oauth2/audience      "test-subject"
+                                            :coremanager-url      noodlebar-uri})
+                                          {:policyIssuer "test-issuer"
+                                           :target       {:accessSubject "test-subject"}
+                                           :policySets
+                                           [{:policies
+                                             [{:rules [{:effect "Permit"}]
+                                               :target
+                                               {:resource {:type        "test"
+                                                           :identifiers ["*"]
+                                                           :attributes  ["*"]}
+                                                :actions  ["read"]
+                                                :environment
+                                                {:serviceProviders ["test-provider"]}}}]}]}]
+                                         [passage.interceptors/respond
+                                          {:status 200
+                                           :body   "pass"}]]}]}))
        _openid    (start-openid jwks-keys)
        _noodlebar (start-noodlebar
                    {:policyIssuer "test-issuer"

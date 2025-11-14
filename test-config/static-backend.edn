@@ -1,0 +1,18 @@
+;;; SPDX-FileCopyrightText: 2025 Jomco B.V.
+;;; SPDX-FileCopyrightText: 2025 Stichting Connekt
+;;; SPDX-License-Identifier: AGPL-3.0-or-later
+
+{:rules
+ [{:match        {:uri "/favicon.ico"} ;; prevent chrome for asking for basic auth again
+   :interceptors [[respond {:status 204}]]}
+  ;; health check
+  {:match        {:uri "/ping"}
+   :interceptors [[respond {:status 200
+                            :header {"content-type" "text/plain"}
+                            :body   "pong\n"}]]}
+  {:match        {:uri #rx "/.*"}
+   :interceptors [[logger {"uri"    (get request :uri)
+                           "server" "static-backend"}]
+                  [respond {:status 200
+                            :body "Hi there!\n"
+                            :headers {"content-type" "text/plain"}}]]}]}

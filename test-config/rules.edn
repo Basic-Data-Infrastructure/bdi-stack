@@ -2,7 +2,9 @@
 ;;; SPDX-FileCopyrightText: 2025 Stichting Connekt
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-{:rules
+{:ns-alias {bdi org.bdinetwork.connector.interceptors}
+
+ :rules
  [{:match        {:uri          #rx "/v3/events(/.+)?"
                   :query-params {"eventTypes"                 "EQUIPMENT"
                                  "transportDocumentReference" bol
@@ -23,11 +25,11 @@
                    {:realm #env! OAUTH_REALM}]
                   [request update :headers dissoc "authorization"]
 
-                  [noodlebar/delegation {:oauth2/token-url     #env! NOODLEBAR_TOKEN_URL
-                                         :oauth2/client-id     #env! NOODLEBAR_CLIENT_ID
-                                         :oauth2/client-secret #env! NOODLEBAR_CLIENT_SECRET
-                                         :oauth2/audience      #env! NOODLEBAR_AUDIENCE
-                                         :coremanager-url      #env! NOODLEBAR_COREMANAGER_URL}
+                  [bdi/noodlebar-delegation {:oauth2/token-url     #env! NOODLEBAR_TOKEN_URL
+                                             :oauth2/client-id     #env! NOODLEBAR_CLIENT_ID
+                                             :oauth2/client-secret #env! NOODLEBAR_CLIENT_SECRET
+                                             :oauth2/audience      #env! NOODLEBAR_AUDIENCE
+                                             :coremanager-url      #env! NOODLEBAR_COREMANAGER_URL}
                    {:policyIssuer (str/replace owner "kvk:" "NL.KVK.") ; translate itv to p8 notation
                     :target       {:accessSubject (get-in ctx [:oauth2/bearer-token-claims :organizationId])}
                     :policySets
@@ -51,7 +53,7 @@
                             #join ["Basic " #b64 #join
                                    [#env! AUDIT_LOG_USER ":" #env! AUDIT_LOG_PASSWD]]}
                   :uri     "/audit-log"}
-   :interceptors [[demo/audit-log {:json-file #env! AUDIT_LOG_FILE}]]} ;; as configured in logback.xml
+   :interceptors [[(bdi/demo-audit-log {:json-file #env! AUDIT_LOG_FILE})]]} ;; as configured in logback.xml
   {:match        {:uri "/audit-log"}
    :interceptors [[respond {:status  401
                             :headers {"content-type"     "text/html"
