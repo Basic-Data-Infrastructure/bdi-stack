@@ -113,6 +113,13 @@ in the top-level directory.
 that the `test-config` is populated correctly.
 
 ## CHANGES
+
+### v1.1.0-RC1
+- Include BDI Connector in releases
+- CI and release automation improvements
+- Dependency updates
+- Bug fixes
+
 ### v1.0.1
   - Added `authentication-service`, a standalone service that provides
     an access token endpoint generating trusted JWTs.
