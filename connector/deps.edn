@@ -13,7 +13,7 @@
         aleph/aleph                    {:mvn/version "0.9.3"}
         nl.jomco/clj-http-status-codes {:mvn/version "0.2"}
         nl.jomco/passage               {:git/url "https://codeberg.org/jomco/passage.git"
-                                        :git/sha "d3cec54d1a41a0c081b9d9fa1971aae00056a57a"}
+                                        :git/sha "7841d578ac86baa2fa6dbf0e18a61e116ce08140"}
         org.clojure/data.json {:mvn/version "2.5.1"}
         ring/ring-core        {:mvn/version "1.15.3"}
         ring/ring-json        {:mvn/version "0.5.1"}
