@@ -65,6 +65,8 @@ Advantages:
 
 - Easy to implement.
 
+- Still works when client code is generated from, for instance, OpenAPI Specs.
+
 Disadvantages:
 
 - Error-prone.
@@ -77,7 +79,7 @@ Disadvantages:
 
 - Internal traffic is unencrypted.
 
-  In this approach, it is impossible to encrypt traffic between the client and the proxy, so both must be in a trusted network.
+  In this approach, it is impossible to encrypt traffic between the client and the proxy, so both must be in a trusted or private network.
 
 ### Connector API
 
@@ -110,6 +112,10 @@ Disadvantages:
 - There is more management and maintenance pressure on the connector.
 
   Each new method of authentication, authorization or communication may require adjustments to the specification made.
+
+- Does not work when client code is generated from, for instance, OpenAPI Specs.
+
+  It will require to make specifications for the created API which allow code generation.
 
 ## Conclusion
 
