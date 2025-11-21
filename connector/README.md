@@ -264,6 +264,10 @@ The following example is protected by a basic authentication username / password
 
 Not supported (yet).
 
+## Forward Proxy
+
+This connector can be used as a HTTP Forward Proxy but does not support HTTPS.  See [Connector HTTP(S) Forward Proxy](../connector-forward-proxy.md) for more information.
+
 ## Security considerations
 
 ### End-user header overrides
