@@ -22,7 +22,7 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/cache@v4
         with:
           path: "~/.m2"
@@ -70,7 +70,7 @@ jobs:
       matrix:
         service: [association-register, authorization-register, authentication-service, connector]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/cache@v4
         with:
           path: "~/.m2"
@@ -130,7 +130,7 @@ jobs:
       matrix:
         lib: [clj-ishare-jwt, clj-ishare-client, clj-authentication, clj-ring-middleware]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/cache@v4
         with:
           path: "~/.m2"
