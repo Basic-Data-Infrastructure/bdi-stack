@@ -5,6 +5,7 @@
 (ns org.bdinetwork.connector.interceptors
   (:require [clojure.data.json :as json]
             [clojure.tools.logging :as log]
+            [manifold.deferred :as d]
             [nl.jomco.http-status-codes :as http-status]
             [org.bdinetwork.authentication.access-token :as access-token]
             [org.bdinetwork.authentication.client-assertion :as client-assertion]
@@ -16,7 +17,8 @@
             [org.bdinetwork.ishare.client.validate-delegation :as validate-delegation]
             [passage.response :as response]
             [ring.middleware.json :as ring-json]
-            [ring.middleware.params :as ring-params]))
+            [ring.middleware.params :as ring-params])
+  (:import java.time.Instant))
 
 (defn extract-client-id [request config]
   (let [auth (get-in request [:headers "authorization"])]
@@ -111,54 +113,97 @@
 
 
 
-(def ^{:interceptor  true
-       :expr-arglist '[{:keys [server-id base-url client-id private-key x5c association-id association-url]}]}
+(def expires-in-fraction
+  "Fraction of expires/max-age seconds to consider."
+  90/100)
+
+(defn- now-in-epoch-seconds
+  []
+  (.getEpochSecond (Instant/now)))
+
+(defn- deferred-cached
+  "Deferred cache of `c` for key `k` and `:payload` of `f`.
+  Returned `:exp` from `f` is epoch seconds of expiration.
+
+  Note: this cache does not evict entries, it only validates it
+  expiration date, so the assumption the amount of `k`s is limited."
+  [c k f]
+  {:pre [c]}
+  (d/let-flow
+      [{:keys [payload]}
+       (-> (swap! c update k
+                  (fn [slot]
+                    (if slot
+                      (d/let-flow [{:keys [exp]} slot]
+                        (if (< (now-in-epoch-seconds) exp)
+                          slot
+                          (f)))
+                      (f))))
+           (get k))]
+    payload))
+
+(defn- get-bearer-token-cache-slot
+  "Return a non blocking future of `{:payload \"token\", :exp 1234}` for arguments."
+  [{:keys [server-id base-url client-id private-key x5c association-id association-url path]}]
+  (future
+    (let [res (-> {:ishare/server-id server-id
+                   :ishare/base-url  base-url
+
+                   ;; credentials
+                   :ishare/client-id   client-id
+                   :ishare/private-key private-key
+                   :ishare/x5c         x5c
+
+                   ;; for adherence test of server
+                   :ishare/satellite-id  association-id
+                   :ishare/satellite-url association-url}
+
+                  (ishare-request/access-token-request path)
+                  (ishare-client/exec))]
+      {:payload (:ishare/result res)
+       :exp     (+ (now-in-epoch-seconds)
+                   (* expires-in-fraction
+                      (-> res :body (get "expires_in"))))})))
+
+(defn ^{:interceptor  true
+        :expr-arglist '[{:keys [server-id base-url client-id private-key x5c association-id association-url path]}]}
   set-bearer-token
   "Set a bearer token on the current request for the given `server-id` and `base-url`.
 
   Example:
 
   ```
-  [bdi/set-bearer-token {;; target server
-                         :server-id       server-id
-                         :base-url        server-url
+  [(bdi/set-bearer-token) {;; target server
+                           :server-id       server-id
+                           :base-url        server-url
 
-                         ;; credentials
-                         :client-id       server-id
-                         :private-key     private-key
-                         :x5c             x5c
+                           ;; credentials
+                           :client-id       server-id
+                           :private-key     private-key
+                           :x5c             x5c
 
-                         ;; association to check server adherence
-                         :association-url association-server-url
-                         :association-id  association-server-id}]"
-  {:enter
-   (fn set-bearer-token-enter
-     ([ctx
-       {:keys [server-id base-url
-               client-id private-key x5c
-               association-id association-url]}
-       path]
-      {:pre [client-id private-key x5c base-url server-id association-id association-url]}
-      (let [token (-> {:ishare/server-id server-id
-                       :ishare/base-url  base-url
+                           ;; association to check server adherence
+                           :association-url association-server-url
+                           :association-id  association-server-id}]
+  ```
 
-                       ;; credentials
-                       :ishare/client-id   client-id
-                       :ishare/private-key private-key
-                       :ishare/x5c         x5c
-
-                       ;; for adherence test of server
-                       :ishare/satellite-id  association-id
-                       :ishare/satellite-url association-url}
-
-                      (ishare-request/access-token-request path)
-                      (ishare-client/exec)
-                      :ishare/result)]
-        (assoc-in ctx [:request :headers "authorization"]
-                  (str "Bearer " token))))
-
-     ([ctx config]
-      (set-bearer-token-enter ctx config nil)))})
+  The `:path` can be added for a non-standard token endpoint location,
+  otherwise `/connect/token` is used."
+  []
+  (let [cache (atom {})]
+    {:enter
+     (fn set-bearer-token-enter
+       [ctx
+        {:keys [server-id base-url
+                client-id private-key x5c
+                association-id association-url]
+         :as config}]
+       {:pre [client-id private-key x5c base-url server-id association-id association-url]}
+       (d/let-flow
+           [token (deferred-cached cache [server-id base-url client-id association-id]
+                    #(get-bearer-token-cache-slot config))]
+         (assoc-in ctx [:request :headers "authorization"]
+                   (str "Bearer " token))))}))
 
 
 (defn ^{:interceptor true} demo-audit-log

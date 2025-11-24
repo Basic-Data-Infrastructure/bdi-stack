@@ -65,13 +65,13 @@
                   :params {"party-id" party-id}}
    :interceptors [[logger {"uri"    (get request :uri)
                            "server" "backend-connector"}]
-                  [bdi/set-bearer-token {:server-id       association-server-id
-                                         :base-url        association-server-url
-                                         :client-id       server-id
-                                         :private-key     private-key
-                                         :x5c             x5c
-                                         :association-url association-server-url
-                                         :association-id  association-server-id}]
+                  [(bdi/set-bearer-token) {:server-id       association-server-id
+                                           :base-url        association-server-url
+                                           :client-id       server-id
+                                           :private-key     private-key
+                                           :x5c             x5c
+                                           :association-url association-server-url
+                                           :association-id  association-server-id}]
                   [request update :headers dissoc
                    ;; remove just acquired bearer token when "without-token" param passed
                    (if (get-in request [:params "without-token"])

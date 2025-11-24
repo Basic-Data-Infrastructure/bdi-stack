@@ -125,13 +125,13 @@
 
 (deftest set-bearer-token
   (with-resources [_association-system (association-system)]
-    (let [{:keys [enter]} interceptors/set-bearer-token
+    (let [{:keys [enter]} (interceptors/set-bearer-token)
           config          (assoc client-config
                                  :server-id association-server-id
                                  :base-url association-server-url
                                  :association-id association-server-id
                                  :association-url association-server-url)
-          ctx             (enter {} config)]
+          ctx             @(enter {} config)]
       (is (re-matches #"Bearer eyJ.+" ;; JWTs always start with 'eyJ' because it's base64 JSON '{"'
                       (get-in ctx [:request :headers "authorization"]))))))
 
