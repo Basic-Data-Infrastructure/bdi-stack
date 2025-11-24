@@ -13,11 +13,11 @@
         aleph/aleph                    {:mvn/version "0.9.3"}
         nl.jomco/clj-http-status-codes {:mvn/version "0.2"}
         nl.jomco/passage               {:git/url "https://codeberg.org/jomco/passage.git"
-                                        :git/sha "7faf6a8ffae8784c162711b51eb3847ed4cfb803"}
-        org.clojure/data.json {:mvn/version "2.5.1"}
-        ring/ring-core        {:mvn/version "1.15.3"}
-        ring/ring-json        {:mvn/version "0.5.1"}
-        hiccup/hiccup         {:mvn/version "2.0.0"}
+                                        :git/sha "0c2f080d46be86c94a9a005725663bfba13661e1"}
+        org.clojure/data.json          {:mvn/version "2.5.1"}
+        ring/ring-core                 {:mvn/version "1.15.3"}
+        ring/ring-json                 {:mvn/version "0.5.1"}
+        hiccup/hiccup                  {:mvn/version "2.0.0"}
 
         nl.jomco/with-resources {:mvn/version "0.1.2"}
         nl.jomco/envopts        {:mvn/version "0.0.7"}
@@ -29,4 +29,9 @@
   :uberjar {:replace-deps  {uberdeps/uberdeps {:mvn/version "RELEASE"}}
             :replace-paths []
             :main-opts     ["-m" "uberdeps.uberjar" "--aliases" "package"]}
-  :run {:main-opts ["-m" "org.bdinetwork.connector.main"]}}}
+  :run     {:main-opts ["-m" "org.bdinetwork.connector.main"]}
+
+  :print-interceptors {:replace-paths ["src"] ;; prevent log messages
+                       :exec-fn   passage.interceptors/print-docs
+                       :exec-args {:extra-namespaces [org.bdinetwork.connector.interceptors]
+                                   :ns-alias         {bdi org.bdinetwork.connector.interceptors}}}}}

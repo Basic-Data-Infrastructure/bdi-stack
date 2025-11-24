@@ -14,3 +14,10 @@ bdi-connector.jar: clean
 	mkdir classes
 	clojure -M -e "(compile 'org.bdinetwork.connector.main)"
 	clojure -M:uberjar --main-class org.bdinetwork.connector.main --target $@
+
+interceptors.md: deps.edn src/org/bdinetwork/connector/interceptors.clj src/org/bdinetwork/connector/interceptors/*.clj
+	clojure -X:print-interceptors > interceptors.md
+
+README.md: interceptors.md README.src.md
+	echo "<!-- WARNING! THIS FILE IS GENERATED, EDIT README.src.md INSTEAD -->" >$@
+	sed "/<!-- INCLUDE interceptors.md -->/r $<" README.src.md >>$@

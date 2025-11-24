@@ -31,7 +31,16 @@
 
 (defn ^{:interceptor true} authenticate
   "Enforce BDI authentication on incoming requests and add \"x-bdi-client-id\" request header.
-  Responds with 401 Unauthorized when request is not allowed."
+  Responds with 401 Unauthorized when request is not allowed.  Example:
+
+  ```
+  [bdi/authenticate {:server-id   \"EU.EORI.CONNECTOR\"
+                     :private-key #private-key \"certs/connector.key.pem\"
+                     :public-key  #public-key \"certs/connector.cert.pem\"
+                     :x5c         #x5c \"certs/connector.x5c.pem\"
+                     :association-server-id  \"EU.EORI.ASSOCIATION-REGISTER\"
+                     :association-server-url \"https://association-register.com\"}]
+  ```"
   [config]
   {:enter
    (fn authenticate-enter [{:keys [request] :as ctx}]
@@ -44,7 +53,11 @@
                :headers {"www-authenticate" "Bearer scope=\"BDI\""}})))})
 
 (def ^{:interceptor true} deauthenticate
-  "Remove \"x-bdi-client-id\" request header for avoid clients from fooling backend into being authenticated."
+  "Ensure the \"X-Bdi-Client-Id\" request header is **not** already set on a request for public endpoints which do not need authentication.
+
+  This prevents clients from fooling the backend into being
+  authenticated.  **Always use this on public routes when
+  authentication is optional downstream.**"
   {:enter  (fn bdi-deauthenticate-enter [ctx]
              (update-in ctx [:request :headers] dissoc "x-bdi-client-id"))})
 
@@ -70,9 +83,21 @@
       (ring-json/json-response {})))
 
 (defn ^{:interceptor true} connect-token
-  "Provide a access token (M2M) endpoint to acquire an authentication token.
-  Note: this interceptor does not match on an `uri`, use a `:match` in
-  the rules for that."
+  "Provide a token endpoint to provide access tokens for machine-to-machine (M2M) operations.
+
+  Note: this interceptor does no matching.  Example:
+
+  ```
+  {:match        {:uri \"/connect/token\"}
+   :interceptors
+   [[bdi/connect-token {:server-id   \"EU.EORI.CONNECTOR\"
+                        :private-key #private-key \"certs/connector.key.pem\"
+                        :public-key  #public-key \"certs/connector.cert.pem\"
+                        :x5c         #x5c \"certs/connector.x5c.pem\"
+                        :association-server-id  \"EU.EORI.ASSOCIATION-REGISTER\"
+                        :association-server-url \"https://association-register.com\"}]
+    ..]}
+  ```"
   [config]
   (let [jti-cache-atom (client-assertion/mk-jti-cache-atom)
         config         (assoc config
