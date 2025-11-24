@@ -16,22 +16,30 @@
             [org.bdinetwork.ishare.jwt :as ishare-jwt]
             [org.bdinetwork.service-commons.config :as config]
             [org.bdinetwork.test-helper :refer [jwks-keys mk-token openid-token-uri openid-uri proxy-url start-backend start-openid start-proxy]]
+            [org.bdinetwork.test.system-helpers
+             :refer [association-system
+                     association-server-id
+                     association-server-url]]
             [passage :as gateway]
             [passage.interceptors]
             [ring.adapter.jetty :refer [run-jetty]]
             [ring.util.codec :as ring-codec])
   (:import (java.io StringBufferInputStream)
            (java.time Instant)))
+
 (def server-id "EU.EORI.CONNECTOR")
 
-(def config
-  {:server-id   server-id
+(def client-config
+  {:client-id   server-id
    :private-key (keys/private-key (io/resource "test-config/connector.key.pem"))
    :public-key  (keys/public-key (io/resource "test-config/connector.cert.pem"))
-   :x5c         (config/split-x5c (io/resource "test-config/connector.x5c.pem"))
+   :x5c         (config/split-x5c (io/resource "test-config/connector.x5c.pem"))})
 
-   :in-memory-association-data-source
-   (io/resource "test-config/association-register-config.yml")})
+(def config
+  (merge client-config
+         {:server-id server-id
+          :in-memory-association-data-source
+          (io/resource "test-config/association-register-config.yml")}))
 
 (defn mk-access-token [client-id]
   (access-token/mk-access-token (assoc config :client-id client-id)))
@@ -113,6 +121,19 @@
       (let [{:strs [token_type]} (json/read-str (:body response))]
         (is (= "Bearer" token_type))))))
 
+
+
+(deftest set-bearer-token
+  (with-resources [_association-system (association-system)]
+    (let [{:keys [enter]} interceptors/set-bearer-token
+          config          (assoc client-config
+                                 :server-id association-server-id
+                                 :base-url association-server-url
+                                 :association-id association-server-id
+                                 :association-url association-server-url)
+          ctx             (enter {} config)]
+      (is (re-matches #"Bearer eyJ.+" ;; JWTs always start with 'eyJ' because it's base64 JSON '{"'
+                      (get-in ctx [:request :headers "authorization"]))))))
 
 
 

@@ -11,6 +11,8 @@
             [org.bdinetwork.authentication.in-memory-association :refer [in-memory-association read-source]]
             [org.bdinetwork.authentication.remote-association :refer [remote-association]]
             [org.bdinetwork.connector.interceptors.audit-log :refer [audit-log-response]]
+            [org.bdinetwork.ishare.client :as ishare-client]
+            [org.bdinetwork.ishare.client.request :as ishare-request]
             [org.bdinetwork.ishare.client.validate-delegation :as validate-delegation]
             [passage.response :as response]
             [ring.middleware.json :as ring-json]
@@ -87,7 +89,7 @@
   {:enter
    (fn delegation-enter
      [ctx {:keys [server-id x5c private-key association-server-id association-server-url dataspace-id] :as _config} mask]
-     (assert [server-id x5c private-key association-server-id association-server-url dataspace-id])
+     {:pre [server-id x5c private-key association-server-id association-server-url dataspace-id]}
      (let [base-request {:ishare/satellite-base-url association-server-url
                          :ishare/satellite-id       association-server-id
                          :ishare/x5c                x5c
@@ -107,6 +109,56 @@
                               (assoc-in [:headers "content-type"] "application/json")
                               (assoc :body (json/json-str {:delegation-issues issues})))))))})
 
+
+
+(def ^{:interceptor  true
+       :expr-arglist '[{:keys [server-id base-url client-id private-key x5c association-id association-url]}]}
+  set-bearer-token
+  "Set a bearer token on the current request for the given `server-id` and `base-url`.
+
+  Example:
+
+  ```
+  [bdi/set-bearer-token {;; target server
+                         :server-id       server-id
+                         :base-url        server-url
+
+                         ;; credentials
+                         :client-id       server-id
+                         :private-key     private-key
+                         :x5c             x5c
+
+                         ;; association to check server adherence
+                         :association-url association-server-url
+                         :association-id  association-server-id}]"
+  {:enter
+   (fn set-bearer-token-enter
+     ([ctx
+       {:keys [server-id base-url
+               client-id private-key x5c
+               association-id association-url]}
+       path]
+      {:pre [client-id private-key x5c base-url server-id association-id association-url]}
+      (let [token (-> {:ishare/server-id server-id
+                       :ishare/base-url  base-url
+
+                       ;; credentials
+                       :ishare/client-id   client-id
+                       :ishare/private-key private-key
+                       :ishare/x5c         x5c
+
+                       ;; for adherence test of server
+                       :ishare/satellite-id  association-id
+                       :ishare/satellite-url association-url}
+
+                      (ishare-request/access-token-request path)
+                      (ishare-client/exec)
+                      :ishare/result)]
+        (assoc-in ctx [:request :headers "authorization"]
+                  (str "Bearer " token))))
+
+     ([ctx config]
+      (set-bearer-token-enter ctx config nil)))})
 
 
 (defn ^{:interceptor true} demo-audit-log
