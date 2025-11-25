@@ -6,7 +6,9 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.connector.system-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [babashka.http-client :as http]
+            [clojure.data.json :as json]
+            [clojure.test :refer [deftest is testing]]
             [nl.jomco.http-status-codes :as http-status]
             [nl.jomco.resources :refer [with-resources]]
             [org.bdinetwork.ishare.client :as client]
@@ -19,6 +21,7 @@
                      backend-connector-id
                      backend-connector-request
                      backend-connector-system
+                     backend-connector-url
                      client-config
                      client-id
                      data-owner-config
@@ -94,7 +97,23 @@
                                               :method :get
                                               :path "/api/bdi/authenticated"
                                               :ishare/bearer-token "NONSENSE"))))
-              "status unauthorized")))
+              "status unauthorized"))
+
+        (testing "setting bearer token; accessing association register with automatically set token"
+          (let [{:keys [status body]
+                 {:strs [content-type]} :headers}
+                (http/get (str backend-connector-url "/api/bdi/party?party-id=" client-id)
+                          {:throw false})]
+            (is (= http-status/ok status))
+            (is (re-matches #"application/json\b.*" content-type))
+            (is (contains? (json/read-str body)
+                           "party_token")))
+
+          (testing "should not work without token"
+            (let [{:keys [status]}
+                  (http/get (str backend-connector-url "/api/bdi/party?party-id=" client-id "&without-token=1")
+                            {:throw false})]
+              (is (= http-status/unauthorized status))))))
 
       (testing "authorization"
         (testing "accessing authorzed backend"

@@ -5,16 +5,20 @@
 (ns org.bdinetwork.connector.interceptors
   (:require [clojure.data.json :as json]
             [clojure.tools.logging :as log]
+            [manifold.deferred :as d]
             [nl.jomco.http-status-codes :as http-status]
             [org.bdinetwork.authentication.access-token :as access-token]
             [org.bdinetwork.authentication.client-assertion :as client-assertion]
             [org.bdinetwork.authentication.in-memory-association :refer [in-memory-association read-source]]
             [org.bdinetwork.authentication.remote-association :refer [remote-association]]
             [org.bdinetwork.connector.interceptors.audit-log :refer [audit-log-response]]
+            [org.bdinetwork.ishare.client :as ishare-client]
+            [org.bdinetwork.ishare.client.request :as ishare-request]
             [org.bdinetwork.ishare.client.validate-delegation :as validate-delegation]
             [passage.response :as response]
             [ring.middleware.json :as ring-json]
-            [ring.middleware.params :as ring-params]))
+            [ring.middleware.params :as ring-params])
+  (:import java.time.Instant))
 
 (defn extract-client-id [request config]
   (let [auth (get-in request [:headers "authorization"])]
@@ -27,7 +31,16 @@
 
 (defn ^{:interceptor true} authenticate
   "Enforce BDI authentication on incoming requests and add \"x-bdi-client-id\" request header.
-  Responds with 401 Unauthorized when request is not allowed."
+  Responds with 401 Unauthorized when request is not allowed.  Example:
+
+  ```
+  [bdi/authenticate {:server-id   \"EU.EORI.CONNECTOR\"
+                     :private-key #private-key \"certs/connector.key.pem\"
+                     :public-key  #public-key \"certs/connector.cert.pem\"
+                     :x5c         #x5c \"certs/connector.x5c.pem\"
+                     :association-server-id  \"EU.EORI.ASSOCIATION-REGISTER\"
+                     :association-server-url \"https://association-register.com\"}]
+  ```"
   [config]
   {:enter
    (fn authenticate-enter [{:keys [request] :as ctx}]
@@ -40,7 +53,11 @@
                :headers {"www-authenticate" "Bearer scope=\"BDI\""}})))})
 
 (def ^{:interceptor true} deauthenticate
-  "Remove \"x-bdi-client-id\" request header for avoid clients from fooling backend into being authenticated."
+  "Ensure the \"X-Bdi-Client-Id\" request header is **not** already set on a request for public endpoints which do not need authentication.
+
+  This prevents clients from fooling the backend into being
+  authenticated.  **Always use this on public routes when
+  authentication is optional downstream.**"
   {:enter  (fn bdi-deauthenticate-enter [ctx]
              (update-in ctx [:request :headers] dissoc "x-bdi-client-id"))})
 
@@ -66,9 +83,21 @@
       (ring-json/json-response {})))
 
 (defn ^{:interceptor true} connect-token
-  "Provide a access token (M2M) endpoint to acquire an authentication token.
-  Note: this interceptor does not match on an `uri`, use a `:match` in
-  the rules for that."
+  "Provide a token endpoint to provide access tokens for machine-to-machine (M2M) operations.
+
+  Note: this interceptor does no matching.  Example:
+
+  ```
+  {:match        {:uri \"/connect/token\"}
+   :interceptors
+   [[bdi/connect-token {:server-id   \"EU.EORI.CONNECTOR\"
+                        :private-key #private-key \"certs/connector.key.pem\"
+                        :public-key  #public-key \"certs/connector.cert.pem\"
+                        :x5c         #x5c \"certs/connector.x5c.pem\"
+                        :association-server-id  \"EU.EORI.ASSOCIATION-REGISTER\"
+                        :association-server-url \"https://association-register.com\"}]
+    ..]}
+  ```"
   [config]
   (let [jti-cache-atom (client-assertion/mk-jti-cache-atom)
         config         (assoc config
@@ -87,7 +116,7 @@
   {:enter
    (fn delegation-enter
      [ctx {:keys [server-id x5c private-key association-server-id association-server-url dataspace-id] :as _config} mask]
-     (assert [server-id x5c private-key association-server-id association-server-url dataspace-id])
+     {:pre [server-id x5c private-key association-server-id association-server-url dataspace-id]}
      (let [base-request {:ishare/satellite-base-url association-server-url
                          :ishare/satellite-id       association-server-id
                          :ishare/x5c                x5c
@@ -107,6 +136,99 @@
                               (assoc-in [:headers "content-type"] "application/json")
                               (assoc :body (json/json-str {:delegation-issues issues})))))))})
 
+
+
+(def expires-in-fraction
+  "Fraction of expires/max-age seconds to consider."
+  90/100)
+
+(defn- now-in-epoch-seconds
+  []
+  (.getEpochSecond (Instant/now)))
+
+(defn- deferred-cached
+  "Deferred cache of `c` for key `k` and `:payload` of `f`.
+  Returned `:exp` from `f` is epoch seconds of expiration.
+
+  Note: this cache does not evict entries, it only validates it
+  expiration date, so the assumption the amount of `k`s is limited."
+  [c k f]
+  {:pre [c]}
+  (d/let-flow
+      [{:keys [payload]}
+       (-> (swap! c update k
+                  (fn [slot]
+                    (if slot
+                      (d/let-flow [{:keys [exp]} slot]
+                        (if (< (now-in-epoch-seconds) exp)
+                          slot
+                          (f)))
+                      (f))))
+           (get k))]
+    payload))
+
+(defn- get-bearer-token-cache-slot
+  "Return a non blocking future of `{:payload \"token\", :exp 1234}` for arguments."
+  [{:keys [server-id base-url client-id private-key x5c association-id association-url path]}]
+  (future
+    (let [res (-> {:ishare/server-id server-id
+                   :ishare/base-url  base-url
+
+                   ;; credentials
+                   :ishare/client-id   client-id
+                   :ishare/private-key private-key
+                   :ishare/x5c         x5c
+
+                   ;; for adherence test of server
+                   :ishare/satellite-id  association-id
+                   :ishare/satellite-url association-url}
+
+                  (ishare-request/access-token-request path)
+                  (ishare-client/exec))]
+      {:payload (:ishare/result res)
+       :exp     (+ (now-in-epoch-seconds)
+                   (* expires-in-fraction
+                      (-> res :body (get "expires_in"))))})))
+
+(defn ^{:interceptor  true
+        :expr-arglist '[{:keys [server-id base-url client-id private-key x5c association-id association-url path]}]}
+  set-bearer-token
+  "Set a bearer token on the current request for the given `server-id` and `base-url`.
+
+  Example:
+
+  ```
+  [(bdi/set-bearer-token) {;; target server
+                           :server-id       server-id
+                           :base-url        server-url
+
+                           ;; credentials
+                           :client-id       server-id
+                           :private-key     private-key
+                           :x5c             x5c
+
+                           ;; association to check server adherence
+                           :association-url association-server-url
+                           :association-id  association-server-id}]
+  ```
+
+  The `:path` can be added for a non-standard token endpoint location,
+  otherwise `/connect/token` is used."
+  []
+  (let [cache (atom {})]
+    {:enter
+     (fn set-bearer-token-enter
+       [ctx
+        {:keys [server-id base-url
+                client-id private-key x5c
+                association-id association-url]
+         :as config}]
+       {:pre [client-id private-key x5c base-url server-id association-id association-url]}
+       (d/let-flow
+           [token (deferred-cached cache [server-id base-url client-id association-id]
+                    #(get-bearer-token-cache-slot config))]
+         (assoc-in ctx [:request :headers "authorization"]
+                   (str "Bearer " token))))}))
 
 
 (defn ^{:interceptor true} demo-audit-log

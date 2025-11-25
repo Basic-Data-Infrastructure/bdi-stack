@@ -5,7 +5,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-.PHONY: lint test check clean test-config jar
+.PHONY: lint test doc check clean test-config jar
 
 test-config:
 	$(MAKE) -C test-config
@@ -23,7 +23,11 @@ test: test-config
 clean:
 	rm -rf ./*/classes ./*/target test-config/*pem ./*/*.jar ./*.zip
 
-check: test lint outdated
+check: test lint doc outdated
+	exit $$(git status --porcelain | tee /dev/fd/2 | wc -l) # fail when, after running the above, files in the repo changed
+
+doc:
+	make -C connector README.md
 
 outdated:
 	clojure -T:antq outdated
