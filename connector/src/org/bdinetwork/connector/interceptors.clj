@@ -181,7 +181,7 @@
 
                    ;; for adherence test of server
                    :ishare/satellite-id  association-id
-                   :ishare/satellite-url association-url}
+                   :ishare/satellite-base-url association-url}
 
                   (ishare-request/access-token-request path)
                   (ishare-client/exec))]
