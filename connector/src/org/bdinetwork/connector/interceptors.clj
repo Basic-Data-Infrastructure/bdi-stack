@@ -34,12 +34,12 @@
   Responds with 401 Unauthorized when request is not allowed.  Example:
 
   ```
-  [bdi/authenticate {:server-id   \"EU.EORI.CONNECTOR\"
-                     :private-key #private-key \"certs/connector.key.pem\"
-                     :public-key  #public-key \"certs/connector.cert.pem\"
-                     :x5c         #x5c \"certs/connector.x5c.pem\"
-                     :association-server-id  \"EU.EORI.ASSOCIATION-REGISTER\"
-                     :association-server-url \"https://association-register.com\"}]
+  [(bdi/authenticate {:server-id   \"EU.EORI.CONNECTOR\"
+                      :private-key #private-key \"certs/connector.key.pem\"
+                      :public-key  #public-key \"certs/connector.cert.pem\"
+                      :x5c         #x5c \"certs/connector.x5c.pem\"
+                      :association-server-id  \"EU.EORI.ASSOCIATION-REGISTER\"
+                      :association-server-url \"https://association-register.com\"})]
   ```"
   [config]
   {:enter
@@ -181,7 +181,7 @@
 
                    ;; for adherence test of server
                    :ishare/satellite-id  association-id
-                   :ishare/satellite-url association-url}
+                   :ishare/satellite-base-url association-url}
 
                   (ishare-request/access-token-request path)
                   (ishare-client/exec))]
