@@ -19,7 +19,10 @@
             [org.bdinetwork.test.system-helpers
              :refer [association-system
                      association-server-id
-                     association-server-url]]
+                     association-server-url
+                     backend-connector-system
+                     backend-connector-url
+                     backend-connector-id]]
             [passage :as gateway]
             [passage.interceptors]
             [ring.adapter.jetty :refer [run-jetty]]
@@ -124,11 +127,12 @@
 
 
 (deftest set-bearer-token
-  (with-resources [_association-system (association-system)]
+  (with-resources [_backend-connector-system (backend-connector-system)
+                   _association-system (association-system)]
     (let [{:keys [enter]} (interceptors/set-bearer-token)
           config          (assoc client-config
-                                 :server-id association-server-id
-                                 :base-url association-server-url
+                                 :server-id backend-connector-id
+                                 :base-url backend-connector-url
                                  :association-id association-server-id
                                  :association-url association-server-url)
           ctx             @(enter {} config)]
