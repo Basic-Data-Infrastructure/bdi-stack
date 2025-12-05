@@ -257,12 +257,12 @@ Enforce BDI authentication on incoming requests and add "x-bdi-client-id" reques
 Responds with 401 Unauthorized when request is not allowed.  Example:
 
 ```
-[bdi/authenticate {:server-id   "EU.EORI.CONNECTOR"
-                   :private-key #private-key "certs/connector.key.pem"
-                   :public-key  #public-key "certs/connector.cert.pem"
-                   :x5c         #x5c "certs/connector.x5c.pem"
-                   :association-server-id  "EU.EORI.ASSOCIATION-REGISTER"
-                   :association-server-url "https://association-register.com"}]
+[(bdi/authenticate {:server-id   "EU.EORI.CONNECTOR"
+                    :private-key #private-key "certs/connector.key.pem"
+                    :public-key  #public-key "certs/connector.cert.pem"
+                    :x5c         #x5c "certs/connector.x5c.pem"
+                    :association-server-id  "EU.EORI.ASSOCIATION-REGISTER"
+                    :association-server-url "https://association-register.com"})]
 ```
 
 ---
