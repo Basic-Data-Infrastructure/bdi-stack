@@ -23,7 +23,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: "~/.m2"
           key: "prep-deps-${{ hashFiles('deps.edn') }}"
@@ -71,7 +71,7 @@ jobs:
         service: [association-register, authorization-register, authentication-service, connector]
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: "~/.m2"
           key: "prep-deps${{ hashFiles('deps.edn') }}"
@@ -131,7 +131,7 @@ jobs:
         lib: [clj-ishare-jwt, clj-ishare-client, clj-authentication, clj-ring-middleware]
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: "~/.m2"
           key: "prep-deps${{ hashFiles('deps.edn') }}"
