@@ -3,7 +3,7 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 (ns org.bdinetwork.connector.interceptors-test
-  (:require [aleph.http :as http]
+  (:require [babashka.http-client :as http]
             [buddy.core.keys :as keys]
             [clojure.data.json :as json]
             [clojure.java.io :as io]
@@ -206,9 +206,8 @@
                              :aud "audience"
                              :sub "test-subject"})
             {:keys [status body]}
-            @(http/get proxy-url
-                       {:throw-exceptions? false
-                        :headers           {"authorization" (str "Bearer " token)}})]
+            (http/get proxy-url
+                      {:throw-exceptions? false
+                       :headers           {"authorization" (str "Bearer " token)}})]
         (is (= http-status/ok status))
-        (is (= "pass"
-               (slurp body)))))))
+        (is (= "pass" body))))))

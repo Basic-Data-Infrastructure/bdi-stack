@@ -34,7 +34,7 @@
 
                       ;; connector tests
                       ring/ring {:mvn/version "1.15.3"}}
-         :main-opts ["-m" "kaocha.runner"]
+         :main-opts   ["-m" "kaocha.runner"]
          :extra-paths ["test-helpers"
                        "test-resources"
                        "clj-ishare-jwt/test"
@@ -48,7 +48,7 @@
   :lint {:extra-deps {clj-kondo/clj-kondo {:mvn/version "RELEASE"}}
          :main-opts  ["-m" "clj-kondo.main"]}
 
-  :build {:deps       {io.github.clojure/tools.build {:mvn/version "0.10.11"}
+  :build {:deps       {io.github.clojure/tools.build {:mvn/version "0.10.12"}
                        slipset/deps-deploy           {:mvn/version "RELEASE"}}
           :ns-default build-lib}
 
