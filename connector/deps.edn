@@ -10,33 +10,10 @@
         org.clojure/tools.logging      {:mvn/version "1.3.1"}
         ch.qos.logback/logback-classic {:mvn/version "1.5.24"}
 
-        aleph/aleph {:mvn/version "0.9.3"
-;;; >>> fix for CVE-2025-67735
-                     :exclusions  [io.netty/netty-codec
-                                   io.netty/netty-codec-http
-                                   io.netty/netty-codec-http2
-                                   io.netty/netty-handler
-                                   io.netty/netty-handler-proxy
-                                   io.netty/netty-resolver
-                                   io.netty/netty-resolver-dns
-                                   io.netty/netty-transport
-                                   io.netty/netty-transport-native-epoll
-                                   io.netty/netty-transport-native-kqueue]}
-        io.netty/netty-codec                   ^:antq/exclude {:mvn/version "4.1.129.Final"}
-        io.netty/netty-codec-http              ^:antq/exclude {:mvn/version "4.1.129.Final"}
-        io.netty/netty-codec-http2             ^:antq/exclude {:mvn/version "4.1.129.Final"}
-        io.netty/netty-handler                 ^:antq/exclude {:mvn/version "4.1.129.Final"}
-        io.netty/netty-handler-proxy           ^:antq/exclude {:mvn/version "4.1.129.Final"}
-        io.netty/netty-resolver                ^:antq/exclude {:mvn/version "4.1.129.Final"}
-        io.netty/netty-resolver-dns            ^:antq/exclude {:mvn/version "4.1.129.Final"}
-        io.netty/netty-transport               ^:antq/exclude {:mvn/version "4.1.129.Final"}
-        io.netty/netty-transport-native-epoll  ^:antq/exclude {:mvn/version "4.1.129.Final"}
-        io.netty/netty-transport-native-kqueue ^:antq/exclude {:mvn/version "4.1.129.Final"}
-;;; fix for CVE-2025-67735 <<<
-
         nl.jomco/clj-http-status-codes {:mvn/version "0.2"}
         nl.jomco/passage               {:git/url "https://codeberg.org/jomco/passage.git"
                                         :git/sha "0d291ae5386d03e1b6a9a900b98e0183dfadeea9"}
+        manifold/manifold              {:mvn/version "0.5.0"}
         org.clojure/data.json          {:mvn/version "2.5.2"}
         ring/ring-core                 {:mvn/version "1.15.3"}
         ring/ring-json                 {:mvn/version "0.5.1"}
@@ -55,6 +32,6 @@
   :run     {:main-opts ["-m" "org.bdinetwork.connector.main"]}
 
   :print-interceptors {:replace-paths ["src"] ;; prevent log messages
-                       :exec-fn   passage.interceptors/print-docs
-                       :exec-args {:extra-namespaces [org.bdinetwork.connector.interceptors]
-                                   :ns-alias         {bdi org.bdinetwork.connector.interceptors}}}}}
+                       :exec-fn       passage.interceptors/print-docs
+                       :exec-args     {:extra-namespaces [org.bdinetwork.connector.interceptors]
+                                       :ns-alias         {bdi org.bdinetwork.connector.interceptors}}}}}
