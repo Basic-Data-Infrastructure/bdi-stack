@@ -9,10 +9,6 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
   <suppress>
-    <notes>We don't use the HttpURI class or the authority segment of an URI.</notes>
-    <cve>CVE-2024-6763</cve>
-  </suppress>
-  <suppress>
     <notes>False positive: matches wrong package.</notes>
     <packageUrl regex="true">.*openapi-v3-validator.*</packageUrl>
     <cve>CVE-2025-15104</cve>
