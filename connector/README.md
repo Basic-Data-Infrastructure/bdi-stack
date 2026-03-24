@@ -110,7 +110,7 @@ Short name: `logger`
 
 Log incoming requests, response status and duration at `info` level.
 
-Optional `props` will be evaluated in the "leave" or "error"
+Optional `props` will be evaluated in the "leave"
 phase and logged as diagnostic context, `props` should be a shallow
 map with string keys.
 
