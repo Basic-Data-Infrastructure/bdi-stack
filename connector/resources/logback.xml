@@ -28,7 +28,7 @@
     <encoder class="ch.qos.logback.classic.encoder.JsonEncoder"/>
   </appender>
 
-  <logger name="org.bdinetwork.gateway.interceptors" level="info">
+  <logger name="passage.interceptors" level="info">
     <appender-ref ref="audit" />
   </logger>
 </configuration>
