@@ -5,14 +5,14 @@
         org.bdinetwork/service-commons {:local/root "../service-commons"}
 
         ;; drip responses
-        org.clojure/core.async {:mvn/version "1.8.741"}
+        org.clojure/core.async {:mvn/version "1.9.865"}
 
         org.clojure/tools.logging      {:mvn/version "1.3.1"}
         ch.qos.logback/logback-classic {:mvn/version "1.5.32"}
 
         nl.jomco/clj-http-status-codes {:mvn/version "0.2"}
         nl.jomco/passage               {:git/url "https://codeberg.org/jomco/passage.git"
-                                        :git/sha "0d291ae5386d03e1b6a9a900b98e0183dfadeea9"}
+                                        :git/sha "c47454d365b78f739c915102b22f863b087d5abd"}
         manifold/manifold              {:mvn/version "0.5.0"}
         org.clojure/data.json          {:mvn/version "2.5.2"}
         ring/ring-core                 {:mvn/version "1.15.3"}

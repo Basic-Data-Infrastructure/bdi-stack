@@ -7,15 +7,12 @@
 
 (ns org.bdinetwork.connector.main
   (:gen-class)
-  (:require [environ.core :refer [env]]
-            [nl.jomco.resources :refer [with-resources wait-until-interrupted]]
-            [org.bdinetwork.connector.system :as system]
+  (:require [org.bdinetwork.connector.system :as system]
             [passage.main :as passage]))
 
 (defn start!
   [env]
   (system/run-system (passage/config env passage/opt-specs)))
 
-(defn -main [& _]
-  (with-resources [_sys (start! env)]
-    (wait-until-interrupted)))
+(defn -main [& args]
+  (passage/run-system start! args))
