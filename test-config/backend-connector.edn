@@ -77,7 +77,8 @@
                    (if (get-in request [:params "without-token"])
                      "authorization"
                      "dummy")]
-                  [proxy (str association-server-url "/parties/" party-id)]]}
+                  [request update dissoc :query-string]
+                  [proxy "/api/bdi/party" (str association-server-url "/parties/" party-id)]]}
 
 ;;;; noodlebar/oauth authentication and authorization
 
