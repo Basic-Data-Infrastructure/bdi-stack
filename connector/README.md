@@ -146,7 +146,7 @@ When it fails to connect to the downstream server, respond with
 Example:
 
 ```edn
-[proxy (str "https://example.com" (get request :uri))]
+[proxy "https://example.com"]
 ```
 
 Note: this interceptor should always be the last in the list of
@@ -408,7 +408,7 @@ The following example is protected by a basic authentication username / password
            [request update :headers assoc "authorization"
             #join ["Basic " #b64 #join [#env! "BACKEND_USER" ":" #env! "BACKEND_PASS"]]]
            [response update :headers assoc "x-bdi-connector" "passed"]
-           [proxy (str "http://backend:port/" (get request :uri))]]}
+           [proxy "http://backend:port/"]]}
 
          {:match        {}
           :interceptors [[logger]

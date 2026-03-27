@@ -45,7 +45,7 @@
 
                   [request assoc-in [:headers "x-api-key"] #env! BACKEND_API_KEY]
                   [request update :query-string str/replace "ownerId=NL.KVK." "ownerId=kvk%3a"] ; translate p8 to itv notation
-                  [proxy (str #env! "BACKEND_URL" (get request :uri))]]}
+                  [proxy #env! "BACKEND_URL"]]}
 
   ;; example access to audit log protected by basic
   ;; authentication (for demo purposes only!)
