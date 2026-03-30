@@ -146,7 +146,7 @@ When it fails to connect to the downstream server, respond with
 Example:
 
 ```edn
-[proxy "https://example.com"]
+[proxy (str "https://example.com" (get request :uri))]
 ```
 
 Note: this interceptor should always be the last in the list of
@@ -319,6 +319,39 @@ Provide access to the last `:n-of-lines` (defaults to 100) lines of `:json-file`
 
 ---
 
+`[org.bdinetwork.connector.interceptors/logger & [additional-props]]`
+
+Short name: `bdi/logger`
+
+Log incoming requests, response status and duration.
+
+Also logs BDI specific information: "client",
+"delegation-evidence", "delegation-issues", "delegation-mask".
+ 
+Optional `additional-props` will be evaluated in the "leave"
+phase and logged as diagnostic context, `props` should be a shallow
+map with string keys.
+
+Example log messsage:
+
+```
+GET http://localhost:8081/ HTTP/1.1 / 200 OK / 370ms
+```
+
+Example with MDC:
+
+```edn
+[bdi/logger {"ua" (get-in request [:headers "user-agent"])}]
+```
+
+Example log message:
+
+```
+GET http://localhost:8080/ HTTP/1.1 / 200 OK / 123ms status=200, uri="/", ua="curl/1.2.3"
+```
+
+---
+
 `[org.bdinetwork.connector.interceptors/noodlebar-delegation]`
 
 Short name: `bdi/noodlebar-delegation`
@@ -326,6 +359,24 @@ Short name: `bdi/noodlebar-delegation`
 Retrieves and evaluates delegation evidence for request.
 Responds with 403 Forbidden when the evidence is not found or does
 not match the delegation mask.
+
+---
+
+`[org.bdinetwork.connector.interceptors/noodlebar-validate-policy {:keys [policy-issuer resource-type resource-identifier resource-attributes action]}]`
+
+Short name: `bdi/noodlebar-validate-policy`
+
+Retrieves and evaluates delegation evidence for request.
+Responds with 403 Forbidden when the evidence is not found or does
+not match the delegation mask.
+
+Derives some information from the request's Bearer token claims:
+
+The policy's target must match the bearer-token's :organizationId claim
+The policy's service-provider must match the :aud claim
+
+Required keys:
+policy-issuer, resource-type, resource-identifier, resource-attributes, action
 
 ---
 
@@ -408,7 +459,7 @@ The following example is protected by a basic authentication username / password
            [request update :headers assoc "authorization"
             #join ["Basic " #b64 #join [#env! "BACKEND_USER" ":" #env! "BACKEND_PASS"]]]
            [response update :headers assoc "x-bdi-connector" "passed"]
-           [proxy "http://backend:port/"]]}
+           [proxy (str "http://backend:port/" (get request :uri))]]}
 
          {:match        {}
           :interceptors [[logger]

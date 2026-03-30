@@ -15,6 +15,7 @@
             [org.bdinetwork.ishare.client :as ishare-client]
             [org.bdinetwork.ishare.client.request :as ishare-request]
             [org.bdinetwork.ishare.client.validate-delegation :as validate-delegation]
+            [passage.interceptors :as passage]
             [passage.response :as response]
             [ring.middleware.json :as ring-json]
             [ring.middleware.params :as ring-params])
@@ -261,3 +262,82 @@
          (assoc :response (-> response/forbidden
                               (assoc-in [:headers "content-type"] "application/json")
                               (assoc :body (json/json-str {:delegation-issues issues})))))))})
+
+(def ^{:interceptor  true
+       :expr-arglist '[{:keys [policy-issuer resource-type resource-identifier resource-attributes action]}]}
+  noodlebar-validate-policy
+  "Retrieves and evaluates delegation evidence for request.
+  Responds with 403 Forbidden when the evidence is not found or does
+  not match the delegation mask.
+
+  Derives some information from the request's Bearer token claims:
+
+  The policy's target must match the bearer-token's :organizationId claim
+  The policy's service-provider must match the :aud claim
+
+  Required keys:
+  policy-issuer, resource-type, resource-identifier, resource-attributes, action"
+  (update noodlebar-delegation :enter
+          (fn noodlebar-policy-enter [enter]
+            (fn [ctx base-request {:keys [policy-issuer resource-type resource-identifier resource-attributes action]}]
+              (enter ctx
+                     base-request
+                     {:policyIssuer policy-issuer
+                      :target       {:accessSubject (get-in ctx [:oauth2/bearer-token-claims :organizationId])}
+                      :policySets
+                      [{:policies
+                        [{:rules [{:effect "Permit"}]
+                          :target
+                          {:resource {:type        resource-type
+                                      :identifiers [resource-identifier]
+                                      :attributes  resource-attributes}
+                           :actions  [action]
+                           :environment
+                           {:serviceProviders [(get-in ctx [:oauth2/bearer-token-claims :aud])]}}}]}]})))))
+
+
+
+
+(def ^{:interceptor  true
+       :expr-arglist '[& [additional-props]]}
+  logger
+  "Log incoming requests, response status and duration.
+
+  Also logs BDI specific information: \"client\",
+  \"delegation-evidence\", \"delegation-issues\", \"delegation-mask\".
+ 
+  Optional `additional-props` will be evaluated in the \"leave\"
+  phase and logged as diagnostic context, `props` should be a shallow
+  map with string keys.
+
+  Example log messsage:
+
+  ```
+  GET http://localhost:8081/ HTTP/1.1 / 200 OK / 370ms
+  ```
+
+  Example with MDC:
+
+  ```edn
+  [bdi/logger {\"ua\" (get-in request [:headers \"user-agent\"])}]
+  ```
+
+  Example log message:
+
+  ```
+  GET http://localhost:8080/ HTTP/1.1 / 200 OK / 123ms status=200, uri=\"/\", ua=\"curl/1.2.3\"
+  ```"
+  (-> passage/logger
+      (update :leave
+              (fn [leave]
+                (fn logger-leave
+                  ([{:keys [request response] :as ctx} additional-props]
+                   (leave ctx (merge {"uri"                 (get request :uri)
+                                      "status"              (get response :status)
+                                      "client"              (get-in ctx [:oauth2/bearer-token-claims :sub])
+                                      "delegation-issues"   (get ctx :delegation-issues)
+                                      "delegation-evidence" (get ctx :delegation-evidence)
+                                      "delegation-mask"     (get ctx :delegation-mask)}
+                                     additional-props)))
+                  ([ctx]
+                   (logger-leave ctx nil)))))))
