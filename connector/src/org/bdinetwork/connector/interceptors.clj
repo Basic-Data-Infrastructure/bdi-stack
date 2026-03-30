@@ -264,7 +264,7 @@
                               (assoc :body (json/json-str {:delegation-issues issues})))))))})
 
 (def ^{:interceptor  true
-       :expr-arglist '[{:keys [policy-issuer resource-type resource-identifier resource-attribute action]}]}
+       :expr-arglist '[{:keys [policy-issuer resource-type resource-identifier resource-attributes action]}]}
   noodlebar-validate-policy
   "Retrieves and evaluates delegation evidence for request.
   Responds with 403 Forbidden when the evidence is not found or does
@@ -275,11 +275,11 @@
   The policy's target must match the bearer-token's :organizationId claim
   The policy's service-provider must match the :aud claim
 
-  Required
-"
+  Required keys:
+  policy-issuer, resource-type, resource-identifier, resource-attributes, action"
   (update noodlebar-delegation :enter
           (fn noodlebar-policy-enter [enter]
-            (fn [ctx base-request {:keys [policy-issuer resource-type resource-identifier resource-attribute action]}]
+            (fn [ctx base-request {:keys [policy-issuer resource-type resource-identifier resource-attributes action]}]
               (enter ctx
                      base-request
                      {:policyIssuer policy-issuer
@@ -288,9 +288,9 @@
                       [{:policies
                         [{:rules [{:effect "Permit"}]
                           :target
-                          {:resource {:type        (or resource-type "")
+                          {:resource {:type        resource-type
                                       :identifiers [resource-identifier]
-                                      :attributes  [resource-attribute]}
+                                      :attributes  resource-attributes}
                            :actions  [action]
                            :environment
                            {:serviceProviders [(get-in ctx [:oauth2/bearer-token-claims :aud])]}}}]}]})))))
@@ -332,12 +332,12 @@
               (fn [leave]
                 (fn logger-leave
                   ([{:keys [request response] :as ctx} additional-props]
-                   (leave (merge {"uri"                 (get request :uri)
-                                  "status"              (get response :status)
-                                  "client"              (get-in ctx [:oauth2/bearer-token-claims :sub])
-                                  "delegation-issues"   (get ctx :delegation-issues)
-                                  "delegation-evidence" (get ctx :delegation-evidence)
-                                  "delegation-mask"     (get ctx :delegation-mask)}
-                                 additional-props)))
+                   (leave ctx (merge {"uri"                 (get request :uri)
+                                      "status"              (get response :status)
+                                      "client"              (get-in ctx [:oauth2/bearer-token-claims :sub])
+                                      "delegation-issues"   (get ctx :delegation-issues)
+                                      "delegation-evidence" (get ctx :delegation-evidence)
+                                      "delegation-mask"     (get ctx :delegation-mask)}
+                                     additional-props)))
                   ([ctx]
                    (logger-leave ctx nil)))))))

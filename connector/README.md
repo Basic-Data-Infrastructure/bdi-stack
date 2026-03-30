@@ -362,7 +362,7 @@ not match the delegation mask.
 
 ---
 
-`[org.bdinetwork.connector.interceptors/noodlebar-validate-policy {:keys [policy-issuer resource-type resource-identifier resource-attribute action]}]`
+`[org.bdinetwork.connector.interceptors/noodlebar-validate-policy {:keys [policy-issuer resource-type resource-identifier resource-attributes action]}]`
 
 Short name: `bdi/noodlebar-validate-policy`
 
@@ -375,7 +375,8 @@ Derives some information from the request's Bearer token claims:
 The policy's target must match the bearer-token's :organizationId claim
 The policy's service-provider must match the :aud claim
 
-Required
+Required keys:
+policy-issuer, resource-type, resource-identifier, resource-attributes, action
 
 ---
 
