@@ -26,10 +26,10 @@
          nl.jomco/envopts                   {:mvn/version "0.0.7"}
 
          ;; Fixes CVE-2025-11143 and CVE-2026-1605 for ring-jetty-adapter 1.15.3
-         org.eclipse.jetty/jetty-server                                   {:mvn/version "12.1.7"}
-         org.eclipse.jetty/jetty-unixdomain-server                        {:mvn/version "12.1.7"}
-         org.eclipse.jetty.ee9/jetty-ee9-servlet                          {:mvn/version "12.1.7"}
-         org.eclipse.jetty.ee9.websocket/jetty-ee9-websocket-jetty-server {:mvn/version "12.1.7"}}
+         org.eclipse.jetty/jetty-server                                   {:mvn/version "12.1.8"}
+         org.eclipse.jetty/jetty-unixdomain-server                        {:mvn/version "12.1.8"}
+         org.eclipse.jetty.ee9/jetty-ee9-servlet                          {:mvn/version "12.1.8"}
+         org.eclipse.jetty.ee9.websocket/jetty-ee9-websocket-jetty-server {:mvn/version "12.1.8"}}
  :paths ["src" "resources"]
  :aliases
  {:package {:extra-paths ["classes"]}
