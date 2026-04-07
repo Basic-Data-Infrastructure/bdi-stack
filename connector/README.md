@@ -134,20 +134,25 @@ GET http://localhost:8080/ HTTP/1.1 / 200 OK / 123ms ua="curl/1.2.3"
 
 ---
 
-`[passage.interceptors/proxy url]`
+`[passage.interceptors/proxy path-prefix? url]`
 
 Short name: `proxy`
 
-Send request to given URL in the "enter" phase and respond.
+Send request to service at `url` and return the reponse.
 
 When it fails to connect to the downstream server, respond with
 `503 Service Unavailable`.
 
+Strip optional `path-prefix` from the path in incoming request.
+
 Example:
 
 ```edn
-[proxy "https://example.com"]
+[proxy "/strip/prefix" "https://example.com/api"]
 ```
+
+Will pass incoming request at "/strip/prefix/resource?foo=bar" to
+"https://example.com/api/resource?foo=bar".
 
 Note: this interceptor should always be the last in the list of
 interceptors.
