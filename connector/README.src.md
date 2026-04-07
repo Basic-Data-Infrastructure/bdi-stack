@@ -156,7 +156,7 @@ The following example is protected by a basic authentication username / password
            [request update :headers assoc "authorization"
             #join ["Basic " #b64 #join [#env! "BACKEND_USER" ":" #env! "BACKEND_PASS"]]]
            [response update :headers assoc "x-bdi-connector" "passed"]
-           [proxy (str "http://backend:port/" (get request :uri))]]}
+           [proxy "http://backend:port/"]]}
 
          {:match        {}
           :interceptors [[logger]
