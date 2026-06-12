@@ -6,5 +6,5 @@
 {:deps  {org.bdinetwork/clj-ishare-client {:local/root "../clj-ishare-client"}
          org.clojure/core.cache           {:mvn/version "1.2.263"}
          clj-commons/clj-yaml             {:mvn/version "1.0.29"}
-         nl.jomco/openapi-v3-validator    {:mvn/version "0.2.6"}}
+         nl.jomco/openapi-v3-validator    {:mvn/version "0.2.8"}}
  :paths ["src" "resources"]}

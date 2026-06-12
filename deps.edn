@@ -33,7 +33,7 @@
                       org.clojure/core.async {:mvn/version "1.9.865"}
 
                       ;; connector tests
-                      ring/ring {:mvn/version "1.15.3"}}
+                      ring/ring {:mvn/version "1.15.4"}}
          :main-opts   ["-m" "kaocha.runner"]
          :extra-paths ["test-helpers"
                        "test-resources"
@@ -48,13 +48,13 @@
   :lint {:extra-deps {clj-kondo/clj-kondo {:mvn/version "RELEASE"}}
          :main-opts  ["-m" "clj-kondo.main"]}
 
-  :build {:deps       {io.github.clojure/tools.build {:mvn/version "0.10.13"}
+  :build {:deps       {io.github.clojure/tools.build {:mvn/version "0.10.14"}
                        slipset/deps-deploy           {:mvn/version "RELEASE"}}
           :ns-default build-lib}
 
   :watson {:paths        []
-           :replace-deps {io.github.clj-holmes/clj-watson {:git/tag "v6.0.1"
-                                                           :git/sha "b5203518d023d50e70a240d59a0770ccbacf3867"}
+           :replace-deps {io.github.clj-holmes/clj-watson {:git/tag "v6.1.0"
+                                                           :git/sha "be98e4db74fb8927db4825cc73bbe2606e44e5e3"}
                           org.owasp/dependency-check-core {:mvn/version "RELEASE"}}
            :main-opts    ["-m" "clj-watson.cli"]}
 
