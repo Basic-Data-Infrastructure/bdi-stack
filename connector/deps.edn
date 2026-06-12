@@ -12,7 +12,7 @@
 
         nl.jomco/clj-http-status-codes {:mvn/version "0.2"}
         nl.jomco/passage               {:git/url "https://codeberg.org/jomco/passage.git"
-                                        :git/sha "390104be599ed225f0054c96c1bed2193fefd758"}
+                                        :git/sha "ced669f25bd05b3b91d0150e7112f6b83d2bb36a"}
         manifold/manifold              {:mvn/version "0.5.0"}
         org.clojure/data.json          {:mvn/version "2.5.2"}
         ring/ring-core                 {:mvn/version "1.15.3"}
