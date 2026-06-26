@@ -22,8 +22,8 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/cache@v5
+      - uses: actions/checkout@v7
+      - uses: actions/cache@v6
         with:
           path: "~/.m2"
           key: "prep-deps-${{ hashFiles('deps.edn') }}"
@@ -70,8 +70,8 @@ jobs:
       matrix:
         service: [association-register, authorization-register, authentication-service, connector]
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/cache@v5
+      - uses: actions/checkout@v7
+      - uses: actions/cache@v6
         with:
           path: "~/.m2"
           key: "prep-deps${{ hashFiles('deps.edn') }}"
@@ -130,8 +130,8 @@ jobs:
       matrix:
         lib: [clj-ishare-jwt, clj-ishare-client, clj-authentication, clj-ring-middleware]
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/cache@v5
+      - uses: actions/checkout@v7
+      - uses: actions/cache@v6
         with:
           path: "~/.m2"
           key: "prep-deps${{ hashFiles('deps.edn') }}"

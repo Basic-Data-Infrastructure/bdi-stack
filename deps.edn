@@ -33,7 +33,7 @@
                       org.clojure/core.async {:mvn/version "1.9.865"}
 
                       ;; connector tests
-                      ring/ring {:mvn/version "1.15.4"}}
+                      ring/ring {:mvn/version "1.15.5"}}
          :main-opts   ["-m" "kaocha.runner"]
          :extra-paths ["test-helpers"
                        "test-resources"
