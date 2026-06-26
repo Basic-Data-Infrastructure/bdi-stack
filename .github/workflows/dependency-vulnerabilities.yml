@@ -18,21 +18,11 @@ jobs:
 
     steps:
 
-    # NVD data can change every day, so we use a cache key based on today's date
-    - name: Get current date
-      id: date
-      run: echo "date=$(date '+%Y-%m-%d')" >> $GITHUB_OUTPUT
-
     - uses: actions/checkout@v6
     - uses: actions/cache@v5
       with:
         path: "~/.m2"
-        # store as today's cache
-        key: "nvd-clojure-${{ steps.date.outputs.date }}"
-        # if today's cache does not yet exist, fetch from whatever iss
-        # the most recent cache for nvd-clojure
-        # and update that
-        restore-keys: "nvd-clojure-"
+        key: "nvd"
 
     - uses: actions/setup-java@v5
       with:
@@ -46,13 +36,5 @@ jobs:
         chmod +x posix-install.sh
         sudo ./posix-install.sh
 
-    - name: Check that NVD Secret is set
-      env:
-        NVD_API_TOKEN: ${{ secrets.NVD_API_TOKEN }}
-      if: ${{ env.NVD_API_TOKEN == '' }}
-      run: echo "NVD_API_TOKEN secret is empty"; exit 1
-
     - name: Check clojure dependencies
-      env:
-        CLJ_WATSON_NVD_API_KEY: "${{ secrets.NVD_API_TOKEN }}"
       run: make watson
