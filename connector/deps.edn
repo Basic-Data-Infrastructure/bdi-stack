@@ -8,11 +8,11 @@
         org.clojure/core.async {:mvn/version "1.9.865"}
 
         org.clojure/tools.logging      {:mvn/version "1.3.1"}
-        ch.qos.logback/logback-classic {:mvn/version "1.5.36"}
+        ch.qos.logback/logback-classic {:mvn/version "1.5.37"}
 
         nl.jomco/clj-http-status-codes {:mvn/version "0.2"}
         nl.jomco/passage               {:git/url "https://codeberg.org/jomco/passage.git"
-                                        :git/sha "ced669f25bd05b3b91d0150e7112f6b83d2bb36a"}
+                                        :git/sha "d42512646bb58f663600f0785367714696cc677c"}
         manifold/manifold              {:mvn/version "0.5.0"}
         org.clojure/data.json          {:mvn/version "2.5.2"}
         ring/ring-core                 {:mvn/version "1.15.5"}
