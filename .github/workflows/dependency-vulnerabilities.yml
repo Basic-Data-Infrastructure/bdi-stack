@@ -19,22 +19,9 @@ jobs:
     steps:
 
     - uses: actions/checkout@v7
-    - uses: actions/cache@v6
-      with:
-        path: "~/.m2"
-        key: "nvd"
 
-    - uses: actions/setup-java@v5
-      with:
-        distribution: 'temurin'
-        java-version: '21'
-
-    - name: Install clj runtime
-      run: |
-        cd "$HOME"
-        curl -L -O https://github.com/clojure/brew-install/releases/latest/download/posix-install.sh
-        chmod +x posix-install.sh
-        sudo ./posix-install.sh
+    - uses: jomco/clojure-action@v1
+      with: { m2-cache-key: m2-watson }
 
     - name: Check clojure dependencies
       run: make watson

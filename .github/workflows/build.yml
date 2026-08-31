@@ -23,23 +23,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/cache@v6
-        with:
-          path: "~/.m2"
-          key: "prep-deps-${{ hashFiles('deps.edn') }}"
-          restore-keys: "prep-deps-"
 
-      - uses: actions/setup-java@v5
-        with:
-          distribution: 'temurin'
-          java-version: '21'
-
-      - name: Install clj runtime
-        run: |
-          cd "$HOME"
-          curl -L -O https://github.com/clojure/brew-install/releases/latest/download/posix-install.sh
-          chmod +x posix-install.sh
-          sudo ./posix-install.sh
+      - uses: jomco/clojure-action@v1
+        with: { m2-cache-key: m2-build }
 
       - name: Prep deps
         run: clojure -P
@@ -71,23 +57,9 @@ jobs:
         service: [association-register, authorization-register, authentication-service, connector]
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/cache@v6
-        with:
-          path: "~/.m2"
-          key: "prep-deps${{ hashFiles('deps.edn') }}"
-          restore-keys: "prep-deps"
 
-      - uses: actions/setup-java@v5
-        with:
-          distribution: 'temurin'
-          java-version: '21'
-
-      - name: Install clj runtime
-        run: |
-          cd "$HOME"
-          curl -L -O https://github.com/clojure/brew-install/releases/latest/download/posix-install.sh
-          chmod +x posix-install.sh
-          sudo ./posix-install.sh
+      - uses: jomco/clojure-action@v1
+        with: { m2-cache-key: m2-build-services }
 
       - name: Build ${{ matrix.service }} zip
         run: make bdi-${{ matrix.service }}-${{ needs.create_release.outputs.version }}.zip
@@ -131,24 +103,10 @@ jobs:
         lib: [clj-ishare-jwt, clj-ishare-client, clj-authentication, clj-ring-middleware]
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/cache@v6
-        with:
-          path: "~/.m2"
-          key: "prep-deps${{ hashFiles('deps.edn') }}"
-          restore-keys: "prep-deps"
 
-      - uses: actions/setup-java@v5
-        with:
-          distribution: 'temurin'
-          java-version: '21'
+      - uses: jomco/clojure-action@v1
+        with: { m2-cache-key: m2-build-libs }
 
-      - name: Install clj runtime
-        run: |
-          cd "$HOME"
-          curl -L -O https://github.com/clojure/brew-install/releases/latest/download/posix-install.sh
-          chmod +x posix-install.sh
-          sudo ./posix-install.sh
-      # publish libs to clojars
       - name: Build and ${{ matrix.lib }} to clojars
         env:
           CLOJARS_USERNAME: ${{ vars.CLOJARS_USERNAME }}

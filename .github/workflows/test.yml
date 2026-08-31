@@ -32,27 +32,12 @@ jobs:
     steps:
     - uses: actions/checkout@v7
 
-    - uses: actions/cache@v6
-      with:
-        path: "~/.m2"
-        key: "deps-${{ hashFiles('deps.edn') }}"
-        restore-keys: "deps-"
-
-    - uses: actions/setup-java@v5
-      with:
-        distribution: 'temurin'
-        java-version: '21'
+    - uses: jomco/clojure-action@v1
+      with: { m2-cache-key: m2-test }
 
     - name: Install packages
       run: |
         sudo apt-get install -y reuse
-
-    - name: Install clj runtime
-      run: |
-        cd "$HOME"
-        curl -L -O https://github.com/clojure/brew-install/releases/latest/download/posix-install.sh
-        chmod +x posix-install.sh
-        sudo ./posix-install.sh
 
     - name: Run make check
       run: |
