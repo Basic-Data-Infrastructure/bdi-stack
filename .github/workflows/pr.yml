@@ -1,0 +1,17 @@
+# SPDX-FileCopyrightText: 2026 Jomco B.V.
+# SPDX-FileCopyrightText: 2026 Stichting Connekt
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+name: Run checks for PR
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  nvd:
+    uses: ./.github/workflows/dependency-vulnerabilities.yml
+
+  test:
+    uses: ./.github/workflows/test.yml
