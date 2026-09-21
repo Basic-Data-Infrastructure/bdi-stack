@@ -1,5 +1,5 @@
-;;; SPDX-FileCopyrightText: 2025 Jomco B.V.
-;;; SPDX-FileCopyrightText: 2025 Stichting Connekt
+;;; SPDX-FileCopyrightText: 2025-2026 Jomco B.V.
+;;; SPDX-FileCopyrightText: 2025-2026 Stichting Connekt
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 {:deps {org.bdinetwork/authentication  {:local/root "../clj-authentication"}
         org.bdinetwork/service-commons {:local/root "../service-commons"}
@@ -12,7 +12,7 @@
 
         nl.jomco/clj-http-status-codes {:mvn/version "0.2"}
         nl.jomco/passage               {:git/url "https://codeberg.org/jomco/passage.git"
-                                        :git/sha "48bbabd96f9dcd2c73735184f283c6362bc07aa5"}
+                                        :git/sha "4a8e5b58d6359279b66c8033ca6d4568a2310e09"}
         manifold/manifold              {:mvn/version "0.5.0"}
         org.clojure/data.json          {:mvn/version "2.5.2"}
         ring/ring-core                 {:mvn/version "1.15.5"}
