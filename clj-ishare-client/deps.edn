@@ -6,7 +6,7 @@
 ;;; SPDX-License-Identifier: AGPL-3.0-or-later
 
 {:deps  {org.bdinetwork/clj-ishare-jwt {:local/root "../clj-ishare-jwt"}
-         org.babashka/http-client      {:mvn/version "0.4.25"}
+         org.babashka/http-client      {:mvn/version "0.4.26"}
          org.babashka/json             {:mvn/version "0.1.6"}
          org.clojure/tools.logging     {:mvn/version "1.3.1"}
          org.clojure/core.memoize      {:mvn/version "1.2.281"}}
@@ -17,6 +17,6 @@
   :test {:extra-paths ["test" "test-resources"]
          :extra-deps  {org.clojure/core.async                {:mvn/version "1.9.865"}
                        nl.jomco/clj-http-status-codes        {:mvn/version "0.2"}
-                       nl.jomco/with-resources               {:mvn/version "0.1.2"}
+                       nl.jomco/with-resources               {:mvn/version "0.1.3"}
                        org.bdinetwork/association-register   {:local/root "../association-register"}
                        org.bdinetwork/authorization-register {:local/root "../authorization-register"}}}}}
