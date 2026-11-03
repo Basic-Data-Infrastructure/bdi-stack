@@ -17,5 +17,6 @@ RUN make bdi-authentication-service.jar
 FROM gcr.io/distroless/java21-debian12
 COPY --from=builder /bdi-stack/authentication-service/bdi-authentication-service.jar /bdi-authentication-service.jar
 
+USER nonroot
 WORKDIR /
 ENTRYPOINT ["java", "-jar", "bdi-authentication-service.jar"]

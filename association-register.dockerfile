@@ -17,5 +17,6 @@ RUN make bdi-association-register.jar
 FROM gcr.io/distroless/java21-debian12
 COPY --from=builder /bdi-stack/association-register/bdi-association-register.jar /bdi-association-register.jar
 
+USER nonroot
 WORKDIR /
 ENTRYPOINT ["java", "-jar", "bdi-association-register.jar"]

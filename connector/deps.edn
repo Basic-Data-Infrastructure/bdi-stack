@@ -8,18 +8,18 @@
         org.clojure/core.async {:mvn/version "1.9.865"}
 
         org.clojure/tools.logging      {:mvn/version "1.3.1"}
-        ch.qos.logback/logback-classic {:mvn/version "1.6.3"}
+        ch.qos.logback/logback-classic {:mvn/version "1.6.6"}
 
         nl.jomco/clj-http-status-codes {:mvn/version "0.2"}
         nl.jomco/passage               {:git/url "https://codeberg.org/jomco/passage.git"
-                                        :git/sha "4a8e5b58d6359279b66c8033ca6d4568a2310e09"}
+                                        :git/sha "a5757b374bd63eec959dd2bead73ca00d57c6e98"}
         manifold/manifold              {:mvn/version "0.5.0"}
         org.clojure/data.json          {:mvn/version "2.5.2"}
-        ring/ring-core                 {:mvn/version "1.15.5"}
+        ring/ring-core                 {:mvn/version "1.15.6"}
         ring/ring-json                 {:mvn/version "0.5.1"}
         hiccup/hiccup                  {:mvn/version "2.0.0"}
 
-        nl.jomco/with-resources {:mvn/version "0.1.2"}
+        nl.jomco/with-resources {:mvn/version "0.1.3"}
         nl.jomco/envopts        {:mvn/version "0.0.7"}
         aero/aero               {:mvn/version "1.1.6"}}
  :paths ["src" "resources"]

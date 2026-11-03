@@ -17,5 +17,6 @@ RUN make bdi-connector.jar
 FROM gcr.io/distroless/java21-debian12
 COPY --from=builder /bdi-stack/connector/bdi-connector.jar /bdi-connector.jar
 
+USER nonroot
 WORKDIR /
 ENTRYPOINT ["java", "-jar", "bdi-connector.jar"]
